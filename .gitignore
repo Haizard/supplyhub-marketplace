@@ -38,6 +38,9 @@ yarn-error.log*
 
 # env files — keep .env.example committed
 .env*
+
+# local agent workspace state
+/.workbuddy-ai/
 !.env.example
 
 # vercel

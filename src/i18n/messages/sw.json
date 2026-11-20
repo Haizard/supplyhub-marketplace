@@ -189,6 +189,7 @@
     "newestArrivals": "Bidhaa mpya zaidi",
     "lowestPrice": "Bei ya chini kwanza",
     "liveTracking": "Ufuatiliaji wa uwasilishaji moja kwa moja",
+    "courierStudio": "Ofisi ya courier",
     "protectionHub": "Kituo cha ulinzi wa mnunuzi",
     "copyright": "© 2026 SupplyHub. Mradi huru wa majaribio.",
     "stack": "Next.js · Prisma · PostgreSQL"
@@ -569,6 +570,7 @@
     "departments": "Idara",
     "promotions": "Ofa",
     "discountCodes": "Misimbo ya punguzo",
+    "delivery": "Usafirishaji",
     "payments": "Malipo",
     "payouts": "Malipo kwa wauzaji",
     "title": "Utawala wa soko",

@@ -189,6 +189,7 @@
     "newestArrivals": "Newest arrivals",
     "lowestPrice": "Lowest price first",
     "liveTracking": "Live delivery tracking",
+    "courierStudio": "Courier studio",
     "protectionHub": "Buyer protection hub",
     "copyright": "© 2026 SupplyHub. An independent demo project.",
     "stack": "Next.js · Prisma · PostgreSQL"
@@ -569,6 +570,7 @@
     "departments": "Departments",
     "promotions": "Promotions",
     "discountCodes": "Discount codes",
+    "delivery": "Delivery",
     "payments": "Payments",
     "payouts": "Payouts",
     "title": "Marketplace administration",

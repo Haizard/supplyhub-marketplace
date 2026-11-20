@@ -92,15 +92,15 @@ Converting a prototype to production requires: creating database tables, writing
 |---|---|---|
 | Delivery choice at checkout | ✅ | — |
 | Delivery fee calculation | ✅ | — |
-| Live tracking UI + road routing | ⚠️ Prototype | Full UI, no DB backend |
-| Delivery state machine (client) | ⚠️ Prototype | pending → delivered, localStorage only |
-| Delivery agent entity (database) | 🔴 | No `delivery_agents` table |
-| Dispatch engine | 🔴 | Missing |
-| OTP / proof of delivery | 🔴 | Simulated in prototype |
-| Agent earnings | 🔴 | Missing |
-| External delivery requests | 🔴 | Missing |
+| Live tracking UI + road routing | ✅ | DB-backed at `/delivery/track/[jobId]`; original `/delivery-live` demo retained for illustration only |
+| Delivery state machine | ✅ | Forward-only transitions in `delivery_jobs` + append-only `delivery_status_history` |
+| Delivery agent entity (database) | ✅ | `delivery_agents`, vehicles, documents, service areas |
+| Dispatch engine | ✅ | Deterministic scorer in `src/features/logistics/dispatch.ts` |
+| OTP / proof of delivery | ✅ | Six-digit OTP with expiry + photo/signature proof records |
+| Agent earnings | ✅ | Immutable `agent_earnings` + `delivery_commissions` |
+| External delivery requests | ✅ | `/api/delivery/requests` with session auth and idempotency |
 
-**Transition path**: `src/components/delivery/model.ts` defines `Delivery`, `DeliveryAgent`, `DeliveryStatus` — use these as the schema specification for Phase 4 database tables.
+**Schema note**: `src/components/delivery/model.ts` served as the schema specification for the Phase 4 database tables; the client-side simulation remains only in the legacy `/delivery-live` demo.
 
 ---
 

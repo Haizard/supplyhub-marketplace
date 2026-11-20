@@ -1,6 +1,6 @@
 # Implementation Roadmap
 
-> Phase 0 audit — updated for HEAD 4a923d4.
+> Phase 0 audit — updated for Phase 4 logistics implementation.
 
 ## What is Already Done (confirmed after full re-inspection)
 
@@ -22,9 +22,12 @@
 - ✅ Verified studio badge (DB-enforced)
 - ✅ Mobile bottom navigation (buyer + seller)
 - ✅ PWA (manifest, service worker, offline page)
+- ✅ Phase 4 delivery network: verified couriers, dispatch scoring, DB-backed job lifecycle,
+  OTP hand-over, photo/signature proof, courier location pings, earnings/commissions,
+  external delivery request API (`/api/delivery/requests`), live tracking (`/delivery/track/[jobId]`)
 
 ### Prototype only (UI exists, no database backing)
-- ⚠️ Live delivery tracking (full UI + road routing, demo data only)
+- ⚠️ The original `/delivery-live` map demo (kept for illustration; real tracking is now DB-backed at `/delivery/request` and `/delivery/track/[jobId]`)
 - ⚠️ Buyer experience centre (wishlist, price watch, chat, escrow, reviews, security)
 - ⚠️ Sandbox payment simulation
 
@@ -97,9 +100,22 @@ These must be resolved before new feature development starts:
 
 ---
 
-## Phase 4 — Shared Logistics Network
+## Phase 4 — Shared Logistics Network ✅ IMPLEMENTED
 
-**Goal**: Convert the delivery prototype into a real dispatch and tracking backend.
+Delivered as database-backed features (not a prototype):
+- `delivery_agents`, `delivery_vehicles`, `agent_documents`, `agent_service_areas`,
+  `delivery_requests`, `delivery_jobs`, `delivery_assignments`, `delivery_status_history`,
+  `delivery_locations`, `delivery_proofs`, `agent_earnings`, `delivery_commissions`,
+  `delivery_pricing_rules` — all applied in migration `20261120154000_phase4_logistics`.
+- Agent registration, document review and approval by admins (`/courier`, `/admin/delivery`).
+- Deterministic dispatch scorer (distance, rating, experience, service area, availability).
+- Forward-only job state machine with append-only history and optimistic concurrency.
+- Six-digit OTP hand-over with expiry, plus photo/signature proof records.
+- Real-time tracking via courier GPS pings (`/api/courier/jobs/[jobId]/location`) and
+  an authorized polling endpoint (`/api/delivery/jobs/[jobId]/track`).
+- External delivery request API with session auth and idempotency (`/api/delivery/requests`).
+- Immutable agent earnings and platform commission rows, with admin payment reconciliation.
+- Configurable distance pricing rule (documented default; business policy still unresolved).
 
 ### New tables
 `delivery_agents`, `delivery_vehicles`, `agent_documents`, `agent_service_areas`, `delivery_requests`, `delivery_jobs`, `delivery_assignments`, `delivery_status_history`, `delivery_locations`, `delivery_pricing_rules`, `delivery_proofs`, `agent_earnings`, `delivery_commissions`

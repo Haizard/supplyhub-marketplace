@@ -189,6 +189,7 @@
     "newestArrivals": "أحدث المنتجات",
     "lowestPrice": "الأقل سعرًا أولًا",
     "liveTracking": "تتبّع التوصيل المباشر",
+    "courierStudio": "استوديو المندوب",
     "protectionHub": "مركز حماية المشتري",
     "copyright": "© 2026 SupplyHub. مشروع تجريبي مستقل.",
     "stack": "Next.js · Prisma · PostgreSQL"
@@ -569,6 +570,7 @@
     "departments": "الأقسام",
     "promotions": "العروض",
     "discountCodes": "أكواد الخصم",
+    "delivery": "التوصيل",
     "payments": "المدفوعات",
     "payouts": "مستحقات البائعين",
     "title": "إدارة السوق",

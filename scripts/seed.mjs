@@ -28,6 +28,13 @@ const customer = {
   name: "Mara Ellison",
 };
 
+const courier = {
+  id: "00000000-0000-4000-8000-000000000003",
+  email: "courier@supplyhub.test",
+  name: "Kelvin Mushi",
+  agentCode: "AG-DEMO-001",
+};
+
 const studios = [
   {
     id: "10000000-0000-4000-8000-000000000001",
@@ -499,6 +506,37 @@ try {
 
   await upsertUser(admin, "ADMIN");
   await upsertUser(customer, "CUSTOMER");
+  await upsertUser(courier, "CUSTOMER");
+
+  // Phase 4: a verified, online demo courier so dispatch has an eligible agent.
+  await client.query(
+    `INSERT INTO delivery_agents (
+       id, user_id, agent_code, name, phone, presence, verification, rating,
+       completed_trips, latitude, longitude, created_at, updated_at
+     )
+     VALUES (
+       '30000000-0000-4000-8000-000000000001', $1, $2, $3, '+255712345678',
+       'ONLINE', 'APPROVED', 4.8, 42, -6.7924, 39.2083, now(), now()
+     )
+     ON CONFLICT (agent_code) DO UPDATE
+     SET user_id = EXCLUDED.user_id,
+         presence = 'ONLINE',
+         verification = 'APPROVED',
+         updated_at = now()`,
+    [courier.id, courier.agentCode, courier.name],
+  );
+  await client.query(
+    `INSERT INTO delivery_vehicles (id, agent_id, type, plate, created_at, updated_at)
+     VALUES ('31000000-0000-4000-8000-000000000001',
+             '30000000-0000-4000-8000-000000000001', 'MOTORCYCLE', 'T-ABC-123', now(), now())
+     ON CONFLICT (agent_id) DO NOTHING`,
+  );
+  await client.query(
+    `INSERT INTO agent_service_areas (id, agent_id, label, latitude, longitude, radius_km, created_at)
+     VALUES ('32000000-0000-4000-8000-000000000001',
+             '30000000-0000-4000-8000-000000000001', 'Dar es Salaam', -6.7924, 39.2083, 25, now())
+     ON CONFLICT DO NOTHING`,
+  );
 
   for (const studio of studios) {
     await upsertUser({ id: studio.ownerId, email: studio.email, name: studio.ownerName }, "VENDOR");
@@ -832,11 +870,22 @@ try {
     }
   }
 
+  // Phase 4: documented default delivery pricing (TZS).
+  await client.query(
+    `INSERT INTO delivery_pricing_rules (
+       id, name, currency, base_fee, per_km_rate, minimum_fee, maximum_fee,
+       is_active, created_at, updated_at
+     )
+     VALUES (gen_random_uuid(), 'TZS default', 'TZS', 5000, 2000, 5000, 50000, true, now(), now())
+     ON CONFLICT DO NOTHING`,
+  );
+
   await client.query("COMMIT");
 
   console.log("Seeded SupplyHub demo catalog.");
   console.log(`  Admin:    ${admin.email} / ${DEMO_PASSWORD}`);
   console.log(`  Customer: ${customer.email} / ${DEMO_PASSWORD}`);
+  console.log(`  Courier:  ${courier.email} / ${DEMO_PASSWORD}`);
   console.log(`  Studios:  ${studios.map((studio) => studio.email).join(", ")}`);
   console.log(
     `  Businesses: ${demoBusinesses.map((business) => `${business.name} (${business.businessCode})`).join(", ")}`,

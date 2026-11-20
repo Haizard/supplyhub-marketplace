@@ -189,6 +189,7 @@
     "newestArrivals": "Dernières arrivées",
     "lowestPrice": "Prix croissant",
     "liveTracking": "Suivi de livraison en direct",
+    "courierStudio": "Espace livreur",
     "protectionHub": "Espace protection acheteur",
     "copyright": "© 2026 SupplyHub. Un projet de démonstration indépendant.",
     "stack": "Next.js · Prisma · PostgreSQL"
@@ -569,6 +570,7 @@
     "departments": "Rayons",
     "promotions": "Promotions",
     "discountCodes": "Codes de réduction",
+    "delivery": "Livraison",
     "payments": "Paiements",
     "payouts": "Versements",
     "title": "Administration de la marketplace",

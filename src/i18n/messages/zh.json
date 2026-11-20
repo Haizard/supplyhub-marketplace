@@ -189,6 +189,7 @@
     "newestArrivals": "最新上架",
     "lowestPrice": "价格从低到高",
     "liveTracking": "实时配送追踪",
+    "courierStudio": "配送员工作台",
     "protectionHub": "买家保障中心",
     "copyright": "© 2026 SupplyHub. 独立演示项目。",
     "stack": "Next.js · Prisma · PostgreSQL"
@@ -569,6 +570,7 @@
     "departments": "分类",
     "promotions": "促销",
     "discountCodes": "折扣码",
+    "delivery": "配送",
     "payments": "支付",
     "payouts": "结算",
     "title": "平台管理后台",

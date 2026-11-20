@@ -9,6 +9,7 @@ import {
   Tag,
   ShoppingBag,
   Store,
+  Truck,
   Users,
   Wallet,
 } from "lucide-react";
@@ -29,6 +30,7 @@ const links = [
   { href: "/admin/payouts", labelKey: "admin.payouts", icon: Banknote },
   { href: "/admin/promotions", labelKey: "admin.promotions", icon: Percent },
   { href: "/admin/coupons", labelKey: "admin.discountCodes", icon: Tag },
+  { href: "/admin/delivery", labelKey: "admin.delivery", icon: Truck },
 ];
 
 export function AdminNav() {

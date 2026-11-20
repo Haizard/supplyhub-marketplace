@@ -81,8 +81,13 @@ export async function SiteFooter() {
                 </Link>
               </li>
               <li>
-                <Link href="/delivery-live?persona=buyer" className={footerLinkClassName}>
+                <Link href="/delivery/request" className={footerLinkClassName}>
                   {t("footer.liveTracking")}
+                </Link>
+              </li>
+              <li>
+                <Link href="/courier" className={footerLinkClassName}>
+                  {t("footer.courierStudio")}
                 </Link>
               </li>
               <li>

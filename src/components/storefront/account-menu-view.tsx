@@ -1,6 +1,15 @@
 "use client";
 
-import { ChevronDown, Heart, LayoutDashboard, LogOut, ShieldCheck, UserRound } from "lucide-react";
+import {
+  Bike,
+  ChevronDown,
+  Heart,
+  LayoutDashboard,
+  LogOut,
+  ShieldCheck,
+  Truck,
+  UserRound,
+} from "lucide-react";
 import Link from "next/link";
 
 import {
@@ -66,6 +75,18 @@ export function AccountMenuView({ actor }: { actor: Actor | null }) {
           <Link href="/account/wishlist" className="w-full">
             <Heart className="size-4" aria-hidden="true" />
             {t("wishlist.title")}
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href="/delivery/request" className="w-full">
+            <Truck className="size-4" aria-hidden="true" />
+            {t("footer.liveTracking")}
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href="/courier" className="w-full">
+            <Bike className="size-4" aria-hidden="true" />
+            {t("footer.courierStudio")}
           </Link>
         </DropdownMenuItem>
         {actor.vendor || actor.role === "VENDOR" ? (
