@@ -235,6 +235,7 @@ describe("catalog input validation", () => {
   it("requires a reason and a quantity when adding stock", () => {
     const base = {
       productId: "40000000-0000-4000-8000-000000000001",
+      warehouseId: "50000000-0000-4000-8000-000000000001",
       mode: "add",
       quantity: "0",
       reason: "RESTOCK",

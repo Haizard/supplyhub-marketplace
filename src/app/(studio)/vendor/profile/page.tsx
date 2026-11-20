@@ -7,9 +7,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { StudioPageHead } from "@/components/vendor/studio-page-head";
 import { StudioProfileForm } from "@/components/vendor/studio-profile-form";
 import { listStudioCategoryOptions } from "@/features/catalog/vendor-queries";
-import { getVendorForOwner } from "@/features/vendors/queries";
+import { getStudioVendor } from "@/features/vendors/queries";
 import { initialsFor } from "@/lib/utils/initials";
-import { requireApprovedVendor } from "@/server/auth/guards";
+import { requireStudioAccess } from "@/server/business/studio-access";
 
 export const metadata: Metadata = {
   title: "Studio profile",
@@ -35,12 +35,12 @@ async function ProfileContent({
   searchParams: PageProps<"/vendor/profile">["searchParams"];
 }) {
   const [{ actor, vendorId }, query] = await Promise.all([
-    requireApprovedVendor("/vendor/profile"),
+    requireStudioAccess("business.update", "/vendor/profile"),
     searchParams,
   ]);
 
   const [vendor, departments] = await Promise.all([
-    getVendorForOwner(actor.id),
+    getStudioVendor(actor),
     listStudioCategoryOptions(),
   ]);
 

@@ -354,6 +354,23 @@ export function CheckoutForm({
         ) : null}
       </fieldset>
 
+      <div>
+        <Field
+          label={t("checkout.couponCode")}
+          htmlFor="couponCode"
+          hint={t("checkout.couponHint")}
+        >
+          <Input
+            id="couponCode"
+            name="couponCode"
+            autoComplete="off"
+            spellCheck={false}
+            className="uppercase"
+            maxLength={40}
+          />
+        </Field>
+      </div>
+
       <FormMessage state={state} />
 
       <div className="border-t border-border pt-6">

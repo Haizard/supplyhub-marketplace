@@ -3,7 +3,14 @@ import "server-only";
 import type { PrismaClient } from "@/generated/prisma/client";
 import { Prisma } from "@/generated/prisma/client";
 import { centsToDecimalString, decimalToCents } from "@/features/catalog/money";
+import {
+  evaluateCoupon,
+  normalizeCouponCode,
+  type CouponRejection,
+} from "@/features/coupons/discount";
+import { evaluatePromotions } from "@/features/promotions/discount";
 import { recordAuditEvent } from "@/server/audit/audit-log";
+import { recordOrderStatusChange } from "./status-history";
 import { logger } from "@/lib/logging/logger";
 
 import { MAX_CART_QUANTITY } from "@/features/cart/constants";
@@ -12,7 +19,17 @@ import type { PlacedOrder } from "./types";
 import type { CheckoutAddressInput } from "./validation";
 
 export type CheckoutErrorCode =
-  "cart-empty" | "unavailable-items" | "currency-mismatch" | "invalid-request";
+  "cart-empty" | "unavailable-items" | "currency-mismatch" | "invalid-request" | "invalid-coupon";
+
+const couponRejectionMessages: Record<CouponRejection, string> = {
+  invalid: "That discount code is not valid.",
+  inactive: "That discount code is no longer available.",
+  "not-started": "That discount code is not active yet.",
+  expired: "That discount code has expired.",
+  exhausted: "That discount code has been fully redeemed.",
+  "min-subtotal": "Your cart does not reach the minimum for that discount code.",
+  currency: "That discount code does not apply to this currency.",
+};
 
 function haversineKm(
   latitude1: number,
@@ -49,6 +66,7 @@ export interface PlaceOrderInput {
   cartId: string;
   address: CheckoutAddressInput;
   reservationMinutes: number;
+  couponCode?: string | null;
 }
 
 const checkoutCartInclude = {
@@ -66,8 +84,10 @@ const checkoutCartInclude = {
           stock: true,
           status: true,
           vendorId: true,
+          categoryId: true,
           vendor: { select: { id: true, status: true, latitude: true, longitude: true } },
-          category: { select: { status: true } },
+          variants: { where: { isActive: true }, select: { id: true } },
+          category: { select: { status: true, id: true } },
           images: {
             where: { status: "APPROVED" },
             orderBy: { sortOrder: "asc" },
@@ -75,6 +95,9 @@ const checkoutCartInclude = {
             select: { storageKey: true },
           },
         },
+      },
+      variant: {
+        select: { id: true, name: true, sku: true, price: true, stock: true, isActive: true },
       },
     },
   },
@@ -173,11 +196,28 @@ async function runCheckout(database: PrismaClient, input: PlaceOrderInput): Prom
         continue;
       }
 
-      if (item.quantity > product.stock) {
+      if (item.variantId && !item.variant) {
+        problems.push(`${product.name}: that option is no longer available.`);
+        continue;
+      }
+
+      if (item.variant && !item.variant.isActive) {
+        problems.push(`${product.name}: ${item.variant.name} is no longer available.`);
+        continue;
+      }
+
+      if (!item.variantId && product.variants.length > 0) {
+        problems.push(`${product.name}: choose an option before checking out.`);
+        continue;
+      }
+
+      const availableStock = item.variant ? item.variant.stock : product.stock;
+
+      if (item.quantity > availableStock) {
         problems.push(
-          product.stock === 0
+          availableStock === 0
             ? `${product.name} is sold out.`
-            : `${product.name}: only ${product.stock} left.`,
+            : `${product.name}: only ${availableStock} left.`,
         );
         continue;
       }
@@ -214,6 +254,8 @@ async function runCheckout(database: PrismaClient, input: PlaceOrderInput): Prom
           productName: string;
           productSlug: string;
           sku: string;
+          variantId: string | null;
+          variantName: string | null;
           imageKey: string | null;
           unitPriceCents: number;
           quantity: number;
@@ -233,13 +275,15 @@ async function runCheckout(database: PrismaClient, input: PlaceOrderInput): Prom
           longitude: product.vendor.longitude,
         });
       }
-      const unitPriceCents = decimalToCents(product.price);
+      const unitPriceCents = decimalToCents(item.variant?.price ?? product.price);
       const lineTotalCents = unitPriceCents * item.quantity;
       const snapshot = {
         productId: product.id,
         productName: product.name,
         productSlug: product.slug,
-        sku: product.sku,
+        sku: item.variant?.sku ?? product.sku,
+        variantId: item.variant?.id ?? null,
+        variantName: item.variant?.name ?? null,
         imageKey: product.images[0]?.storageKey ?? null,
         unitPriceCents,
         quantity: item.quantity,
@@ -313,7 +357,72 @@ async function runCheckout(database: PrismaClient, input: PlaceOrderInput): Prom
       deliveryDistanceKm = totalDistance;
     }
 
-    const totalCents = subtotalCents + shippingCents;
+    let discountCents = 0;
+    let appliedCoupon: { id: string; code: string; maxRedemptions: number | null } | null = null;
+
+    if (input.couponCode) {
+      const code = normalizeCouponCode(input.couponCode);
+      const coupon = code ? await transaction.coupon.findUnique({ where: { code } }) : null;
+
+      if (!coupon) {
+        throw new CheckoutError("invalid-coupon", "That discount code is not valid.");
+      }
+
+      const evaluation = evaluateCoupon(
+        {
+          isActive: coupon.isActive,
+          startsAt: coupon.startsAt,
+          endsAt: coupon.endsAt,
+          minSubtotalCents: coupon.minSubtotal === null ? null : decimalToCents(coupon.minSubtotal),
+          maxRedemptions: coupon.maxRedemptions,
+          redemptions: coupon.redemptions,
+          kind: coupon.kind,
+          percent: coupon.kind === "PERCENT" ? Number(coupon.value) : null,
+          amountCents: coupon.kind === "FIXED" ? decimalToCents(coupon.value) : null,
+          currency: coupon.currency,
+        },
+        { subtotalCents, currency, now },
+      );
+
+      if (!evaluation.ok) {
+        throw new CheckoutError("invalid-coupon", couponRejectionMessages[evaluation.reason]);
+      }
+
+      discountCents = evaluation.discountCents;
+      appliedCoupon = { id: coupon.id, code: coupon.code, maxRedemptions: coupon.maxRedemptions };
+    }
+
+    const promotionRules = await transaction.promotion.findMany({
+      where: { isActive: true, currency },
+      select: {
+        id: true,
+        name: true,
+        scope: true,
+        vendorId: true,
+        categoryId: true,
+        percent: true,
+        currency: true,
+        startsAt: true,
+        endsAt: true,
+        isActive: true,
+      },
+    });
+
+    const appliedPromotion = evaluatePromotions(
+      promotionRules,
+      cart.items.map((item) => ({
+        vendorId: item.product.vendorId,
+        categoryId: item.product.categoryId,
+        lineTotalCents: decimalToCents(item.variant?.price ?? item.product.price) * item.quantity,
+      })),
+      { currency, now },
+    );
+    const promotionDiscountCents = appliedPromotion?.discountCents ?? 0;
+
+    const totalCents = Math.max(
+      0,
+      subtotalCents + shippingCents - discountCents - promotionDiscountCents,
+    );
 
     const order = await transaction.order.create({
       data: {
@@ -324,7 +433,10 @@ async function runCheckout(database: PrismaClient, input: PlaceOrderInput): Prom
         subtotal: centsToDecimalString(subtotalCents),
         shippingTotal: centsToDecimalString(shippingCents),
         taxTotal: "0.00",
-        discountTotal: "0.00",
+        discountTotal: centsToDecimalString(discountCents),
+        promotionId: appliedPromotion?.promotionId ?? null,
+        promotionName: appliedPromotion?.promotionName ?? null,
+        promotionDiscount: centsToDecimalString(promotionDiscountCents),
         total: centsToDecimalString(totalCents),
         recipientName: input.address.recipientName,
         contactEmail: input.address.contactEmail,
@@ -350,6 +462,35 @@ async function runCheckout(database: PrismaClient, input: PlaceOrderInput): Prom
       select: { id: true },
     });
 
+    if (appliedCoupon) {
+      // Claim a redemption slot atomically so concurrent checkouts cannot exceed the cap.
+      const claimed = await transaction.coupon.updateMany({
+        where: {
+          id: appliedCoupon.id,
+          isActive: true,
+          ...(appliedCoupon.maxRedemptions === null
+            ? {}
+            : { redemptions: { lt: appliedCoupon.maxRedemptions } }),
+        },
+        data: { redemptions: { increment: 1 } },
+      });
+
+      if (claimed.count !== 1) {
+        throw new CheckoutError("invalid-coupon", couponRejectionMessages.exhausted);
+      }
+
+      await transaction.couponRedemption.create({
+        data: {
+          couponId: appliedCoupon.id,
+          orderId: order.id,
+          userId: input.customerId,
+          code: appliedCoupon.code,
+          discount: centsToDecimalString(discountCents),
+          currency,
+        },
+      });
+    }
+
     for (const group of groups.values()) {
       const vendorOrder = await transaction.vendorOrder.create({
         data: {
@@ -362,6 +503,14 @@ async function runCheckout(database: PrismaClient, input: PlaceOrderInput): Prom
         select: { id: true },
       });
 
+      await recordOrderStatusChange(transaction, {
+        orderId: order.id,
+        vendorOrderId: vendorOrder.id,
+        fromStatus: null,
+        toStatus: "AWAITING_PAYMENT",
+        note: "Reserved at checkout.",
+      });
+
       await transaction.orderItem.createMany({
         data: group.items.map((item) => ({
           orderId: order.id,
@@ -370,6 +519,8 @@ async function runCheckout(database: PrismaClient, input: PlaceOrderInput): Prom
           productName: item.productName,
           productSlug: item.productSlug,
           sku: item.sku,
+          variantId: item.variantId,
+          variantName: item.variantName,
           imageKey: item.imageKey,
           unitPrice: centsToDecimalString(item.unitPriceCents),
           quantity: item.quantity,
@@ -379,7 +530,68 @@ async function runCheckout(database: PrismaClient, input: PlaceOrderInput): Prom
       });
     }
 
+    await recordOrderStatusChange(transaction, {
+      orderId: order.id,
+      fromStatus: null,
+      toStatus: "AWAITING_PAYMENT",
+      actorId: input.customerId,
+      note: "Order placed.",
+    });
+
+    const defaultWarehouses = new Map<string, { id: string; name: string } | null>();
+
     for (const item of cart.items) {
+      const vendorId = item.product.vendorId;
+
+      if (!defaultWarehouses.has(vendorId)) {
+        defaultWarehouses.set(
+          vendorId,
+          await transaction.warehouse.findFirst({
+            where: { vendorId, isDefault: true },
+            select: { id: true, name: true },
+          }),
+        );
+      }
+
+      const warehouse = defaultWarehouses.get(vendorId) ?? null;
+
+      if (!warehouse) {
+        throw new CheckoutError(
+          "unavailable-items",
+          `${item.product.name} cannot be sold right now. Review your cart and try again.`,
+        );
+      }
+
+      const balance = await transaction.inventoryBalance.findUnique({
+        where: {
+          warehouseId_productId: { warehouseId: warehouse.id, productId: item.productId },
+        },
+        select: { quantity: true },
+      });
+
+      if ((balance?.quantity ?? 0) < item.quantity) {
+        throw new CheckoutError(
+          "unavailable-items",
+          `${item.product.name} just sold out. Review your cart and try again.`,
+        );
+      }
+
+      const moved = await transaction.inventoryBalance.updateMany({
+        where: {
+          warehouseId: warehouse.id,
+          productId: item.productId,
+          quantity: { gte: item.quantity },
+        },
+        data: { quantity: { decrement: item.quantity } },
+      });
+
+      if (moved.count !== 1) {
+        throw new CheckoutError(
+          "unavailable-items",
+          `${item.product.name} just sold out. Review your cart and try again.`,
+        );
+      }
+
       const updated = await transaction.product.updateMany({
         where: {
           id: item.productId,
@@ -398,6 +610,25 @@ async function runCheckout(database: PrismaClient, input: PlaceOrderInput): Prom
         );
       }
 
+      if (item.variantId) {
+        const variantUpdated = await transaction.productVariant.updateMany({
+          where: {
+            id: item.variantId,
+            productId: item.productId,
+            isActive: true,
+            stock: { gte: item.quantity },
+          },
+          data: { stock: { decrement: item.quantity } },
+        });
+
+        if (variantUpdated.count !== 1) {
+          throw new CheckoutError(
+            "unavailable-items",
+            `${item.product.name} just sold out in that option. Review your cart and try again.`,
+          );
+        }
+      }
+
       const current = await transaction.product.findUnique({
         where: { id: item.productId },
         select: { stock: true },
@@ -407,6 +638,7 @@ async function runCheckout(database: PrismaClient, input: PlaceOrderInput): Prom
         data: {
           productId: item.productId,
           actorId: input.customerId,
+          warehouseId: warehouse.id,
           delta: -item.quantity,
           reason: "SALE",
           resultingStock: current?.stock ?? 0,
@@ -484,9 +716,45 @@ export async function releaseExpiredReservations(
         return false;
       }
 
+      const vendorOrders = await transaction.vendorOrder.findMany({
+        where: { orderId: order.id },
+        select: { id: true, status: true },
+      });
+
+      const redemption = await transaction.couponRedemption.findUnique({
+        where: { orderId: order.id },
+        select: { id: true, couponId: true },
+      });
+
+      if (redemption) {
+        // An unpaid order releases its discount slot, so a code capped at N uses stays usable.
+        await transaction.couponRedemption.delete({ where: { id: redemption.id } });
+        await transaction.coupon.update({
+          where: { id: redemption.couponId },
+          data: { redemptions: { decrement: 1 } },
+        });
+      }
+
       await transaction.vendorOrder.updateMany({
         where: { orderId: order.id },
         data: { status: "EXPIRED" },
+      });
+
+      for (const vendorOrder of vendorOrders) {
+        await recordOrderStatusChange(transaction, {
+          orderId: order.id,
+          vendorOrderId: vendorOrder.id,
+          fromStatus: vendorOrder.status,
+          toStatus: "EXPIRED",
+          note: "Reservation expired.",
+        });
+      }
+
+      await recordOrderStatusChange(transaction, {
+        orderId: order.id,
+        fromStatus: "AWAITING_PAYMENT",
+        toStatus: "EXPIRED",
+        note: "Reservation window passed before payment.",
       });
 
       for (const item of order.items) {

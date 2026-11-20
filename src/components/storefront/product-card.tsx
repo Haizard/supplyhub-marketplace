@@ -6,12 +6,12 @@ import Link from "next/link";
 import type { ProductListing } from "@/features/catalog/types";
 import { Badge } from "@/components/ui/badge";
 import { Price } from "@/components/ui/price";
-import { WishlistButton } from "@/features/experience/widgets/wishlist-button";
 import { useT } from "@/i18n/client";
 import { cn } from "@/lib/utils/cn";
 
 import { AvailabilityBadge } from "./availability-badge";
 import { MakerLabel } from "./maker-label";
+import { WishlistToggle } from "./wishlist-toggle";
 
 export function ProductCard({
   product,
@@ -61,15 +61,10 @@ export function ProductCard({
           )}
           <div className="flex items-center gap-1.5">
             {hasDiscount ? <Badge tone="accent">{t("common.sale")}</Badge> : null}
-            <WishlistButton
-              item={{
-                slug: product.slug,
-                name: product.name,
-                priceCents: product.priceCents,
-                inventory: product.inventory,
-                image: product.image.src,
-                currency: product.currency,
-              }}
+            <WishlistToggle
+              productId={product.id}
+              productName={product.name}
+              saved={Boolean(product.saved)}
             />
           </div>
         </div>

@@ -3,9 +3,12 @@ import type { CatalogImage } from "@/features/catalog/types";
 export type CartLineProblem = "unavailable" | "insufficient-stock" | "currency-mismatch";
 
 export interface CartLineDraft {
+  id: string;
   productId: string;
   slug: string;
   name: string;
+  variantId: string | null;
+  variantName: string | null;
   sku: string;
   vendorId: string;
   vendorName: string;

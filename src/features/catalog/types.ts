@@ -47,12 +47,24 @@ export interface Product {
   images: readonly CatalogImage[];
   featured: boolean;
   addedAt: string;
+  /** True when the signed-in buyer has saved this object to their wishlist. */
+  saved?: boolean;
+}
+
+export interface ProductVariantOption {
+  id: string;
+  name: string;
+  sku: string;
+  priceCents: number;
+  stock: number;
 }
 
 export interface ProductListing extends Product {
   vendor: Vendor;
   category: Category;
   availability: Availability;
+  /** Active options, cheapest first. Empty for single-option objects. */
+  variants: readonly ProductVariantOption[];
 }
 
 export interface VendorSummary extends Vendor {

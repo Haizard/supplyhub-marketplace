@@ -6,7 +6,7 @@ import { StudioPageHead } from "@/components/vendor/studio-page-head";
 import { formatMoney } from "@/features/catalog/money";
 import { getVendorEarnings } from "@/features/payments/vendor-queries";
 import { formatDate } from "@/lib/utils/format-date";
-import { requireApprovedVendor } from "@/server/auth/guards";
+import { requireStudioAccess } from "@/server/business/studio-access";
 
 export const metadata: Metadata = {
   title: "Studio earnings",
@@ -22,7 +22,7 @@ export default function VendorEarningsPage() {
 }
 
 async function VendorEarningsContent() {
-  const { vendorId } = await requireApprovedVendor("/vendor/earnings");
+  const { vendorId } = await requireStudioAccess("finance.read", "/vendor/earnings");
   const earnings = await getVendorEarnings(vendorId);
   const metrics = [
     { label: "Recorded earnings", value: earnings.earningsCents },

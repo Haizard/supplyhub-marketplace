@@ -76,6 +76,7 @@ export async function placeOrderAction(
       cartId: cart.id,
       address: parsed.data,
       reservationMinutes: getServerEnv().CHECKOUT_RESERVATION_MINUTES,
+      couponCode: formValue(formData, "couponCode")?.trim().slice(0, 40) || null,
     });
 
     logger.info("checkout.completed", {

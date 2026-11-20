@@ -2,10 +2,13 @@ import "server-only";
 
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
+import { cookies } from "next/headers";
 import { z } from "zod";
 
 import { emailField } from "@/features/identity/validation";
 import { getServerEnv } from "@/lib/config/env";
+import { ACTIVE_BUSINESS_COOKIE } from "@/server/business/active-business";
+import { loadActiveBusiness } from "@/server/business/active-business-store";
 import { getDatabase } from "@/server/db/client";
 
 import { verifyPassword } from "./password";
@@ -95,11 +98,29 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         return null;
       }
 
+      // The active business is re-resolved on every session read. Only the switch
+      // cookie expresses a preference; membership status always comes from
+      // PostgreSQL, so a stale token can never hold a business open.
+      let preferredBusinessId: string | null = null;
+      try {
+        preferredBusinessId = (await cookies()).get(ACTIVE_BUSINESS_COOKIE)?.value ?? null;
+      } catch {
+        // Outside a request scope there is no cookie store: use the default rule.
+      }
+
+      const activeBusiness = await loadActiveBusiness(token.sub, preferredBusinessId);
+
       token.sessionVersion = account.sessionVersion;
       token.role = account.role;
       token.status = account.status;
       token.vendorId = account.vendor?.id ?? null;
       token.vendorStatus = account.vendor?.status ?? null;
+      token.businessId = activeBusiness?.businessId ?? null;
+      token.businessName = activeBusiness?.businessName ?? null;
+      token.businessMemberId = activeBusiness?.memberId ?? null;
+      token.businessVendorId = activeBusiness?.vendorId ?? null;
+      token.businessVendorStatus = activeBusiness?.vendorStatus ?? null;
+      token.businessIsOwner = activeBusiness?.isOwner ?? false;
 
       return token;
     },
@@ -109,6 +130,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       session.user.status = token.status ?? "SUSPENDED";
       session.user.vendorId = token.vendorId ?? null;
       session.user.vendorStatus = token.vendorStatus ?? null;
+      session.user.businessId = token.businessId ?? null;
+      session.user.businessName = token.businessName ?? null;
+      session.user.businessMemberId = token.businessMemberId ?? null;
+      session.user.businessVendorId = token.businessVendorId ?? null;
+      session.user.businessVendorStatus = token.businessVendorStatus ?? null;
+      session.user.businessIsOwner = token.businessIsOwner ?? false;
 
       return session;
     },

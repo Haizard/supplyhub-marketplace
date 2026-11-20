@@ -19,8 +19,17 @@ import { VerifiedStudioBadge } from "@/components/storefront/verified-studio-bad
 import { getProductBySlug, getRelatedProducts } from "@/features/catalog/queries";
 import type { ProductListing } from "@/features/catalog/types";
 import { StudioChatButton } from "@/features/experience/widgets/studio-chat-button";
-import { WishlistButton } from "@/features/experience/widgets/wishlist-button";
+import { WishlistToggle } from "@/components/storefront/wishlist-toggle";
+import { ReviewForm } from "@/components/storefront/review-form";
+import { StarRating } from "@/components/storefront/star-rating";
+import {
+  getProductRatingSummary,
+  getReviewGate,
+  listProductReviews,
+} from "@/features/reviews/queries";
 import { getServerI18n } from "@/i18n/server";
+import { formatDate } from "@/lib/utils/format-date";
+import { getSessionActor } from "@/server/auth/session";
 
 export async function generateMetadata({
   params,
@@ -67,9 +76,13 @@ export default async function ProductDetailPage({ params }: PageProps<"/products
 }
 
 async function ProductDetail({ product }: { product: ProductListing }) {
-  const [{ t }, related] = await Promise.all([
+  const actor = await getSessionActor();
+  const [{ t }, related, rating, reviews, gate] = await Promise.all([
     getServerI18n(),
     getRelatedProducts(product.slug, 3),
+    getProductRatingSummary(product.id),
+    listProductReviews(product.id),
+    getReviewGate(actor?.id ?? null, product.id),
   ]);
   const soldOut = product.availability === "sold-out";
 
@@ -125,6 +138,21 @@ async function ProductDetail({ product }: { product: ProductListing }) {
             {product.name}
           </h1>
 
+          <div className="mt-4 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+            <StarRating
+              rating={rating.average}
+              label={t("reviews.stars", { rating: rating.average })}
+            />
+            <a href="#reviews" className="underline-offset-4 hover:underline">
+              {rating.count === 0
+                ? t("reviews.noReviews")
+                : t("reviews.summary", {
+                    average: rating.average.toFixed(1),
+                    count: rating.count,
+                  })}
+            </a>
+          </div>
+
           <div className="mt-5 flex flex-wrap items-center gap-4">
             <Price
               amountCents={product.priceCents}
@@ -163,7 +191,12 @@ async function ProductDetail({ product }: { product: ProductListing }) {
               <>
                 <div className="flex flex-wrap items-end gap-4">
                   <div className="min-w-0 flex-1">
-                    <AddToCartForm productId={product.id} available={product.inventory} />
+                    <AddToCartForm
+                      productId={product.id}
+                      available={product.inventory}
+                      currency={product.currency}
+                      variants={product.variants}
+                    />
                   </div>
                   <ShareButton className="h-12" />
                 </div>
@@ -173,16 +206,11 @@ async function ProductDetail({ product }: { product: ProductListing }) {
           </div>
 
           <div className="mt-5 flex flex-wrap items-center gap-2">
-            <WishlistButton
+            <WishlistToggle
               className="size-11 rounded-lg"
-              item={{
-                slug: product.slug,
-                name: product.name,
-                priceCents: product.priceCents,
-                inventory: product.inventory,
-                image: product.image.src,
-                currency: product.currency,
-              }}
+              productId={product.id}
+              productName={product.name}
+              saved={Boolean(product.saved)}
             />
             <StudioChatButton vendorSlug={product.vendor.slug} vendorName={product.vendor.name} />
             <Link
@@ -252,6 +280,99 @@ async function ProductDetail({ product }: { product: ProductListing }) {
           ) : null}
         </div>
       </div>
+
+      <section
+        id="reviews"
+        aria-labelledby="reviews-heading"
+        className="mt-16 border-t border-border pt-10 sm:mt-20"
+      >
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="eyebrow text-muted-foreground">{t("reviews.eyebrow")}</p>
+            <h2
+              id="reviews-heading"
+              className="mt-3 font-display text-3xl leading-[1.02] font-medium tracking-[-0.03em]"
+            >
+              {t("reviews.title")}
+            </h2>
+          </div>
+          {rating.count > 0 ? (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <StarRating
+                rating={rating.average}
+                label={t("reviews.stars", { rating: rating.average })}
+              />
+              <span>
+                {t("reviews.summary", {
+                  average: rating.average.toFixed(1),
+                  count: rating.count,
+                })}
+              </span>
+            </div>
+          ) : null}
+        </div>
+
+        <div className="mt-8 grid gap-10 lg:grid-cols-[1.15fr_0.85fr]">
+          <div>
+            {reviews.length === 0 ? (
+              <p className="text-sm leading-6 text-muted-foreground">{t("reviews.noReviews")}</p>
+            ) : (
+              <ul className="divide-y divide-border">
+                {reviews.map((review) => (
+                  <li key={review.id} className="py-5 first:pt-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <StarRating
+                        rating={review.rating}
+                        label={t("reviews.stars", { rating: review.rating })}
+                      />
+                      <span className="text-xs text-muted-foreground">
+                        {formatDate(review.createdAt)}
+                      </span>
+                    </div>
+                    <p className="mt-2 font-medium">{review.title}</p>
+                    <p className="mt-1 text-sm leading-6 text-muted-foreground">{review.body}</p>
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      {review.authorName} ·{" "}
+                      <span className="text-success">{t("reviews.verified")}</span>
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          <div className="h-fit rounded-xl border border-border bg-surface p-6">
+            {gate.eligible ? (
+              <>
+                <h3 className="font-display text-xl font-medium tracking-[-0.02em]">
+                  {gate.review ? t("reviews.formEditTitle") : t("reviews.formTitle")}
+                </h3>
+                <p className="mt-1 mb-4 text-sm leading-6 text-muted-foreground">
+                  {t("reviews.formIntro")}
+                </p>
+                <ReviewForm productId={product.id} existing={gate.review} />
+              </>
+            ) : (
+              <>
+                <h3 className="font-display text-xl font-medium tracking-[-0.02em]">
+                  {t("reviews.formTitle")}
+                </h3>
+                <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                  {actor ? t("reviews.notEligible") : t("reviews.guest")}
+                </p>
+                {!actor ? (
+                  <Link
+                    href={`/sign-in?next=${encodeURIComponent(`/products/${product.slug}`)}`}
+                    className="mt-4 inline-flex text-sm font-medium text-accent underline-offset-4 hover:underline"
+                  >
+                    {t("auth.signIn")}
+                  </Link>
+                ) : null}
+              </>
+            )}
+          </div>
+        </div>
+      </section>
 
       {related.length > 0 ? (
         <section className="mt-16 border-t border-border pt-10 sm:mt-20">

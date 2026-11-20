@@ -15,6 +15,7 @@ export interface OrderItemView {
   productName: string;
   productSlug: string;
   sku: string;
+  variantName: string | null;
   imageSrc: string | null;
   unitPriceCents: number;
   quantity: number;
@@ -53,6 +54,13 @@ export interface CustomerOrderAddress {
   countryCode: string;
 }
 
+export interface OrderTimelineEntry {
+  id: string;
+  status: OrderStatus;
+  note: string | null;
+  createdAt: Date;
+}
+
 export interface CustomerOrderDetail {
   id: string;
   orderNumber: string;
@@ -62,9 +70,12 @@ export interface CustomerOrderDetail {
   shippingTotalCents: number;
   taxTotalCents: number;
   discountTotalCents: number;
+  promotionName: string | null;
+  promotionDiscountCents: number;
   totalCents: number;
   placedAt: Date;
   reservationExpiresAt: Date | null;
   address: CustomerOrderAddress;
   vendorOrders: VendorOrderView[];
+  timeline: OrderTimelineEntry[];
 }

@@ -260,6 +260,196 @@ const products = [
   },
 ];
 
+const businessCategories = [
+  {
+    id: "70000000-0000-4000-8000-000000000001",
+    slug: "craft-and-home",
+    name: "Craft & Home",
+    sortOrder: 0,
+  },
+  {
+    id: "70000000-0000-4000-8000-000000000002",
+    slug: "fashion-and-textiles",
+    name: "Fashion & Textiles",
+    sortOrder: 1,
+  },
+];
+
+const demoBusinesses = [
+  {
+    businessCode: "BIZ-AN01",
+    name: "Atelier Nord Studio",
+    slug: "atelier-nord-studio",
+    verificationStatus: "verified",
+    vendorId: "10000000-0000-4000-8000-000000000001",
+    categorySlug: "craft-and-home",
+    description:
+      "The business behind Atelier Nord: one studio, two locations, and the team that throws, glazes, and ships every piece.",
+    website: "https://atelier-nord.example.com",
+    contactPhone: "+1 503 555 0142",
+    contactEmail: "studio@atelier-nord.test",
+    branches: [
+      {
+        name: "Portland Studio",
+        branchCode: "MAIN",
+        address: "412 SE Division St",
+        city: "Portland",
+        latitude: "45.5045000",
+        longitude: "-122.6543000",
+        isPrimary: true,
+      },
+      {
+        name: "Seattle Outpost",
+        branchCode: "SEA",
+        address: "88 Pike St",
+        city: "Seattle",
+        latitude: "47.6097000",
+        longitude: "-122.3331000",
+        isPrimary: false,
+      },
+    ],
+    customRoles: [
+      {
+        name: "Operations manager",
+        permissionKeys: [
+          "business.read",
+          "branch.read",
+          "inventory.read",
+          "inventory.adjust",
+          "orders.read",
+          "orders.fulfill",
+          "catalog.product.create",
+          "catalog.product.update",
+          "catalog.product.publish",
+          "delivery.request.create",
+          "pos.sale.create",
+          "pos.register.close",
+        ],
+      },
+      {
+        name: "Bookkeeper",
+        permissionKeys: [
+          "business.read",
+          "finance.read",
+          "finance.expense.create",
+          "subscription.read",
+        ],
+      },
+    ],
+    members: [{ userId: customer.id, roleName: "Operations manager" }],
+  },
+  {
+    businessCode: "BIZ-FF02",
+    name: "Field & Form Workshop",
+    slug: "field-and-form-workshop",
+    verificationStatus: "verified",
+    vendorId: "10000000-0000-4000-8000-000000000002",
+    categorySlug: "fashion-and-textiles",
+    description:
+      "Cutting benches, an edge-painting station, and the two people who keep Field & Form's leather work moving.",
+    website: "https://field-and-form.example.com",
+    contactPhone: "+1 512 555 0198",
+    contactEmail: "studio@field-and-form.test",
+    branches: [
+      {
+        name: "Austin Workshop",
+        branchCode: "MAIN",
+        address: "1704 E 6th St",
+        city: "Austin",
+        latitude: "30.2654000",
+        longitude: "-97.7283000",
+        isPrimary: true,
+      },
+    ],
+    customRoles: [
+      {
+        name: "Catalog editor",
+        permissionKeys: [
+          "business.read",
+          "branch.read",
+          "inventory.read",
+          "catalog.product.create",
+          "catalog.product.update",
+          "catalog.product.publish",
+        ],
+      },
+    ],
+    members: [{ userId: "20000000-0000-4000-8000-000000000001", roleName: "Catalog editor" }],
+  },
+  {
+    businessCode: "BIZ-LH03",
+    name: "Loom House Mill",
+    slug: "loom-house-mill",
+    verificationStatus: "pending",
+    vendorId: "10000000-0000-4000-8000-000000000003",
+    categorySlug: "fashion-and-textiles",
+    description:
+      "Looms, dye vats, and a stockroom in Charlotte. Verification is still under review, so the profile shows as pending.",
+    website: "https://loom-house.example.com",
+    contactPhone: "+1 828 555 0177",
+    contactEmail: "studio@loom-house.test",
+    branches: [
+      {
+        name: "Asheville Mill",
+        branchCode: "MAIN",
+        address: "31 Clingman Ave",
+        city: "Asheville",
+        latitude: "35.5842000",
+        longitude: "-82.5637000",
+        isPrimary: true,
+      },
+      {
+        name: "Charlotte Stockroom",
+        branchCode: "CLT",
+        address: "1200 S Mint St",
+        city: "Charlotte",
+        latitude: "35.2197000",
+        longitude: "-80.8569000",
+        isPrimary: false,
+      },
+    ],
+    customRoles: [
+      {
+        name: "Catalog editor",
+        permissionKeys: [
+          "business.read",
+          "branch.read",
+          "inventory.read",
+          "catalog.product.create",
+          "catalog.product.update",
+          "catalog.product.publish",
+        ],
+      },
+      {
+        name: "Fulfilment lead",
+        permissionKeys: [
+          "business.read",
+          "branch.read",
+          "inventory.read",
+          "orders.read",
+          "orders.fulfill",
+          "delivery.request.create",
+        ],
+      },
+    ],
+    members: [
+      { userId: "20000000-0000-4000-8000-000000000002", roleName: "Catalog editor" },
+      { userId: "20000000-0000-4000-8000-000000000001", roleName: "Fulfilment lead" },
+    ],
+  },
+];
+
+const demoStaffPermissionKeys = [
+  "business.read",
+  "branch.read",
+  "inventory.read",
+  "orders.read",
+  "orders.fulfill",
+  "catalog.product.create",
+  "catalog.product.update",
+  "catalog.product.publish",
+];
+
 function normalize(value) {
   return value
     .normalize("NFKD")
@@ -471,12 +661,189 @@ try {
     );
   }
 
+  // ── Demo businesses (business identity) ──────────────────────────────────
+  const permissionRows = (await client.query("SELECT id, permission_key FROM permissions")).rows;
+  const permissionIdByKey = new Map(permissionRows.map((row) => [row.permission_key, row.id]));
+
+  const grantPermissions = async (roleId, keys) => {
+    await client.query("DELETE FROM role_permissions WHERE role_id = $1", [roleId]);
+    const permissionIds = keys.map((key) => {
+      const id = permissionIdByKey.get(key);
+      if (!id) throw new Error(`Unknown permission key in seed: ${key}`);
+      return id;
+    });
+    if (permissionIds.length === 0) return;
+    await client.query(
+      `INSERT INTO role_permissions (role_id, permission_id)
+       SELECT $1, unnest($2::uuid[])
+       ON CONFLICT DO NOTHING`,
+      [roleId, permissionIds],
+    );
+  };
+
+  const upsertRole = async (businessId, name, permissionKeys, isSystem) => {
+    const { rows } = await client.query(
+      `INSERT INTO business_roles (business_id, name, is_system, created_at)
+       VALUES ($1, $2, $3, now())
+       ON CONFLICT (business_id, name) DO UPDATE
+       SET is_system = EXCLUDED.is_system
+       RETURNING id`,
+      [businessId, name, isSystem],
+    );
+    await grantPermissions(rows[0].id, permissionKeys);
+    return rows[0].id;
+  };
+
+  const upsertMember = async (businessId, userId, invitedById) => {
+    const { rows } = await client.query(
+      `INSERT INTO business_members (business_id, user_id, status, invited_by, created_at, updated_at)
+       VALUES ($1, $2, 'active', $3, now(), now())
+       ON CONFLICT (business_id, user_id) DO UPDATE
+       SET status = 'active',
+           updated_at = now()
+       RETURNING id`,
+      [businessId, userId, invitedById],
+    );
+    return rows[0].id;
+  };
+
+  const assignRole = async (memberId, roleId) => {
+    await client.query(
+      `INSERT INTO member_roles (member_id, role_id)
+       VALUES ($1, $2)
+       ON CONFLICT DO NOTHING`,
+      [memberId, roleId],
+    );
+  };
+
+  for (const category of businessCategories) {
+    await client.query(
+      `INSERT INTO business_categories (id, name, slug, sort_order, created_at)
+       VALUES ($1, $2, $3, $4, now())
+       ON CONFLICT (slug) DO UPDATE
+       SET name = EXCLUDED.name,
+           sort_order = EXCLUDED.sort_order`,
+      [category.id, category.name, category.slug, category.sortOrder],
+    );
+  }
+
+  for (const business of demoBusinesses) {
+    const studio = studios.find((entry) => entry.id === business.vendorId);
+    const category = businessCategories.find((entry) => entry.slug === business.categorySlug);
+
+    const { rows: businessRows } = await client.query(
+      `INSERT INTO businesses (
+         business_code, name, slug, category_id, verification_status, description,
+         website, contact_phone, contact_email, created_at, updated_at
+       )
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, now(), now())
+       ON CONFLICT (slug) DO UPDATE
+       SET business_code = EXCLUDED.business_code,
+           name = EXCLUDED.name,
+           category_id = EXCLUDED.category_id,
+           verification_status = EXCLUDED.verification_status,
+           description = EXCLUDED.description,
+           website = EXCLUDED.website,
+           contact_phone = EXCLUDED.contact_phone,
+           contact_email = EXCLUDED.contact_email,
+           updated_at = now()
+       RETURNING id`,
+      [
+        business.businessCode,
+        business.name,
+        business.slug,
+        category ? category.id : null,
+        business.verificationStatus,
+        business.description,
+        business.website,
+        business.contactPhone,
+        business.contactEmail,
+      ],
+    );
+    const businessId = businessRows[0].id;
+
+    // Backfill the vendor → business link the phase 1 schema left nullable.
+    await client.query("UPDATE vendors SET business_id = $1, updated_at = now() WHERE id = $2", [
+      businessId,
+      business.vendorId,
+    ]);
+
+    await client.query(
+      `INSERT INTO business_settings (business_id, settings_json, updated_at)
+       VALUES ($1, $2::jsonb, now())
+       ON CONFLICT (business_id) DO UPDATE
+       SET settings_json = EXCLUDED.settings_json,
+           updated_at = now()`,
+      [businessId, JSON.stringify({ seeded: true, currency: "TZS" })],
+    );
+
+    for (const branch of business.branches) {
+      await client.query(
+        `INSERT INTO business_branches (
+           business_id, name, branch_code, address, city, latitude, longitude,
+           is_primary, created_at, updated_at
+         )
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, now(), now())
+         ON CONFLICT (business_id, branch_code) DO UPDATE
+         SET name = EXCLUDED.name,
+             address = EXCLUDED.address,
+             city = EXCLUDED.city,
+             latitude = EXCLUDED.latitude,
+             longitude = EXCLUDED.longitude,
+             is_primary = EXCLUDED.is_primary,
+             updated_at = now()`,
+        [
+          businessId,
+          branch.name,
+          branch.branchCode,
+          branch.address,
+          branch.city,
+          branch.latitude,
+          branch.longitude,
+          branch.isPrimary,
+        ],
+      );
+    }
+
+    const ownerRoleId = await upsertRole(
+      businessId,
+      "owner",
+      permissionRows.map((row) => row.permission_key),
+      true,
+    );
+    await upsertRole(businessId, "staff", demoStaffPermissionKeys, true);
+
+    const roleIdsByName = new Map([["owner", ownerRoleId]]);
+    for (const role of business.customRoles) {
+      roleIdsByName.set(
+        role.name,
+        await upsertRole(businessId, role.name, role.permissionKeys, false),
+      );
+    }
+
+    const ownerMemberId = await upsertMember(businessId, studio.ownerId, null);
+    await assignRole(ownerMemberId, ownerRoleId);
+
+    for (const member of business.members) {
+      const roleId = roleIdsByName.get(member.roleName);
+      if (!roleId) throw new Error(`Unknown role in seed: ${member.roleName}`);
+      const memberId = await upsertMember(businessId, member.userId, studio.ownerId);
+      await assignRole(memberId, roleId);
+    }
+  }
+
   await client.query("COMMIT");
 
   console.log("Seeded SupplyHub demo catalog.");
   console.log(`  Admin:    ${admin.email} / ${DEMO_PASSWORD}`);
   console.log(`  Customer: ${customer.email} / ${DEMO_PASSWORD}`);
   console.log(`  Studios:  ${studios.map((studio) => studio.email).join(", ")}`);
+  console.log(
+    `  Businesses: ${demoBusinesses.map((business) => `${business.name} (${business.businessCode})`).join(", ")}`,
+  );
+  console.log(
+    "  Business demo: customer@supplyhub.test is Operations manager at Atelier Nord Studio; studio owners cross-join other businesses.",
+  );
   console.log(`  Images:   ${products.length} copied to .local/uploads`);
 } catch (error) {
   await client.query("ROLLBACK").catch(() => undefined);

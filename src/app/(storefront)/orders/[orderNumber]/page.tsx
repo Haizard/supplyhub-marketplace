@@ -13,6 +13,10 @@ import { Notice } from "@/components/ui/notice";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatMoney } from "@/features/catalog/money";
 import { getOrderForViewer } from "@/features/checkout/queries";
+import { listCustomerReturns, RETURNABLE_ORDER_STATUSES } from "@/features/returns/queries";
+import { listCustomerShipments } from "@/features/shipments/queries";
+import { RETURN_STATUS_TONES } from "@/features/returns/status";
+import { getServerI18n } from "@/i18n/server";
 import { ORDER_STATUS_LABELS, ORDER_STATUS_TONES } from "@/features/checkout/status";
 import { paymentMethodLabel } from "@/features/payments/methods";
 import { getOrderPaymentView } from "@/features/payments/queries";
@@ -50,7 +54,10 @@ async function OrderContent({
   searchParams: PageProps<"/orders/[orderNumber]">["searchParams"];
 }) {
   const [{ orderNumber }, query] = await Promise.all([params, searchParams]);
-  const actor = await requireActor(`/orders/${orderNumber}`);
+  const [actor, { t }] = await Promise.all([
+    requireActor(`/orders/${orderNumber}`),
+    getServerI18n(),
+  ]);
   const [order, paymentView] = await Promise.all([
     getOrderForViewer(actor, orderNumber),
     getOrderPaymentView(actor, orderNumber),
@@ -59,6 +66,12 @@ async function OrderContent({
   if (!order) {
     notFound();
   }
+
+  const [returns, shipments] = await Promise.all([
+    listCustomerReturns(order.id, actor.id),
+    listCustomerShipments(order.id, actor.id),
+  ]);
+  const returnsOpen = RETURNABLE_ORDER_STATUSES.some((status) => status === order.status);
 
   const placed = searchParamValue(query.placed) === "1";
   const paymentReturned = searchParamValue(query.payment) === "return";
@@ -203,6 +216,11 @@ async function OrderContent({
                       >
                         {item.productName}
                       </Link>
+                      {item.variantName ? (
+                        <p className="mt-0.5 text-xs font-medium text-muted-foreground">
+                          {item.variantName}
+                        </p>
+                      ) : null}
                       <p className="mt-0.5 font-mono text-[0.6875rem] tracking-[0.1em] text-muted-foreground">
                         {item.sku} · {item.quantity} ×{" "}
                         {formatMoney(item.unitPriceCents, item.currency)}
@@ -214,12 +232,102 @@ async function OrderContent({
                   </li>
                 ))}
               </ul>
-              <p className="border-t border-border px-5 py-3 text-xs text-muted-foreground sm:px-6">
-                Delivered by {vendorOrder.vendorName}. This studio only sees its own part of the
-                order.
-              </p>
+              {shipments
+                .filter((shipment) => shipment.vendorOrderId === vendorOrder.id)
+                .map((shipment) => (
+                  <div key={shipment.id} className="border-t border-border px-5 py-4 sm:px-6">
+                    <p className="eyebrow text-muted-foreground">{t("orders.shipmentTitle")}</p>
+                    <dl className="mt-2 space-y-1 text-sm">
+                      <div className="flex flex-wrap items-baseline justify-between gap-3">
+                        <dt className="text-muted-foreground">{t("orders.shipmentCarrier")}</dt>
+                        <dd>{shipment.carrier}</dd>
+                      </div>
+                      <div className="flex flex-wrap items-baseline justify-between gap-3">
+                        <dt className="text-muted-foreground">{t("orders.shipmentTracking")}</dt>
+                        <dd className="font-mono text-xs">{shipment.trackingNumber}</dd>
+                      </div>
+                      <div className="flex flex-wrap items-baseline justify-between gap-3">
+                        <dt className="text-muted-foreground">
+                          {t("orders.shipmentShippedOn", {
+                            date: formatDate(shipment.shippedAt),
+                          })}
+                        </dt>
+                        <dd>
+                          {shipment.deliveredAt
+                            ? t("orders.shipmentDeliveredOn", {
+                                date: formatDate(shipment.deliveredAt),
+                              })
+                            : t("orders.shipmentInTransit")}
+                        </dd>
+                      </div>
+                    </dl>
+                    {shipment.trackingUrl ? (
+                      <a
+                        href={shipment.trackingUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="mt-2 inline-block text-xs font-medium text-accent underline-offset-4 hover:underline"
+                      >
+                        {t("orders.shipmentTrack")}
+                      </a>
+                    ) : null}
+                  </div>
+                ))}
+              <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-5 py-3 sm:px-6">
+                <p className="text-xs text-muted-foreground">
+                  Delivered by {vendorOrder.vendorName}. This studio only sees its own part of the
+                  order.
+                </p>
+                {returnsOpen && !returns.some((entry) => entry.vendorOrderId === vendorOrder.id) ? (
+                  <Link
+                    href={`/orders/${order.orderNumber}/return?vendorOrderId=${vendorOrder.id}`}
+                    className="text-xs font-medium text-accent underline-offset-4 hover:underline"
+                  >
+                    {t("returns.start")}
+                  </Link>
+                ) : null}
+              </div>
             </section>
           ))}
+
+          {returns.length > 0 ? (
+            <section
+              aria-labelledby="order-returns"
+              className="rounded-xl border border-border bg-surface p-5 sm:p-6"
+            >
+              <h2
+                id="order-returns"
+                className="font-display text-lg font-medium tracking-[-0.02em]"
+              >
+                {t("returns.listTitle")}
+              </h2>
+              <ul className="mt-4 divide-y divide-border">
+                {returns.map((entry) => (
+                  <li key={entry.id} className="space-y-1 py-3 first:pt-0 last:pb-0">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <p className="font-mono text-xs tracking-[0.08em]">{entry.returnNumber}</p>
+                      <Badge tone={RETURN_STATUS_TONES[entry.status]}>
+                        {t(`returns.status.${entry.status}`)}
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      {entry.vendorName} · {formatDate(entry.requestedAt)}
+                    </p>
+                    <p className="text-sm">
+                      {entry.items
+                        .map((item) => `${item.productName} × ${item.quantity}`)
+                        .join(", ")}
+                    </p>
+                    {entry.vendorNote ? (
+                      <p className="text-xs text-muted-foreground">
+                        {t("returns.studioNote", { note: entry.vendorNote })}
+                      </p>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
         </div>
 
         <aside className="space-y-6">
@@ -307,6 +415,45 @@ async function OrderContent({
           ) : null}
 
           <section className="rounded-xl border border-border bg-surface p-6">
+            <h2 className="font-display text-lg font-medium tracking-[-0.02em]">
+              {t("orders.timeline")}
+            </h2>
+            {order.timeline.length === 0 ? (
+              <p className="mt-3 text-sm text-muted-foreground">{t("orders.timelineEmpty")}</p>
+            ) : (
+              <ol className="mt-4 space-y-4">
+                {order.timeline.map((entry, index) => (
+                  <li key={entry.id} className="relative pl-5">
+                    {index < order.timeline.length - 1 ? (
+                      <span
+                        className="absolute top-4 bottom-[-1rem] left-[3px] w-px bg-border"
+                        aria-hidden="true"
+                      />
+                    ) : null}
+                    <span
+                      className={
+                        index === order.timeline.length - 1
+                          ? "absolute top-1.5 left-0 size-2 rounded-full bg-accent"
+                          : "absolute top-1.5 left-0 size-2 rounded-full bg-border-strong"
+                      }
+                      aria-hidden="true"
+                    />
+                    <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+                      <p className="text-sm font-medium">{ORDER_STATUS_LABELS[entry.status]}</p>
+                      <p className="text-xs text-muted-foreground tabular-nums">
+                        {formatDateTime(entry.createdAt)}
+                      </p>
+                    </div>
+                    {entry.note ? (
+                      <p className="mt-0.5 text-xs leading-5 text-muted-foreground">{entry.note}</p>
+                    ) : null}
+                  </li>
+                ))}
+              </ol>
+            )}
+          </section>
+
+          <section className="rounded-xl border border-border bg-surface p-6">
             <div className="flex items-center gap-2">
               <MapPin className="size-4 text-muted-foreground" aria-hidden="true" />
               <h2 className="font-display text-lg font-medium tracking-[-0.02em]">Delivery</h2>
@@ -344,6 +491,16 @@ async function OrderContent({
                   <dt className="text-muted-foreground">Discount</dt>
                   <dd className="tabular-nums">
                     −{formatMoney(order.discountTotalCents, order.currency)}
+                  </dd>
+                </div>
+              ) : null}
+              {order.promotionDiscountCents > 0 ? (
+                <div className="flex items-baseline justify-between gap-4">
+                  <dt className="text-muted-foreground">
+                    {t("orders.promotion", { name: order.promotionName ?? "" })}
+                  </dt>
+                  <dd className="tabular-nums">
+                    −{formatMoney(order.promotionDiscountCents, order.currency)}
                   </dd>
                 </div>
               ) : null}

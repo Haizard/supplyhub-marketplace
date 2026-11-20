@@ -26,5 +26,16 @@ export const getSessionActor = cache(async (): Promise<Actor | null> => {
     status: user.status,
     vendor:
       user.vendorId && user.vendorStatus ? { id: user.vendorId, status: user.vendorStatus } : null,
+    business:
+      user.businessId && user.businessMemberId
+        ? {
+            id: user.businessId,
+            name: user.businessName ?? "",
+            memberId: user.businessMemberId,
+            vendorId: user.businessVendorId ?? null,
+            vendorStatus: user.businessVendorStatus ?? null,
+            isOwner: Boolean(user.businessIsOwner),
+          }
+        : null,
   };
 });

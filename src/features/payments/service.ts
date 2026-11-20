@@ -11,6 +11,7 @@ import {
   centsToSignedDecimalString,
   decimalToCents,
 } from "@/features/catalog/money";
+import { recordOrderStatusChange } from "@/features/checkout/status-history";
 import { getServerEnv } from "@/lib/config/env";
 import { logger } from "@/lib/logging/logger";
 import { recordAuditEvent } from "@/server/audit/audit-log";
@@ -803,6 +804,15 @@ export async function applyProviderPayment(
         },
       });
 
+      const previousOrder = await transaction.order.findUnique({
+        where: { id: payment.orderId },
+        select: { status: true },
+      });
+      const previousVendorOrders = await transaction.vendorOrder.findMany({
+        where: { orderId: payment.orderId },
+        select: { id: true, status: true },
+      });
+
       await transaction.order.update({
         where: { id: payment.orderId },
         data: { status: "PAID", paidAt },
@@ -812,6 +822,27 @@ export async function applyProviderPayment(
         where: { orderId: payment.orderId },
         data: { status: "PAID" },
       });
+
+      if (previousOrder && previousOrder.status !== "PAID") {
+        await recordOrderStatusChange(transaction, {
+          orderId: payment.orderId,
+          fromStatus: previousOrder.status,
+          toStatus: "PAID",
+          note: "Payment confirmed by LynxPay.",
+        });
+      }
+
+      for (const vendorOrder of previousVendorOrders) {
+        if (vendorOrder.status === "PAID") continue;
+
+        await recordOrderStatusChange(transaction, {
+          orderId: payment.orderId,
+          vendorOrderId: vendorOrder.id,
+          fromStatus: vendorOrder.status,
+          toStatus: "PAID",
+          note: "Payment confirmed by LynxPay.",
+        });
+      }
 
       await recordAuditEvent(transaction, {
         actorId: null,

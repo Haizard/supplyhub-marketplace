@@ -357,3 +357,27 @@
 .toast-panel {
   animation: toast-slide-in 220ms cubic-bezier(0.22, 1, 0.36, 1);
 }
+
+/* A counter-sale receipt is the only thing that belongs on paper. */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  .receipt-sheet,
+  .receipt-sheet * {
+    visibility: visible;
+  }
+
+  .receipt-sheet {
+    position: absolute;
+    inset-block-start: 0;
+    inset-inline-start: 0;
+    width: 100%;
+    max-width: none;
+    border: 0;
+    box-shadow: none;
+    color: #000;
+    background: #fff;
+  }
+}

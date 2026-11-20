@@ -17,6 +17,9 @@ interface PermissionsPolicyLike {
 function clipboardWriteAllowed(): boolean {
   if (typeof navigator === "undefined" || !navigator.clipboard) return false;
   if (!window.isSecureContext) return false;
+  // Inside an iframe (e.g. embedded preview panels) the Clipboard API is often
+  // blocked by the parent's Permissions Policy even when isSecureContext is true.
+  if (window.self !== window.top) return false;
   const doc = document as Document & {
     permissionsPolicy?: PermissionsPolicyLike;
     featurePolicy?: PermissionsPolicyLike;

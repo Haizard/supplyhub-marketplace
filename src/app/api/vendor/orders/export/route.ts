@@ -4,7 +4,7 @@ import { z } from "zod";
 import { parseSearchTerm } from "@/features/admin/filters";
 import { ORDER_STATUS_LABELS } from "@/features/checkout/status";
 import { decimalToCents, formatMoney } from "@/features/catalog/money";
-import { requireApprovedVendor } from "@/server/auth/guards";
+import { requireStudioAccess } from "@/server/business/studio-access";
 import { buildCsv } from "@/server/export/csv";
 import { getDatabase } from "@/server/db/client";
 
@@ -12,7 +12,7 @@ const statuses = Object.keys(ORDER_STATUS_LABELS) as (keyof typeof ORDER_STATUS_
 const querySchema = z.object({ status: z.enum(statuses).optional() });
 
 export async function GET(request: Request) {
-  const { vendorId } = await requireApprovedVendor("/vendor/orders");
+  const { vendorId } = await requireStudioAccess("orders.read", "/vendor/orders");
   const url = new URL(request.url);
   const parsed = querySchema.safeParse({ status: url.searchParams.get("status") ?? undefined });
   if (!parsed.success) {

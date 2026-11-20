@@ -12,7 +12,7 @@ import { getDatabase } from "@/server/db/client";
 
 import { MAX_CART_QUANTITY } from "./constants";
 import { findCurrentCart, getOrCreateCartForMutation, touchCart } from "./service";
-import { cartMutationSchema, cartProductIdSchema } from "./validation";
+import { cartItemIdSchema, cartLineMutationSchema, cartMutationSchema } from "./validation";
 
 function revalidateCart(): void {
   revalidatePath("/", "layout");
@@ -40,6 +40,7 @@ export async function addToCartAction(
 
   const parsed = cartMutationSchema.safeParse({
     productId: formValue(formData, "productId"),
+    variantId: formValue(formData, "variantId"),
     quantity: formValue(formData, "quantity"),
   });
 
@@ -55,48 +56,89 @@ export async function addToCartAction(
       vendor: { status: "APPROVED" },
       category: { status: "ACTIVE" },
     },
-    select: { id: true, stock: true },
+    select: {
+      id: true,
+      stock: true,
+      variants: { where: { isActive: true }, select: { id: true, stock: true } },
+    },
   });
 
   if (!product) {
     return { status: "error", message: "That object is no longer available." };
   }
 
-  if (product.stock <= 0) {
+  if (product.variants.length > 0 && !parsed.data.variantId) {
+    return { status: "error", message: "Choose an option for this object." };
+  }
+
+  const variant = parsed.data.variantId
+    ? product.variants.find((entry) => entry.id === parsed.data.variantId)
+    : null;
+
+  if (parsed.data.variantId && !variant) {
+    return { status: "error", message: "That option is no longer available." };
+  }
+
+  const availableStock = variant ? variant.stock : product.stock;
+
+  if (availableStock <= 0) {
     return { status: "error", message: "That object is sold out." };
   }
 
   const { cartId } = await getOrCreateCartForMutation();
-  const existing = await database.cartItem.findUnique({
-    where: { cartId_productId: { cartId, productId: product.id } },
+  const existing = await database.cartItem.findFirst({
+    where: {
+      cartId,
+      productId: product.id,
+      variantId: variant?.id ?? null,
+    },
     select: { quantity: true },
   });
 
-  if ((existing?.quantity ?? 0) + parsed.data.quantity > product.stock) {
+  if ((existing?.quantity ?? 0) + parsed.data.quantity > availableStock) {
     return {
       status: "error",
       message:
-        product.stock === 1
+        availableStock === 1
           ? "Only one of that object is available."
-          : `Only ${product.stock} of that object are available.`,
+          : `Only ${availableStock} of that object are available.`,
     };
   }
 
-  await database.$executeRaw`
-    INSERT INTO "cart_items" ("id", "cart_id", "product_id", "quantity", "created_at", "updated_at")
-    VALUES (${randomUUID()}::uuid, ${cartId}::uuid, ${product.id}::uuid, ${parsed.data.quantity}, now(), now())
-    ON CONFLICT ("cart_id", "product_id")
-    DO UPDATE SET
-      "quantity" = LEAST(
-        "cart_items"."quantity" + EXCLUDED."quantity",
-        ${MAX_CART_QUANTITY},
-        ${product.stock}
-      ),
-      "updated_at" = now()
-  `;
+  if (variant) {
+    await database.$executeRaw`
+      INSERT INTO "cart_items" ("id", "cart_id", "product_id", "variant_id", "quantity", "created_at", "updated_at")
+      VALUES (${randomUUID()}::uuid, ${cartId}::uuid, ${product.id}::uuid, ${variant.id}::uuid, ${parsed.data.quantity}, now(), now())
+      ON CONFLICT ("cart_id", "product_id", "variant_id")
+      DO UPDATE SET
+        "quantity" = LEAST(
+          "cart_items"."quantity" + EXCLUDED."quantity",
+          ${MAX_CART_QUANTITY},
+          ${availableStock}
+        ),
+        "updated_at" = now()
+    `;
+  } else {
+    await database.$executeRaw`
+      INSERT INTO "cart_items" ("id", "cart_id", "product_id", "quantity", "created_at", "updated_at")
+      VALUES (${randomUUID()}::uuid, ${cartId}::uuid, ${product.id}::uuid, ${parsed.data.quantity}, now(), now())
+      ON CONFLICT ("cart_id", "product_id") WHERE "variant_id" IS NULL
+      DO UPDATE SET
+        "quantity" = LEAST(
+          "cart_items"."quantity" + EXCLUDED."quantity",
+          ${MAX_CART_QUANTITY},
+          ${availableStock}
+        ),
+        "updated_at" = now()
+    `;
+  }
   await touchCart(cartId);
 
-  logger.info("cart.item_added", { productId: product.id, quantity: parsed.data.quantity });
+  logger.info("cart.item_added", {
+    productId: product.id,
+    variantId: variant?.id ?? null,
+    quantity: parsed.data.quantity,
+  });
   revalidateCart();
 
   return { status: "success", message: "Added to your cart." };
@@ -112,8 +154,8 @@ export async function updateCartLineAction(
     return inactive;
   }
 
-  const parsed = cartMutationSchema.safeParse({
-    productId: formValue(formData, "productId"),
+  const parsed = cartLineMutationSchema.safeParse({
+    cartItemId: formValue(formData, "cartItemId"),
     quantity: formValue(formData, "quantity"),
   });
 
@@ -128,22 +170,28 @@ export async function updateCartLineAction(
   }
 
   const database = getDatabase();
-  const line = await database.cartItem.findUnique({
-    where: { cartId_productId: { cartId: cart.id, productId: parsed.data.productId } },
-    select: { id: true, product: { select: { name: true, stock: true } } },
+  const line = await database.cartItem.findFirst({
+    where: { id: parsed.data.cartItemId, cartId: cart.id },
+    select: {
+      id: true,
+      product: { select: { name: true, stock: true } },
+      variant: { select: { stock: true } },
+    },
   });
 
   if (!line) {
     return { status: "error", message: "That object is no longer in your cart." };
   }
 
-  if (parsed.data.quantity > line.product.stock) {
+  const availableStock = line.variant ? line.variant.stock : line.product.stock;
+
+  if (parsed.data.quantity > availableStock) {
     return {
       status: "error",
       message:
-        line.product.stock === 0
+        availableStock === 0
           ? `${line.product.name} is sold out.`
-          : `Only ${line.product.stock} of ${line.product.name} are available.`,
+          : `Only ${availableStock} of ${line.product.name} are available.`,
     };
   }
 
@@ -162,9 +210,9 @@ export async function removeCartLineAction(formData: FormData): Promise<void> {
     redirect("/cart?inactive=1");
   }
 
-  const productId = cartProductIdSchema.safeParse(formValue(formData, "productId"));
+  const cartItemId = cartItemIdSchema.safeParse(formValue(formData, "cartItemId"));
 
-  if (!productId.success) {
+  if (!cartItemId.success) {
     redirect("/cart");
   }
 
@@ -172,7 +220,7 @@ export async function removeCartLineAction(formData: FormData): Promise<void> {
 
   if (cart) {
     await getDatabase().cartItem.deleteMany({
-      where: { cartId: cart.id, productId: productId.data },
+      where: { id: cartItemId.data, cartId: cart.id },
     });
     await touchCart(cart.id);
   }

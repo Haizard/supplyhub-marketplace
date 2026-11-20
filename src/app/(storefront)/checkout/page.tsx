@@ -140,9 +140,14 @@ async function CheckoutContent() {
                 <p className="eyebrow text-muted-foreground">{vendorName}</p>
                 <ul className="mt-2 space-y-2 text-sm">
                   {lines.map((line) => (
-                    <li key={line.productId} className="flex items-baseline justify-between gap-3">
+                    <li key={line.id} className="flex items-baseline justify-between gap-3">
                       <span className="min-w-0">
                         <span className="line-clamp-2">{line.name}</span>
+                        {line.variantName ? (
+                          <span className="block text-xs text-muted-foreground">
+                            {line.variantName}
+                          </span>
+                        ) : null}
                         <span className="block text-xs text-muted-foreground">
                           {line.quantity} × {formatMoney(line.unitPriceCents, line.currency)}
                         </span>

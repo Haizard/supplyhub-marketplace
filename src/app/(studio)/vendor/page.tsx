@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Notice } from "@/components/ui/notice";
 import { Skeleton } from "@/components/ui/skeleton";
 import { OrderStatusPill } from "@/components/vendor/order-status-pill";
@@ -17,7 +18,9 @@ import { VendorStatusBadge } from "@/components/vendors/vendor-status-badge";
 import { decimalToCents, formatMoney } from "@/features/catalog/money";
 import { getStudioProductStats, listVendorProducts } from "@/features/catalog/vendor-queries";
 import { listVendorOrders } from "@/features/checkout/vendor-operations";
-import { getVendorForOwner } from "@/features/vendors/queries";
+import { getPosReport } from "@/features/pos/report-queries";
+import { getStudioVendor } from "@/features/vendors/queries";
+import { getServerI18n } from "@/i18n/server";
 import { formatDate } from "@/lib/utils/format-date";
 import { requireActor } from "@/server/auth/guards";
 import { canApplyForVendor } from "@/server/auth/policies";
@@ -46,7 +49,27 @@ async function VendorContent({
   searchParams: PageProps<"/vendor">["searchParams"];
 }) {
   const actor = await requireActor("/vendor");
-  const [params, vendor] = await Promise.all([searchParams, getVendorForOwner(actor.id)]);
+  const [params, vendor] = await Promise.all([searchParams, getStudioVendor(actor)]);
+
+  // A business member whose business has no marketplace studio yet keeps the
+  // business workspace instead of being sent to the studio-application form.
+  if (!vendor && actor.business) {
+    return (
+      <>
+        <StudioPageHead
+          title={actor.business.name}
+          description="This business has no marketplace studio yet, so there are no objects or orders to manage here."
+        />
+        <Notice tone="info">
+          No studio is linked to this business yet. Branches, staff, and roles are managed in the
+          business workspace.
+        </Notice>
+        <Button asChild variant="secondary" size="sm" className="mt-4">
+          <Link href={`/business/${actor.business.id}`}>Open business workspace</Link>
+        </Button>
+      </>
+    );
+  }
 
   if (!vendor) {
     if (actor.role === "ADMIN") {
@@ -192,13 +215,21 @@ async function VendorContent({
     );
   }
 
-  const [products, stats, orders] = await Promise.all([
+  const [products, stats, orders, pulse, { t, formatCurrency }] = await Promise.all([
     listVendorProducts(vendor.id),
     getStudioProductStats(vendor.id),
     listVendorOrders(vendor.id),
+    getPosReport(vendor.id, 7),
+    getServerI18n(),
   ]);
   const recentOrders = orders.slice(0, 4);
   const departmentCount = new Set(products.map((product) => product.categoryName)).size;
+  const money = (cents: number) => formatCurrency(cents, pulse.currency);
+  const pulseEmpty = pulse.totals.salesCount === 0 && pulse.totals.expensesCents === 0;
+  const lowStockProducts = products
+    .filter((product) => product.status === "PUBLISHED" && product.stock <= 4)
+    .sort((left, right) => left.stock - right.stock)
+    .slice(0, 4);
   const profileReady =
     Boolean((vendor.story ?? vendor.description) && vendor.departments.length) &&
     vendor.latitude !== null &&
@@ -240,6 +271,43 @@ async function VendorContent({
         <StudioKpi label="Drafts" value={stats.drafts} note="Not yet published" />
         <StudioKpi label="Low stock" value={stats.lowStock} note="Published items at 4 or fewer" />
       </div>
+
+      <section
+        aria-labelledby="pulse-heading"
+        className="mt-3 overflow-hidden rounded-xl border border-border bg-surface"
+      >
+        <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-3.5">
+          <h2 id="pulse-heading" className="text-[0.8125rem] font-semibold">
+            {t("dashboard.last7Days")}
+          </h2>
+          <Link
+            href="/vendor/pos/report"
+            className="rounded-sm text-xs text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none"
+          >
+            {t("dashboard.retailReport")}
+          </Link>
+        </div>
+
+        <dl className="grid grid-cols-2 gap-3 px-4 py-3.5 sm:grid-cols-4">
+          <PulseMetric label={t("dashboard.revenue")} value={money(pulse.totals.grossCents)} />
+          <PulseMetric label={t("dashboard.grossProfit")} value={money(pulse.totals.profitCents)} />
+          <PulseMetric label={t("dashboard.expenses")} value={money(pulse.totals.expensesCents)} />
+          <PulseMetric label={t("dashboard.net")} value={money(pulse.totals.netCents)} />
+        </dl>
+
+        <p className="border-t border-border px-4 py-2.5 text-[0.6875rem] leading-4 text-muted-foreground">
+          {pulseEmpty
+            ? t("dashboard.noSales")
+            : [
+                pulse.totals.salesCount === 1
+                  ? t("dashboard.counterSalesOne")
+                  : t("dashboard.counterSales", { count: pulse.totals.salesCount }),
+                pulse.totals.uncostedUnits > 0
+                  ? t("dashboard.profitNoteUncosted", { count: pulse.totals.uncostedUnits })
+                  : t("dashboard.profitNote"),
+              ].join(" · ")}
+        </p>
+      </section>
 
       <div className="mt-3 grid items-start gap-3 lg:grid-cols-[1.5fr_1fr]">
         <section
@@ -390,6 +458,31 @@ async function VendorContent({
                 />
               )}
             </ul>
+
+            {lowStockProducts.length > 0 ? (
+              <div className="border-t border-border px-4 py-2.5">
+                <p className="font-mono text-[0.5625rem] font-medium tracking-[0.1em] text-muted-foreground uppercase">
+                  {t("dashboard.runningLow")}
+                </p>
+                <ul className="mt-1.5 space-y-1">
+                  {lowStockProducts.map((product) => (
+                    <li key={product.id}>
+                      <Link
+                        href={`/vendor/products/${product.id}`}
+                        className="flex items-center justify-between gap-3 rounded-sm text-xs transition-colors hover:text-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-surface focus-visible:outline-none"
+                      >
+                        <span className="min-w-0 truncate">{product.name}</span>
+                        <span className="shrink-0 font-mono text-[0.6563rem] text-muted-foreground tabular-nums">
+                          {product.stock === 1
+                            ? t("dashboard.unitsLeftOne")
+                            : t("dashboard.unitsLeft", { count: product.stock })}
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
           </section>
 
           <section
@@ -468,6 +561,17 @@ async function VendorContent({
         .
       </p>
     </>
+  );
+}
+
+function PulseMetric({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <dt className="font-mono text-[0.625rem] font-medium tracking-[0.08em] text-muted-foreground uppercase">
+        {label}
+      </dt>
+      <dd className="mt-1 font-mono text-sm font-semibold tabular-nums">{value}</dd>
+    </div>
   );
 }
 

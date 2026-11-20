@@ -50,6 +50,19 @@ const optionalPriceField = z.preprocess(
     .optional(),
 );
 
+const optionalCostField = z.preprocess(
+  (value) => {
+    if (typeof value !== "string" || value.trim() === "") return undefined;
+    return parseMoneyToCents(value);
+  },
+  z
+    .number({ error: "Enter a unit cost like 24.00, or leave it empty." })
+    .int({ error: "Costs must resolve to whole cents." })
+    .min(0, { error: "Unit cost cannot be negative." })
+    .max(MAX_PRICE_CENTS, { error: "That cost is too large." })
+    .optional(),
+);
+
 const wholeNumberField = (minimum: number, maximum: number, message: string) =>
   z.preprocess(
     (value) => (typeof value === "string" && value.trim() !== "" ? Number(value) : value),
@@ -82,6 +95,7 @@ export const productInputSchema = z
     categoryId: z.uuid({ error: "Choose a department." }),
     sku: skuField,
     priceCents: priceField,
+    costCents: optionalCostField,
     compareAtPriceCents: optionalPriceField,
     summary: z.preprocess(
       trimmed,
@@ -132,6 +146,7 @@ export const productInputSchema = z
 export const inventoryAdjustmentSchema = z
   .object({
     productId: z.uuid({ error: "That object reference is invalid." }),
+    warehouseId: z.uuid({ error: "Choose a warehouse." }),
     mode: z.enum(["add", "set"], { error: "Choose how to change stock." }),
     quantity: wholeNumberField(0, MAX_UNIT_STOCK, "Enter a whole number of units."),
     reason: z.enum(["RESTOCK", "CORRECTION", "RETURN"], {

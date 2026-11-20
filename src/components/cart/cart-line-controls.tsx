@@ -10,27 +10,37 @@ import { initialFormState } from "@/features/identity/form-state";
 import { useT } from "@/i18n/client";
 
 export interface CartLineControlsProps {
-  productId: string;
+  cartItemId: string;
   quantity: number;
   maxQuantity: number;
+  canUpdate: boolean;
 }
 
-export function CartLineControls({ productId, quantity, maxQuantity }: CartLineControlsProps) {
+export function CartLineControls({
+  cartItemId,
+  quantity,
+  maxQuantity,
+  canUpdate,
+}: CartLineControlsProps) {
   const [state, formAction] = useActionState(updateCartLineAction, initialFormState);
   const t = useT();
 
   return (
     <form action={formAction} className="space-y-3">
-      <input type="hidden" name="productId" value={productId} />
+      <input type="hidden" name="cartItemId" value={cartItemId} />
       <div className="flex flex-wrap items-center gap-2">
-        <QuantityStepper
-          name="quantity"
-          defaultValue={quantity}
-          max={Math.max(quantity, maxQuantity)}
-        />
-        <Button type="submit" variant="secondary" size="sm">
-          {t("common.update")}
-        </Button>
+        {canUpdate ? (
+          <>
+            <QuantityStepper
+              name="quantity"
+              defaultValue={quantity}
+              max={Math.max(quantity, maxQuantity)}
+            />
+            <Button type="submit" variant="secondary" size="sm">
+              {t("common.update")}
+            </Button>
+          </>
+        ) : null}
         <Button type="submit" formAction={removeCartLineAction} variant="ghost" size="sm">
           {t("common.remove")}
         </Button>

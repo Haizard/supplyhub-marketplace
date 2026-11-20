@@ -5,6 +5,8 @@ import {
   ClipboardList,
   FolderTree,
   ShieldCheck,
+  Percent,
+  Tag,
   ShoppingBag,
   Store,
   Users,
@@ -25,6 +27,8 @@ const links = [
   { href: "/admin/categories", labelKey: "admin.departments", icon: FolderTree },
   { href: "/admin/payments", labelKey: "admin.payments", icon: Wallet },
   { href: "/admin/payouts", labelKey: "admin.payouts", icon: Banknote },
+  { href: "/admin/promotions", labelKey: "admin.promotions", icon: Percent },
+  { href: "/admin/coupons", labelKey: "admin.discountCodes", icon: Tag },
 ];
 
 export function AdminNav() {

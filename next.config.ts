@@ -24,11 +24,16 @@ const contentSecurityPolicy = [
 
 const securityHeaders = [
   { key: "X-Content-Type-Options", value: "nosniff" },
-  { key: "X-Frame-Options", value: "DENY" },
+  // In development, allow embedding in local preview iframes (e.g. WorkBuddy preview panel).
+  // Production keeps DENY to prevent clickjacking.
+  ...(isProduction
+    ? [{ key: "X-Frame-Options", value: "DENY" }]
+    : [{ key: "X-Frame-Options", value: "SAMEORIGIN" }]),
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   {
     key: "Permissions-Policy",
-    value: "camera=(), geolocation=(self), microphone=(), payment=(), usb=()",
+    value:
+      "camera=(), geolocation=(self), microphone=(), payment=(), usb=(), clipboard-write=(self)",
   },
   { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
   { key: "Content-Security-Policy-Report-Only", value: contentSecurityPolicy },

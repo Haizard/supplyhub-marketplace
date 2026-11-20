@@ -178,7 +178,7 @@ async function CartContent({ searchParams }: { searchParams: PageProps<"/cart">[
                     const problem = problemText(line, t);
 
                     return (
-                      <li key={line.productId} className="p-5 sm:p-6">
+                      <li key={line.id} className="p-5 sm:p-6">
                         <div className="flex gap-4 sm:gap-5">
                           <Link
                             href={`/products/${line.slug}`}
@@ -202,6 +202,11 @@ async function CartContent({ searchParams }: { searchParams: PageProps<"/cart">[
                                 >
                                   {line.name}
                                 </Link>
+                                {line.variantName ? (
+                                  <p className="mt-1 text-xs font-medium text-muted-foreground">
+                                    {line.variantName}
+                                  </p>
+                                ) : null}
                                 <p className="mt-1 font-mono text-[0.6875rem] tracking-[0.1em] text-muted-foreground">
                                   {line.sku} · {line.currency}{" "}
                                   {formatMoney(line.unitPriceCents, line.currency)}
@@ -218,9 +223,10 @@ async function CartContent({ searchParams }: { searchParams: PageProps<"/cart">[
                             </div>
                             <div className="mt-4">
                               <CartLineControls
-                                productId={line.productId}
+                                cartItemId={line.id}
                                 quantity={line.quantity}
                                 maxQuantity={Math.min(10, line.availableQuantity)}
+                                canUpdate={line.problem !== "unavailable"}
                               />
                             </div>
                           </div>

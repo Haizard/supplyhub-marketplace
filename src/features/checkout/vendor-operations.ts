@@ -18,6 +18,15 @@ export async function listVendorOrders(vendorId: string) {
       createdAt: true,
       order: { select: { orderNumber: true, recipientName: true } },
       items: { select: { productName: true, sku: true, quantity: true } },
+      shipment: {
+        select: {
+          carrier: true,
+          trackingNumber: true,
+          trackingUrl: true,
+          shippedAt: true,
+          deliveredAt: true,
+        },
+      },
     },
   });
 }

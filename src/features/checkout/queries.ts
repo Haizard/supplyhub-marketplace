@@ -20,6 +20,11 @@ import type {
 } from "./types";
 
 const orderDetailInclude = {
+  statusHistory: {
+    where: { vendorOrderId: null },
+    orderBy: { createdAt: "asc" },
+    select: { id: true, toStatus: true, note: true, createdAt: true },
+  },
   vendorOrders: {
     orderBy: { createdAt: "asc" },
     include: {
@@ -37,6 +42,7 @@ function mapItem(item: OrderDetailRow["vendorOrders"][number]["items"][number]):
     productName: item.productName,
     productSlug: item.productSlug,
     sku: item.sku,
+    variantName: item.variantName,
     imageSrc: item.imageKey ? mediaUrlForKey(item.imageKey) : null,
     unitPriceCents: decimalToCents(item.unitPrice),
     quantity: item.quantity,
@@ -66,6 +72,8 @@ function mapDetail(row: OrderDetailRow): CustomerOrderDetail {
     shippingTotalCents: decimalToCents(row.shippingTotal),
     taxTotalCents: decimalToCents(row.taxTotal),
     discountTotalCents: decimalToCents(row.discountTotal),
+    promotionName: row.promotionName,
+    promotionDiscountCents: decimalToCents(row.promotionDiscount),
     totalCents: decimalToCents(row.total),
     placedAt: row.placedAt,
     reservationExpiresAt: row.reservationExpiresAt,
@@ -81,6 +89,12 @@ function mapDetail(row: OrderDetailRow): CustomerOrderDetail {
       countryCode: row.countryCode,
     },
     vendorOrders: row.vendorOrders.map(mapVendorOrder),
+    timeline: row.statusHistory.map((entry) => ({
+      id: entry.id,
+      status: entry.toStatus,
+      note: entry.note,
+      createdAt: entry.createdAt,
+    })),
   };
 }
 

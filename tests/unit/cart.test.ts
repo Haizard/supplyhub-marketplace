@@ -8,9 +8,12 @@ import { cartMutationSchema, cartQuantitySchema } from "@/features/cart/validati
 
 function draft(overrides: Partial<CartLineDraft> = {}): CartLineDraft {
   return {
+    id: "50000000-0000-4000-8000-000000000001",
     productId: "40000000-0000-4000-8000-000000000001",
     slug: "ridge-carafe",
     name: "Ridge Carafe",
+    variantId: null,
+    variantName: null,
     sku: "AN-CARAFE-1",
     vendorId: "40000000-0000-4000-8000-000000000099",
     vendorName: "Atelier Nord",

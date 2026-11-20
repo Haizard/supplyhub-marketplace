@@ -28,7 +28,8 @@ export function StudioBottomNav() {
               key={tab.href}
               href={tab.href}
               aria-current={active ? "page" : undefined}
-              className="group flex min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-md focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none"
+              aria-label={t(tab.labelKey)}
+              className="group flex min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-md focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none"
             >
               <span
                 className={cn(
@@ -42,11 +43,13 @@ export function StudioBottomNav() {
               </span>
               <span
                 className={cn(
-                  "w-full truncate px-0.5 text-center text-[0.625rem] leading-none tracking-[0.01em]",
+                  "w-full truncate px-0.5 text-center text-[0.5625rem] leading-none tracking-[0.01em]",
                   active ? "font-semibold text-accent" : "font-medium text-muted-foreground",
                 )}
               >
-                {t(tab.labelKey)}
+                {t(
+                  "mobileLabelKey" in tab && tab.mobileLabelKey ? tab.mobileLabelKey : tab.labelKey,
+                )}
               </span>
             </Link>
           );

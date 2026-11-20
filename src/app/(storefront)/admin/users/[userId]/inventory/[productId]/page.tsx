@@ -12,6 +12,11 @@ import { StudioProductForm } from "@/components/vendor/studio-product-form";
 import { MAX_PRODUCT_IMAGES } from "@/features/catalog/constants";
 import { centsToDecimalString } from "@/features/catalog/money";
 import { getVendorProduct, listStudioCategoryOptions } from "@/features/catalog/vendor-queries";
+import {
+  getProductWarehouseBalances,
+  listProductTransfers,
+  listVendorWarehouses,
+} from "@/features/inventory/warehouses";
 import { getDatabase } from "@/server/db/client";
 import { requireAdmin } from "@/server/auth/guards";
 
@@ -40,6 +45,12 @@ export default async function AdminManagedProductPage({
     listStudioCategoryOptions(),
   ]);
   if (!product) notFound();
+
+  const [balances, warehouses, transfers] = await Promise.all([
+    getProductWarehouseBalances(user.vendor.id, product.id),
+    listVendorWarehouses(user.vendor.id),
+    listProductTransfers(user.vendor.id, product.id),
+  ]);
   const canEdit =
     product.status === "DRAFT" || product.status === "REJECTED" || product.status === "PUBLISHED";
 
@@ -76,6 +87,13 @@ export default async function AdminManagedProductPage({
                     description: product.description,
                     makerNote: product.makerNote,
                     materials: product.materials,
+                    variants: product.variants.map((variant) => ({
+                      id: variant.id,
+                      name: variant.name,
+                      sku: variant.sku,
+                      price: centsToDecimalString(variant.priceCents),
+                      stock: variant.stock,
+                    })),
                   }}
                 />
               </div>
@@ -87,6 +105,13 @@ export default async function AdminManagedProductPage({
               stock={product.stock}
               movements={product.movements}
               canAdjust={product.status !== "ARCHIVED"}
+              balances={balances}
+              transfers={transfers}
+              warehouses={warehouses.map((warehouse) => ({
+                id: warehouse.id,
+                name: warehouse.name,
+                isDefault: warehouse.isDefault,
+              }))}
               adminVendorId={user.vendor.id}
             />
           </section>

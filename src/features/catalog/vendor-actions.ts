@@ -11,6 +11,7 @@ import { logger } from "@/lib/logging/logger";
 import { initialsFor } from "@/lib/utils/initials";
 import { recordAuditEvent } from "@/server/audit/audit-log";
 import { canPerformAdminAction } from "@/server/auth/policies";
+import { requireStudioAccess } from "@/server/business/studio-access";
 import { getSessionActor } from "@/server/auth/session";
 import { getDatabase } from "@/server/db/client";
 import { MAX_IMAGE_BYTES, validateImageUpload } from "@/server/storage/image-validation";
@@ -20,9 +21,12 @@ import { firstFieldErrors, formValue, type FormState } from "@/features/identity
 
 import { DEFAULT_CURRENCY, MAX_PRODUCT_IMAGES } from "./constants";
 import { productImageAlt } from "./image-alt";
-import { applyStockAdjustment } from "./inventory";
-import { centsToDecimalString } from "./money";
+import { ensureDefaultWarehouse } from "@/features/inventory/warehouses";
+
+import { applyStockAdjustment, MAX_UNIT_STOCK } from "./inventory";
+import { centsToDecimalString, parseMoneyToCents } from "./money";
 import { buildSearchText } from "./search";
+import { normalizeVariants, type VariantInput } from "./variants";
 import { inventoryAdjustmentSchema, productInputSchema, studioProfileSchema } from "./validation";
 
 const uuidSchema = z.uuid();
@@ -58,28 +62,22 @@ function uniqueFieldErrors(error: unknown): FormState {
     };
   }
 
+  if (target.includes("product_variants")) {
+    return {
+      status: "error",
+      fieldErrors: { variants: "Another option in this object already uses that SKU." },
+    };
+  }
+
   return { status: "error", message: "That change conflicts with an existing record." };
 }
 
-async function requireStudio() {
-  const actor = await getSessionActor();
-
-  if (!actor) {
-    redirect("/sign-in?next=%2Fvendor");
-  }
-
-  if (actor.role === "ADMIN") {
-    redirect("/admin/products");
-  }
-
-  if (actor.role !== "VENDOR" || !actor.vendor || actor.vendor.status !== "APPROVED") {
-    redirect("/vendor");
-  }
-
-  return { actor, vendorId: actor.vendor.id };
+async function requireStudio(permission = "business.update") {
+  const access = await requireStudioAccess(permission, "/vendor");
+  return { actor: access.actor, vendorId: access.vendorId };
 }
 
-async function requireManagedStudio(formData: FormData) {
+async function requireManagedStudio(formData: FormData, permission: string) {
   const requestedVendorId = formValue(formData, "adminVendorId");
   if (requestedVendorId) {
     const actor = await getSessionActor();
@@ -93,8 +91,43 @@ async function requireManagedStudio(formData: FormData) {
     });
     return vendor ? { actor, vendorId, adminManaged: true as const } : null;
   }
-  const access = await requireStudio();
-  return { ...access, adminManaged: false as const };
+  const access = await requireStudioAccess(permission, "/vendor");
+  return { actor: access.actor, vendorId: access.vendorId, adminManaged: false as const };
+}
+
+function readVariantRows(formData: FormData): VariantInput[] {
+  const ids = formData.getAll("variantId").map((value) => String(value));
+  const names = formData.getAll("variantName").map((value) => String(value));
+  const skus = formData.getAll("variantSku").map((value) => String(value));
+  const prices = formData.getAll("variantPrice").map((value) => String(value));
+  const stocks = formData.getAll("variantStock").map((value) => String(value));
+
+  const rows: VariantInput[] = [];
+
+  for (let index = 0; index < names.length; index += 1) {
+    const name = (names[index] ?? "").trim();
+    const sku = (skus[index] ?? "").trim();
+    const rawPrice = (prices[index] ?? "").trim();
+
+    if (!name && !sku && !rawPrice) continue;
+
+    const priceCents = parseMoneyToCents(rawPrice);
+
+    if (priceCents === null) {
+      throw new Error(`Option ${index + 1} needs a price like 68.00.`);
+    }
+
+    const id = (ids[index] ?? "").trim();
+    rows.push({
+      id: asUuid(id) ?? undefined,
+      name,
+      sku,
+      priceCents,
+      stock: Number(stocks[index] ?? 0),
+    });
+  }
+
+  return rows;
 }
 
 function productFields(input: ReturnType<typeof productInputSchema.parse>) {
@@ -105,6 +138,7 @@ function productFields(input: ReturnType<typeof productInputSchema.parse>) {
     categoryId: input.categoryId,
     sku: input.sku,
     price: centsToDecimalString(input.priceCents),
+    costPrice: input.costCents === undefined ? null : centsToDecimalString(input.costCents),
     compareAtPrice: null,
     currency: DEFAULT_CURRENCY,
     summary: summary.length < input.description.length ? `${summary}…` : summary,
@@ -121,15 +155,39 @@ export async function saveProductAction(
   _previousState: FormState,
   formData: FormData,
 ): Promise<FormState> {
-  const access = await requireManagedStudio(formData);
+  const rawProductId = formValue(formData, "productId");
+  const access = await requireManagedStudio(
+    formData,
+    rawProductId ? "catalog.product.update" : "catalog.product.create",
+  );
   if (!access) return { status: "error", message: "Administrator access is required." };
   const { actor, vendorId, adminManaged } = access;
-  const rawProductId = formValue(formData, "productId");
   const productId = rawProductId ? asUuid(rawProductId) : null;
 
   if (rawProductId && !productId) {
     return { status: "error", message: "That object reference is invalid." };
   }
+
+  let variantRows: VariantInput[];
+  try {
+    variantRows = readVariantRows(formData);
+  } catch (error) {
+    return {
+      status: "error",
+      message: error instanceof Error ? error.message : "Check the options.",
+    };
+  }
+
+  const normalizedVariants = normalizeVariants(variantRows);
+
+  if (!normalizedVariants.ok) {
+    return { status: "error", fieldErrors: { variants: normalizedVariants.error } };
+  }
+
+  const variants = normalizedVariants.variants;
+  const variantStock = normalizedVariants.totalStock;
+  const variantPriceCents =
+    variants.length > 0 ? Math.min(...variants.map((variant) => variant.priceCents)) : null;
 
   const parsed = productInputSchema.safeParse({
     name: formValue(formData, "name"),
@@ -137,6 +195,7 @@ export async function saveProductAction(
     categoryId: formValue(formData, "categoryId"),
     sku: `SH-${randomUUID().replaceAll("-", "").slice(0, 12).toUpperCase()}`,
     priceCents: formValue(formData, "price"),
+    costCents: formValue(formData, "costPrice"),
     compareAtPriceCents: "",
     summary: formValue(formData, "description").slice(0, 280),
     description: formValue(formData, "description"),
@@ -237,6 +296,7 @@ export async function saveProductAction(
       }
 
       const createdProductId = randomUUID();
+      const defaultWarehouseId = await ensureDefaultWarehouse(vendorId);
       const storageKey = `products/${createdProductId}/${randomUUID()}.${imagePayload.extension}`;
       try {
         await getStorage().put(storageKey, imagePayload.bytes, imagePayload.contentType);
@@ -249,8 +309,10 @@ export async function saveProductAction(
             data: {
               id: createdProductId,
               ...data,
+              price:
+                variantPriceCents === null ? data.price : centsToDecimalString(variantPriceCents),
               vendorId,
-              stock: parsed.data.initialStock,
+              stock: variants.length > 0 ? variantStock : parsed.data.initialStock,
               // Objects go live immediately — no administrator approval step.
               status: "PUBLISHED",
               publishedAt: new Date(),
@@ -274,6 +336,29 @@ export async function saveProductAction(
             });
           }
 
+          if (variants.length > 0) {
+            await transaction.productVariant.createMany({
+              data: variants.map((variant, index) => ({
+                productId: product.id,
+                name: variant.name,
+                sku: variant.sku,
+                price: centsToDecimalString(variant.priceCents),
+                stock: variant.stock,
+                sortOrder: index,
+              })),
+            });
+          }
+
+          const openingStock = variants.length > 0 ? variantStock : parsed.data.initialStock;
+
+          await transaction.inventoryBalance.create({
+            data: {
+              warehouseId: defaultWarehouseId,
+              productId: product.id,
+              quantity: openingStock,
+            },
+          });
+
           await transaction.productImage.create({
             data: {
               productId: product.id,
@@ -286,14 +371,14 @@ export async function saveProductAction(
             },
           });
 
-          if (parsed.data.initialStock > 0) {
+          if (openingStock > 0) {
             await transaction.inventoryMovement.create({
               data: {
                 productId: product.id,
                 actorId: actor.id,
-                delta: parsed.data.initialStock,
+                delta: openingStock,
                 reason: "INITIAL",
-                resultingStock: parsed.data.initialStock,
+                resultingStock: openingStock,
                 note: "Initial stock recorded when the object was created.",
               },
             });
@@ -351,9 +436,117 @@ export async function saveProductAction(
       update.reviewNote = null;
     }
 
-    const updated = await database.product.updateMany({
-      where: { id: existing.id, vendorId },
-      data: update,
+    if (variantPriceCents !== null) {
+      update.price = centsToDecimalString(variantPriceCents);
+    }
+
+    if (variants.length > 0) {
+      update.stock = variantStock;
+    }
+
+    const updated = await database.$transaction(async (transaction) => {
+      const existingVariants = await transaction.productVariant.findMany({
+        where: { productId: existing.id },
+        select: { id: true },
+      });
+      const keptIds: string[] = [];
+
+      for (const [index, variant] of variants.entries()) {
+        const variantData = {
+          name: variant.name,
+          sku: variant.sku,
+          price: centsToDecimalString(variant.priceCents),
+          stock: variant.stock,
+          sortOrder: index,
+          isActive: true,
+        };
+
+        if (variant.id && existingVariants.some((entry) => entry.id === variant.id)) {
+          const result = await transaction.productVariant.updateMany({
+            where: { id: variant.id, productId: existing.id },
+            data: variantData,
+          });
+
+          if (result.count !== 1) {
+            throw new Error("That option changed while you were editing. Reload and retry.");
+          }
+
+          keptIds.push(variant.id);
+        } else {
+          const created = await transaction.productVariant.create({
+            data: { productId: existing.id, ...variantData },
+            select: { id: true },
+          });
+          keptIds.push(created.id);
+        }
+      }
+
+      await transaction.productVariant.deleteMany({
+        where: { productId: existing.id, id: { notIn: keptIds } },
+      });
+
+      if (variants.length > 0) {
+        // The object's total is the sum of its options, so the default location holds
+        // whatever the other locations do not. Saving options therefore repairs a
+        // balance that drifted from the option stock instead of only shifting it.
+        const defaultWarehouse = await transaction.warehouse.findFirst({
+          where: { vendorId, isDefault: true },
+          select: { id: true },
+        });
+
+        if (defaultWarehouse) {
+          const balance = await transaction.inventoryBalance.findUnique({
+            where: {
+              warehouseId_productId: {
+                warehouseId: defaultWarehouse.id,
+                productId: existing.id,
+              },
+            },
+            select: { id: true, quantity: true },
+          });
+          const elsewhere = await transaction.inventoryBalance.aggregate({
+            where: { productId: existing.id, warehouseId: { not: defaultWarehouse.id } },
+            _sum: { quantity: true },
+          });
+          const current = balance?.quantity ?? 0;
+          const nextQuantity = Math.max(0, variantStock - (elsewhere._sum.quantity ?? 0));
+          const appliedDelta = nextQuantity - current;
+
+          if (balance) {
+            await transaction.inventoryBalance.update({
+              where: { id: balance.id },
+              data: { quantity: nextQuantity },
+            });
+          } else {
+            await transaction.inventoryBalance.create({
+              data: {
+                warehouseId: defaultWarehouse.id,
+                productId: existing.id,
+                quantity: nextQuantity,
+              },
+            });
+          }
+
+          if (appliedDelta !== 0) {
+            await transaction.inventoryMovement.create({
+              data: {
+                productId: existing.id,
+                actorId: actor.id,
+                warehouseId: defaultWarehouse.id,
+                delta: appliedDelta,
+                reason: "CORRECTION",
+                resultingStock: variantStock,
+                note: "Balanced the location with the object's options.",
+              },
+            });
+          }
+        }
+      }
+
+      return transaction.product.updateMany({
+        where: { id: existing.id, vendorId },
+        data: update,
+      });
     });
 
     if (updated.count !== 1) {
@@ -380,7 +573,7 @@ export async function publishProductAction(
   _previousState: FormState,
   formData: FormData,
 ): Promise<FormState> {
-  const access = await requireManagedStudio(formData);
+  const access = await requireManagedStudio(formData, "catalog.product.publish");
   if (!access) return { status: "error", message: "Administrator access is required." };
   const { actor, vendorId, adminManaged } = access;
   const productId = asUuid(formValue(formData, "productId"));
@@ -454,7 +647,7 @@ export async function archiveProductAction(
   _previousState: FormState,
   formData: FormData,
 ): Promise<FormState> {
-  const access = await requireManagedStudio(formData);
+  const access = await requireManagedStudio(formData, "catalog.product.publish");
   if (!access) return { status: "error", message: "Administrator access is required." };
   const { actor, vendorId, adminManaged } = access;
   const productId = asUuid(formValue(formData, "productId"));
@@ -506,7 +699,7 @@ export async function deleteProductAction(
   _previousState: FormState,
   formData: FormData,
 ): Promise<FormState> {
-  const access = await requireManagedStudio(formData);
+  const access = await requireManagedStudio(formData, "catalog.product.delete");
   if (!access) return { status: "error", message: "Administrator access is required." };
   const { actor, vendorId, adminManaged } = access;
   const productId = asUuid(formValue(formData, "productId"));
@@ -626,12 +819,13 @@ export async function adjustInventoryAction(
   _previousState: FormState,
   formData: FormData,
 ): Promise<FormState> {
-  const access = await requireManagedStudio(formData);
+  const access = await requireManagedStudio(formData, "inventory.adjust");
   if (!access) return { status: "error", message: "Administrator access is required." };
   const { actor, vendorId } = access;
 
   const parsed = inventoryAdjustmentSchema.safeParse({
     productId: formValue(formData, "productId"),
+    warehouseId: formValue(formData, "warehouseId"),
     mode: formValue(formData, "mode"),
     quantity: formValue(formData, "quantity"),
     reason: formValue(formData, "reason"),
@@ -646,9 +840,18 @@ export async function adjustInventoryAction(
 
   try {
     const message = await database.$transaction(async (transaction) => {
+      const warehouse = await transaction.warehouse.findFirst({
+        where: { id: parsed.data.warehouseId, vendorId },
+        select: { id: true, name: true },
+      });
+
+      if (!warehouse) {
+        throw new StockChangeError("That warehouse could not be found in your studio.");
+      }
+
       const product = await transaction.product.findFirst({
         where: { id: parsed.data.productId, vendorId },
-        select: { id: true, stock: true, status: true },
+        select: { id: true, stock: true, status: true, _count: { select: { variants: true } } },
       });
 
       if (!product) {
@@ -659,7 +862,21 @@ export async function adjustInventoryAction(
         throw new StockChangeError("Archived objects cannot change stock.");
       }
 
-      const result = applyStockAdjustment(product.stock, {
+      if (product._count.variants > 0) {
+        throw new StockChangeError(
+          "This object sells by option. Change each option's stock in the object editor.",
+        );
+      }
+
+      const balance = await transaction.inventoryBalance.findUnique({
+        where: {
+          warehouseId_productId: { warehouseId: warehouse.id, productId: product.id },
+        },
+        select: { id: true, quantity: true },
+      });
+      const currentAtLocation = balance?.quantity ?? 0;
+
+      const result = applyStockAdjustment(currentAtLocation, {
         mode: parsed.data.mode,
         quantity: parsed.data.quantity,
       });
@@ -668,9 +885,46 @@ export async function adjustInventoryAction(
         throw new StockChangeError(result.error);
       }
 
+      const nextStock = product.stock + result.delta;
+
+      if (nextStock < 0) {
+        throw new StockChangeError(
+          `${warehouse.name} has ${currentAtLocation} ${
+            currentAtLocation === 1 ? "unit" : "units"
+          }. Enter a quantity that location has.`,
+        );
+      }
+
+      if (nextStock > MAX_UNIT_STOCK) {
+        throw new StockChangeError(
+          `Total stock cannot exceed ${MAX_UNIT_STOCK.toLocaleString()} units.`,
+        );
+      }
+
+      if (balance) {
+        const updatedBalance = await transaction.inventoryBalance.updateMany({
+          where: { id: balance.id, quantity: currentAtLocation },
+          data: { quantity: result.nextStock },
+        });
+
+        if (updatedBalance.count !== 1) {
+          throw new StockChangeError(
+            "Stock changed while you were editing. Reload the page and try again.",
+          );
+        }
+      } else {
+        await transaction.inventoryBalance.create({
+          data: {
+            warehouseId: warehouse.id,
+            productId: product.id,
+            quantity: result.nextStock,
+          },
+        });
+      }
+
       const updated = await transaction.product.updateMany({
         where: { id: product.id, vendorId, stock: product.stock },
-        data: { stock: result.nextStock },
+        data: { stock: nextStock },
       });
 
       if (updated.count !== 1) {
@@ -683,14 +937,15 @@ export async function adjustInventoryAction(
         data: {
           productId: product.id,
           actorId: actor.id,
+          warehouseId: warehouse.id,
           delta: result.delta,
           reason: parsed.data.reason,
-          resultingStock: result.nextStock,
+          resultingStock: nextStock,
           note: parsed.data.note || null,
         },
       });
 
-      return `Stock updated from ${result.previousStock} to ${result.nextStock}.`;
+      return `Stock at ${warehouse.name} updated from ${result.previousStock} to ${result.nextStock}.`;
     });
 
     logger.info("inventory.adjusted", {
@@ -715,7 +970,7 @@ export async function uploadProductImageAction(
   _previousState: FormState,
   formData: FormData,
 ): Promise<FormState> {
-  const access = await requireManagedStudio(formData);
+  const access = await requireManagedStudio(formData, "catalog.product.update");
   if (!access) return { status: "error", message: "Administrator access is required." };
   const { actor, vendorId } = access;
   const productId = asUuid(formValue(formData, "productId"));
@@ -811,7 +1066,7 @@ export async function deleteProductImageAction(
   _previousState: FormState,
   formData: FormData,
 ): Promise<FormState> {
-  const access = await requireManagedStudio(formData);
+  const access = await requireManagedStudio(formData, "catalog.product.update");
   if (!access) return { status: "error", message: "Administrator access is required." };
   const { actor, vendorId } = access;
   const imageId = asUuid(formValue(formData, "imageId"));
@@ -874,7 +1129,7 @@ export async function moveProductImageAction(
   _previousState: FormState,
   formData: FormData,
 ): Promise<FormState> {
-  const access = await requireManagedStudio(formData);
+  const access = await requireManagedStudio(formData, "catalog.product.update");
   if (!access) return { status: "error", message: "Administrator access is required." };
   const { vendorId } = access;
   const imageId = asUuid(formValue(formData, "imageId"));

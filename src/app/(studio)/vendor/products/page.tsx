@@ -12,7 +12,7 @@ import { ProductStatusBadge } from "@/components/vendor/product-status-badge";
 import { StudioPageHead } from "@/components/vendor/studio-page-head";
 import { formatMoney } from "@/features/catalog/money";
 import { getStudioProductStats, listVendorProducts } from "@/features/catalog/vendor-queries";
-import { requireApprovedVendor } from "@/server/auth/guards";
+import { requireStudioAccess } from "@/server/business/studio-access";
 
 export const metadata: Metadata = {
   title: "Studio products",
@@ -42,7 +42,7 @@ async function ProductsContent({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const [{ vendorId }, params] = await Promise.all([
-    requireApprovedVendor("/vendor/products"),
+    requireStudioAccess("inventory.read", "/vendor/products"),
     searchParams,
   ]);
   const [products, stats] = await Promise.all([

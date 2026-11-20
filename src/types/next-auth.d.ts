@@ -10,6 +10,12 @@ declare module "next-auth" {
       status: UserStatus;
       vendorId: string | null;
       vendorStatus: VendorStatus | null;
+      businessId: string | null;
+      businessName: string | null;
+      businessMemberId: string | null;
+      businessVendorId: string | null;
+      businessVendorStatus: VendorStatus | null;
+      businessIsOwner: boolean;
     } & DefaultSession["user"];
   }
 }
@@ -21,6 +27,12 @@ declare module "@auth/core/jwt" {
     status?: UserStatus;
     vendorId?: string | null;
     vendorStatus?: VendorStatus | null;
+    businessId?: string | null;
+    businessName?: string | null;
+    businessMemberId?: string | null;
+    businessVendorId?: string | null;
+    businessVendorStatus?: VendorStatus | null;
+    businessIsOwner?: boolean;
   }
 }
 

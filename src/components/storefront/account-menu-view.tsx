@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, LayoutDashboard, LogOut, ShieldCheck, UserRound } from "lucide-react";
+import { ChevronDown, Heart, LayoutDashboard, LogOut, ShieldCheck, UserRound } from "lucide-react";
 import Link from "next/link";
 
 import {
@@ -60,6 +60,12 @@ export function AccountMenuView({ actor }: { actor: Actor | null }) {
           <Link href="/account" className="w-full">
             <UserRound className="size-4" aria-hidden="true" />
             {t("account.account")}
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href="/account/wishlist" className="w-full">
+            <Heart className="size-4" aria-hidden="true" />
+            {t("wishlist.title")}
           </Link>
         </DropdownMenuItem>
         {actor.vendor || actor.role === "VENDOR" ? (

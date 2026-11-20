@@ -26,6 +26,7 @@ export interface StudioProductSummary {
 
 export interface StudioProductDetail extends StudioProductSummary {
   categoryId: string;
+  costCents: number | null;
   summary: string;
   description: string;
   makerNote: string;
@@ -34,6 +35,13 @@ export interface StudioProductDetail extends StudioProductSummary {
   care: string;
   compareAtPriceCents: number | null;
   reviewNote: string | null;
+  variants: Array<{
+    id: string;
+    name: string;
+    sku: string;
+    priceCents: number;
+    stock: number;
+  }>;
   images: Array<CatalogImage & { id: string; sortOrder: number }>;
   movements: Array<{
     id: string;
@@ -43,6 +51,7 @@ export interface StudioProductDetail extends StudioProductSummary {
     note: string | null;
     createdAt: Date;
     actorName: string | null;
+    warehouseName: string | null;
   }>;
 }
 
@@ -109,11 +118,15 @@ export async function getVendorProduct(
     where: { id: productId, vendorId },
     include: {
       category: { select: { name: true } },
+      variants: { orderBy: [{ sortOrder: "asc" }, { name: "asc" }] },
       images: { orderBy: { sortOrder: "asc" } },
       inventoryMovements: {
         orderBy: { createdAt: "desc" },
         take: 20,
-        include: { actor: { select: { name: true } } },
+        include: {
+          actor: { select: { name: true } },
+          warehouse: { select: { name: true } },
+        },
       },
     },
   });
@@ -131,6 +144,7 @@ export async function getVendorProduct(
     status: product.status,
     sku: product.sku,
     priceCents: decimalToCents(product.price),
+    costCents: product.costPrice === null ? null : decimalToCents(product.costPrice),
     compareAtPriceCents: product.compareAtPrice ? decimalToCents(product.compareAtPrice) : null,
     currency: product.currency,
     stock: product.stock,
@@ -146,6 +160,13 @@ export async function getVendorProduct(
     dimensions: product.dimensions,
     care: product.care,
     reviewNote: product.reviewNote,
+    variants: product.variants.map((variant) => ({
+      id: variant.id,
+      name: variant.name,
+      sku: variant.sku,
+      priceCents: decimalToCents(variant.price),
+      stock: variant.stock,
+    })),
     images: product.images.map(toImage),
     movements: product.inventoryMovements.map((movement) => ({
       id: movement.id,
@@ -155,6 +176,7 @@ export async function getVendorProduct(
       note: movement.note,
       createdAt: movement.createdAt,
       actorName: movement.actor?.name ?? null,
+      warehouseName: movement.warehouse?.name ?? null,
     })),
   };
 }

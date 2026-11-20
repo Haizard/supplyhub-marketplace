@@ -6,7 +6,7 @@ import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StudioProductForm } from "@/components/vendor/studio-product-form";
 import { listStudioCategoryOptions } from "@/features/catalog/vendor-queries";
-import { requireApprovedVendor } from "@/server/auth/guards";
+import { requireStudioAccess } from "@/server/business/studio-access";
 import { getDatabase } from "@/server/db/client";
 
 export const metadata: Metadata = {
@@ -25,7 +25,7 @@ export default function NewStudioProductPage() {
 
 async function NewProductContent() {
   const [{ vendorId }, categories] = await Promise.all([
-    requireApprovedVendor("/vendor/products/new"),
+    requireStudioAccess("catalog.product.create", "/vendor/products/new"),
     listStudioCategoryOptions(),
   ]);
   const studio = await getDatabase().vendor.findUnique({

@@ -4,6 +4,7 @@ import { connection } from "next/server";
 
 import type { Prisma } from "@/generated/prisma/client";
 import { initialsFor } from "@/lib/utils/initials";
+import { getSessionActor } from "@/server/auth/session";
 import { getDatabase } from "@/server/db/client";
 import { mediaUrlForKey } from "@/server/storage/keys";
 
@@ -41,6 +42,10 @@ const publicProductWhere = {
 const productInclude = {
   vendor: true,
   category: true,
+  variants: {
+    where: { isActive: true },
+    orderBy: [{ sortOrder: "asc" }, { name: "asc" }],
+  },
   images: {
     where: { status: "APPROVED" },
     orderBy: { sortOrder: "asc" },
@@ -110,12 +115,31 @@ function mapImage(image: { storageKey: string; alt: string }): CatalogImage {
   };
 }
 
-function mapProduct(row: ProductRow): ProductListing {
+/** Ids the signed-in buyer saved, so listing hearts render in their saved state. */
+async function savedProductIds(): Promise<Set<string>> {
+  const actor = await getSessionActor();
+
+  if (!actor) return new Set();
+
+  const rows = await getDatabase().wishlistItem.findMany({
+    where: { userId: actor.id },
+    select: { productId: true },
+  });
+
+  return new Set(rows.map((row) => row.productId));
+}
+
+function mapProduct(row: ProductRow, savedIds: Set<string> = new Set()): ProductListing {
   const images = row.images.map(mapImage);
   const image = images[0] ?? FALLBACK_IMAGE;
   const vendor = mapVendor(row.vendor);
   const category = mapCategory(row.category);
   const addedAt = row.publishedAt ?? row.createdAt;
+  const variantStock = row.variants.reduce((total, variant) => total + variant.stock, 0);
+  const variantPrice =
+    row.variants.length > 0
+      ? Math.min(...row.variants.map((variant) => decimalToCents(variant.price)))
+      : null;
 
   return {
     id: row.id,
@@ -123,7 +147,7 @@ function mapProduct(row: ProductRow): ProductListing {
     name: row.name,
     vendorSlug: row.vendor.slug,
     categorySlug: row.category.slug,
-    priceCents: decimalToCents(row.price),
+    priceCents: variantPrice ?? decimalToCents(row.price),
     compareAtPriceCents: row.compareAtPrice ? decimalToCents(row.compareAtPrice) : undefined,
     currency: row.currency,
     summary: row.summary,
@@ -132,14 +156,22 @@ function mapProduct(row: ProductRow): ProductListing {
     materials: row.materials,
     dimensions: row.dimensions,
     care: row.care,
-    inventory: row.stock,
+    inventory: row.variants.length > 0 ? variantStock : row.stock,
     image,
     images,
     featured: row.featured,
     addedAt: addedAt.toISOString().slice(0, 10),
     vendor,
     category,
-    availability: getAvailability(row.stock),
+    availability: getAvailability(row.variants.length > 0 ? variantStock : row.stock),
+    variants: row.variants.map((variant) => ({
+      id: variant.id,
+      name: variant.name,
+      sku: variant.sku,
+      priceCents: decimalToCents(variant.price),
+      stock: variant.stock,
+    })),
+    saved: savedIds.has(row.id),
   };
 }
 
@@ -203,8 +235,10 @@ export async function listProductPage(filters: CatalogFilters = {}): Promise<Pro
           take: perPage,
         });
 
+  const savedIds = await savedProductIds();
+
   return {
-    items: rows.map(mapProduct),
+    items: rows.map((row) => mapProduct(row, savedIds)),
     total,
     page,
     pageCount,
@@ -229,7 +263,9 @@ export async function getProductBySlug(slug: string): Promise<ProductListing | u
     include: productInclude,
   });
 
-  return row ? mapProduct(row) : undefined;
+  if (!row) return undefined;
+
+  return mapProduct(row, await savedProductIds());
 }
 
 export async function getFeaturedProducts(limit = 4): Promise<ProductListing[]> {
@@ -260,6 +296,8 @@ export async function getRelatedProducts(slug: string, limit = 3): Promise<Produ
     take: Math.min(Math.max(limit * 4, 12), 24),
   });
 
+  const savedIds = await savedProductIds();
+
   return rows
     .sort(
       (left, right) =>
@@ -269,7 +307,22 @@ export async function getRelatedProducts(slug: string, limit = 3): Promise<Produ
         (right.publishedAt?.getTime() ?? 0) - (left.publishedAt?.getTime() ?? 0),
     )
     .slice(0, limit)
-    .map(mapProduct);
+    .map((row) => mapProduct(row, savedIds));
+}
+
+/** Public listings for explicit ids, used by the saved-objects page. */
+export async function getProductsByIds(ids: string[]): Promise<ProductListing[]> {
+  if (ids.length === 0) return [];
+
+  await connection();
+
+  const rows = await getDatabase().product.findMany({
+    where: { ...publicProductWhere, id: { in: ids } },
+    include: productInclude,
+  });
+  const savedIds = await savedProductIds();
+
+  return rows.map((row) => mapProduct(row, savedIds));
 }
 
 export async function listVendorSummaries(): Promise<VendorSummary[]> {

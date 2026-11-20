@@ -1,5 +1,6 @@
 import { StudioShell } from "@/components/vendor/studio-shell";
-import { getVendorForOwner } from "@/features/vendors/queries";
+import { listBusinessesForUser } from "@/features/business/queries";
+import { getStudioVendor } from "@/features/vendors/queries";
 import { initialsFor } from "@/lib/utils/initials";
 import { getSessionActor } from "@/server/auth/session";
 
@@ -14,7 +15,10 @@ export default async function StudioLayout({ children }: { children: React.React
     return <>{children}</>;
   }
 
-  const vendor = await getVendorForOwner(actor.id);
+  const [vendor, memberships] = await Promise.all([
+    getStudioVendor(actor),
+    listBusinessesForUser(actor.id),
+  ]);
   const name = vendor?.name ?? (actor.name.trim() || "Your studio");
 
   return (
@@ -25,6 +29,12 @@ export default async function StudioLayout({ children }: { children: React.React
         monogram: vendor?.monogram ?? initialsFor(name),
         status: vendor?.status ?? null,
       }}
+      businesses={memberships.map((membership) => ({
+        id: membership.business.id,
+        name: membership.business.name,
+      }))}
+      activeBusinessId={actor.business?.id ?? null}
+      isOwner={actor.business?.isOwner ?? true}
     >
       {children}
     </StudioShell>

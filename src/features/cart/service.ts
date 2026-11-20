@@ -60,6 +60,16 @@ const cartInclude = {
           },
         },
       },
+      variant: {
+        select: {
+          id: true,
+          name: true,
+          sku: true,
+          price: true,
+          stock: true,
+          isActive: true,
+        },
+      },
     },
   },
 } as const satisfies Prisma.CartInclude;
@@ -112,23 +122,27 @@ function toDrafts(cart: CartRow): CartLineDraft[] {
     const purchasable =
       product.status === "PUBLISHED" &&
       product.vendor.status === "APPROVED" &&
-      product.category.status === "ACTIVE";
+      product.category.status === "ACTIVE" &&
+      (item.variant === null || item.variant.isActive);
 
     return {
+      id: item.id,
       productId: product.id,
       slug: product.slug,
       name: product.name,
-      sku: product.sku,
+      variantId: item.variant?.id ?? null,
+      variantName: item.variant?.name ?? null,
+      sku: item.variant?.sku ?? product.sku,
       vendorId: product.vendorId,
       vendorName: product.vendor.name,
       vendorSlug: product.vendor.slug,
       vendorLatitude: product.vendor.latitude === null ? null : Number(product.vendor.latitude),
       vendorLongitude: product.vendor.longitude === null ? null : Number(product.vendor.longitude),
       image: mapImage(product.images[0]),
-      unitPriceCents: decimalToCents(product.price),
+      unitPriceCents: decimalToCents(item.variant?.price ?? product.price),
       currency: product.currency,
       quantity: item.quantity,
-      stock: product.stock,
+      stock: item.variant?.stock ?? product.stock,
       purchasable,
     };
   });
@@ -308,7 +322,7 @@ export async function mergeGuestCartIntoUserCart(userId: string): Promise<void> 
   const database = getDatabase();
   const guest = await database.cart.findUnique({
     where: { guestTokenHash: hashCartToken(token) },
-    include: { items: { select: { productId: true, quantity: true } } },
+    include: { items: { select: { productId: true, variantId: true, quantity: true } } },
   });
 
   if (!guest) {
@@ -332,14 +346,25 @@ export async function mergeGuestCartIntoUserCart(userId: string): Promise<void> 
       });
 
       for (const item of guest.items) {
-        await transaction.$executeRaw`
-          INSERT INTO "cart_items" ("id", "cart_id", "product_id", "quantity", "created_at", "updated_at")
-          VALUES (${randomUUID()}::uuid, ${userCart.id}::uuid, ${item.productId}::uuid, ${item.quantity}, now(), now())
-          ON CONFLICT ("cart_id", "product_id")
-          DO UPDATE SET
-            "quantity" = LEAST("cart_items"."quantity" + EXCLUDED."quantity", ${MAX_CART_QUANTITY}),
-            "updated_at" = now()
-        `;
+        if (item.variantId) {
+          await transaction.$executeRaw`
+            INSERT INTO "cart_items" ("id", "cart_id", "product_id", "variant_id", "quantity", "created_at", "updated_at")
+            VALUES (${randomUUID()}::uuid, ${userCart.id}::uuid, ${item.productId}::uuid, ${item.variantId}::uuid, ${item.quantity}, now(), now())
+            ON CONFLICT ("cart_id", "product_id", "variant_id")
+            DO UPDATE SET
+              "quantity" = LEAST("cart_items"."quantity" + EXCLUDED."quantity", ${MAX_CART_QUANTITY}),
+              "updated_at" = now()
+          `;
+        } else {
+          await transaction.$executeRaw`
+            INSERT INTO "cart_items" ("id", "cart_id", "product_id", "quantity", "created_at", "updated_at")
+            VALUES (${randomUUID()}::uuid, ${userCart.id}::uuid, ${item.productId}::uuid, ${item.quantity}, now(), now())
+            ON CONFLICT ("cart_id", "product_id") WHERE "variant_id" IS NULL
+            DO UPDATE SET
+              "quantity" = LEAST("cart_items"."quantity" + EXCLUDED."quantity", ${MAX_CART_QUANTITY}),
+              "updated_at" = now()
+          `;
+        }
       }
 
       await transaction.cart.delete({ where: { id: guest.id } });

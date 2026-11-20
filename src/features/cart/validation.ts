@@ -4,6 +4,10 @@ import { MAX_CART_QUANTITY } from "./constants";
 
 export const cartProductIdSchema = z.uuid("That object reference is invalid.");
 
+export const cartItemIdSchema = z.uuid("That cart line is invalid.");
+
+export const cartVariantIdSchema = z.uuid("That option reference is invalid.");
+
 export const cartQuantitySchema = z.coerce
   .number("Choose a quantity.")
   .int("Quantity must be a whole number.")
@@ -12,5 +16,14 @@ export const cartQuantitySchema = z.coerce
 
 export const cartMutationSchema = z.object({
   productId: cartProductIdSchema,
+  variantId: z.preprocess(
+    (value) => (typeof value === "string" && value.trim() === "" ? undefined : value),
+    cartVariantIdSchema.optional(),
+  ),
+  quantity: cartQuantitySchema,
+});
+
+export const cartLineMutationSchema = z.object({
+  cartItemId: cartItemIdSchema,
   quantity: cartQuantitySchema,
 });

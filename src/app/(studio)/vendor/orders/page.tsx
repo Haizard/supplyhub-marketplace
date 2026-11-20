@@ -12,7 +12,7 @@ import { StudioPageHead } from "@/components/vendor/studio-page-head";
 import { decimalToCents, formatMoney } from "@/features/catalog/money";
 import { listVendorOrders } from "@/features/checkout/vendor-operations";
 import { formatDate } from "@/lib/utils/format-date";
-import { requireApprovedVendor } from "@/server/auth/guards";
+import { requireStudioAccess } from "@/server/business/studio-access";
 
 export const metadata: Metadata = {
   title: "Studio orders",
@@ -28,7 +28,7 @@ export default function VendorOrdersPage() {
 }
 
 async function VendorOrdersContent() {
-  const { vendorId } = await requireApprovedVendor("/vendor/orders");
+  const { vendorId } = await requireStudioAccess("orders.read", "/vendor/orders");
   const orders = await listVendorOrders(vendorId);
 
   return (
@@ -78,6 +78,28 @@ async function VendorOrdersContent() {
                   </li>
                 ))}
               </ul>
+              {order.shipment ? (
+                <div className="mt-4 rounded-md bg-surface-muted/60 px-3 py-2 text-xs text-muted-foreground">
+                  <span className="font-medium text-foreground">{order.shipment.carrier}</span>
+                  {" · "}
+                  <span className="font-mono">{order.shipment.trackingNumber}</span>
+                  {" · "}
+                  Shipped {formatDate(order.shipment.shippedAt)}
+                  {order.shipment.deliveredAt
+                    ? ` · Delivered ${formatDate(order.shipment.deliveredAt)}`
+                    : ""}
+                  {order.shipment.trackingUrl ? (
+                    <a
+                      href={order.shipment.trackingUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="ml-1 font-medium text-accent underline-offset-4 hover:underline"
+                    >
+                      Open tracking
+                    </a>
+                  ) : null}
+                </div>
+              ) : null}
               <div className="mt-4 border-t border-border pt-4">
                 <OrderStatusForm orderId={order.id} status={order.status} />
               </div>

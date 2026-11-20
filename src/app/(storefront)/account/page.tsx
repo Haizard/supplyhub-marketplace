@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { KeyRound, MailCheck, PackageSearch, Store } from "lucide-react";
+import { Building2, Heart, KeyRound, MailCheck, PackageSearch, Store } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
@@ -18,6 +18,8 @@ import {
   signOutEverywhereAction,
 } from "@/features/identity/actions";
 import { getAccountProfile } from "@/features/identity/queries";
+import { countWishlistItems } from "@/features/wishlist/queries";
+import { getServerI18n } from "@/i18n/server";
 import { requireActor } from "@/server/auth/guards";
 import type { UserRole } from "@/generated/prisma/enums";
 import { formatDate } from "@/lib/utils/format-date";
@@ -53,7 +55,12 @@ async function AccountContent({
   searchParams: PageProps<"/account">["searchParams"];
 }) {
   const actor = await requireActor("/account");
-  const [params, profile] = await Promise.all([searchParams, getAccountProfile(actor.id)]);
+  const [params, profile, wishlistCount, { t }] = await Promise.all([
+    searchParams,
+    getAccountProfile(actor.id),
+    countWishlistItems(actor.id),
+    getServerI18n(),
+  ]);
 
   if (!profile) {
     redirect("/sign-in?next=/account");
@@ -120,6 +127,11 @@ async function AccountContent({
           <Notice tone="warning">
             Only customer accounts can place orders. Studio and administrator accounts keep their
             operational role.
+          </Notice>
+        ) : null}
+        {denied === "studio" ? (
+          <Notice tone="warning">
+            Your business role does not include that action. Ask the business owner to grant it.
           </Notice>
         ) : null}
       </div>
@@ -199,6 +211,62 @@ async function AccountContent({
               </Button>
               <Button asChild variant="ghost" size="sm">
                 <Link href="/cart">Open your cart</Link>
+              </Button>
+            </div>
+          </section>
+
+          <section
+            aria-labelledby="account-wishlist"
+            className="rounded-xl border border-border bg-surface p-6 sm:p-8"
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 id="account-wishlist" className="eyebrow text-muted-foreground">
+                  {t("wishlist.eyebrow")}
+                </h2>
+                <p className="mt-4 text-sm leading-6 text-muted-foreground">
+                  {t("wishlist.description")}
+                </p>
+              </div>
+              <Heart className="mt-1 size-5 shrink-0 text-muted-foreground" aria-hidden="true" />
+            </div>
+            <div className="mt-5 flex flex-wrap items-center gap-3">
+              <Button asChild variant="secondary" size="sm">
+                <Link href="/account/wishlist">{t("wishlist.title")}</Link>
+              </Button>
+              <span className="text-xs text-muted-foreground">
+                {wishlistCount === 1
+                  ? t("wishlist.countOne")
+                  : t("wishlist.count", { count: wishlistCount })}
+              </span>
+            </div>
+          </section>
+
+          <section
+            aria-labelledby="account-businesses"
+            className="rounded-xl border border-border bg-surface p-6 sm:p-8"
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 id="account-businesses" className="eyebrow text-muted-foreground">
+                  Businesses
+                </h2>
+                <p className="mt-4 text-sm leading-6 text-muted-foreground">
+                  Register a business to manage branches, staff, and roles. Owners invite members;
+                  staff only see the business they belong to.
+                </p>
+              </div>
+              <Building2
+                className="mt-1 size-5 shrink-0 text-muted-foreground"
+                aria-hidden="true"
+              />
+            </div>
+            <div className="mt-5 flex flex-wrap gap-2">
+              <Button asChild variant="secondary" size="sm">
+                <Link href="/business">Your businesses</Link>
+              </Button>
+              <Button asChild variant="ghost" size="sm">
+                <Link href="/business/new">Register a business</Link>
               </Button>
             </div>
           </section>

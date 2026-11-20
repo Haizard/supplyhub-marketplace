@@ -8,6 +8,7 @@ import { FormMessage } from "@/components/ui/form-message";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { LocationMapField } from "@/components/vendor/location-map-field";
+import { VariantEditor, type VariantRowValue } from "@/components/vendor/variant-editor";
 import { saveProductAction } from "@/features/catalog/vendor-actions";
 import { initialFormState } from "@/features/identity/form-state";
 
@@ -17,10 +18,12 @@ export interface StudioProductFormValues {
   slug?: string;
   categoryId?: string;
   price?: string;
+  cost?: string;
   description?: string;
   makerNote?: string;
   materials?: string[];
   initialStock?: number;
+  variants?: VariantRowValue[];
 }
 
 export interface StudioLocationValues {
@@ -53,6 +56,7 @@ export function StudioProductForm({
       {adminVendorId ? <input type="hidden" name="adminVendorId" value={adminVendorId} /> : null}
 
       <FormMessage state={state} />
+      {errors?.variants ? <p className="text-sm text-danger">{errors.variants}</p> : null}
 
       <fieldset className="space-y-5">
         <legend className="eyebrow text-muted-foreground">The object</legend>
@@ -109,7 +113,7 @@ export function StudioProductForm({
           </Field>
         </div>
 
-        <div className="grid gap-5 sm:grid-cols-3">
+        <div className="grid gap-5 sm:grid-cols-2">
           <Field label="Price" htmlFor={`${prefix}-price`} hint="TZS" error={errors?.priceCents}>
             <Input
               id={`${prefix}-price`}
@@ -120,6 +124,23 @@ export function StudioProductForm({
               placeholder="68.00"
               aria-invalid={errors?.priceCents ? true : undefined}
               aria-describedby={errors?.priceCents ? `${prefix}-price-error` : undefined}
+            />
+          </Field>
+
+          <Field
+            label="Unit cost"
+            htmlFor={`${prefix}-cost`}
+            hint="Optional · what you pay per unit"
+            error={errors?.costCents}
+          >
+            <Input
+              id={`${prefix}-cost`}
+              name="costPrice"
+              defaultValue={product?.cost}
+              inputMode="decimal"
+              placeholder="24.00"
+              aria-invalid={errors?.costCents ? true : undefined}
+              aria-describedby={errors?.costCents ? `${prefix}-cost-error` : undefined}
             />
           </Field>
         </div>
@@ -145,6 +166,8 @@ export function StudioProductForm({
           </Field>
         ) : null}
       </fieldset>
+
+      <VariantEditor defaultVariants={product?.variants} />
 
       <fieldset className="space-y-5 border-t border-border pt-8">
         <legend className="eyebrow text-muted-foreground">The story</legend>

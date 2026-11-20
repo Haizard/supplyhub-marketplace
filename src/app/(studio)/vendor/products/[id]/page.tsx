@@ -19,7 +19,15 @@ import {
   listStudioCategoryOptions,
   type StudioProductDetail,
 } from "@/features/catalog/vendor-queries";
-import { requireApprovedVendor } from "@/server/auth/guards";
+import {
+  getProductWarehouseBalances,
+  listProductTransfers,
+  listVendorWarehouses,
+  type ProductTransfer,
+  type ProductWarehouseBalance,
+  type WarehouseSummary,
+} from "@/features/inventory/warehouses";
+import { requireStudioAccess } from "@/server/business/studio-access";
 
 const uuidSchema = z.uuid();
 
@@ -38,7 +46,7 @@ export default async function StudioProductPage({
   searchParams,
 }: PageProps<"/vendor/products/[id]">) {
   const [{ vendorId }, routeParams, query] = await Promise.all([
-    requireApprovedVendor(),
+    requireStudioAccess("catalog.product.update"),
     params,
     searchParams,
   ]);
@@ -56,9 +64,22 @@ export default async function StudioProductPage({
     notFound();
   }
 
+  const [balances, warehouses, transfers] = await Promise.all([
+    getProductWarehouseBalances(vendorId, product.id),
+    listVendorWarehouses(vendorId),
+    listProductTransfers(vendorId, product.id),
+  ]);
+
   return (
     <Suspense fallback={<ProductSkeleton />}>
-      <StudioProductContent product={product} categories={categories} query={query} />
+      <StudioProductContent
+        product={product}
+        categories={categories}
+        query={query}
+        balances={balances}
+        warehouses={warehouses}
+        transfers={transfers}
+      />
     </Suspense>
   );
 }
@@ -67,10 +88,16 @@ function StudioProductContent({
   product,
   categories,
   query,
+  balances,
+  warehouses,
+  transfers,
 }: {
   product: StudioProductDetail;
   categories: Array<{ id: string; name: string }>;
   query: Awaited<PageProps<"/vendor/products/[id]">["searchParams"]>;
+  balances: ProductWarehouseBalance[];
+  warehouses: WarehouseSummary[];
+  transfers: ProductTransfer[];
 }) {
   const canEdit =
     product.status === "DRAFT" || product.status === "REJECTED" || product.status === "PUBLISHED";
@@ -160,9 +187,20 @@ function StudioProductContent({
                     slug: product.slug,
                     categoryId: product.categoryId,
                     price: centsToDecimalString(product.priceCents),
+                    cost:
+                      product.costCents === null
+                        ? undefined
+                        : centsToDecimalString(product.costCents),
                     description: product.description,
                     makerNote: product.makerNote,
                     materials: product.materials,
+                    variants: product.variants.map((variant) => ({
+                      id: variant.id,
+                      name: variant.name,
+                      sku: variant.sku,
+                      price: centsToDecimalString(variant.priceCents),
+                      stock: variant.stock,
+                    })),
                   }}
                 />
               </div>
@@ -208,6 +246,13 @@ function StudioProductContent({
               stock={product.stock}
               movements={product.movements}
               canAdjust={product.status !== "ARCHIVED"}
+              balances={balances}
+              transfers={transfers}
+              warehouses={warehouses.map((warehouse) => ({
+                id: warehouse.id,
+                name: warehouse.name,
+                isDefault: warehouse.isDefault,
+              }))}
             />
           </section>
         </div>

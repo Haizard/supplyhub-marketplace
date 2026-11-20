@@ -3,6 +3,7 @@ import "server-only";
 import { connection } from "next/server";
 
 import { getDatabase } from "@/server/db/client";
+import type { Actor } from "@/server/auth/actor";
 import type { VendorStatus } from "@/generated/prisma/enums";
 import { DEFAULT_PAGE_SIZE, clampPage, pageOffset } from "@/lib/utils/pagination";
 
@@ -37,6 +38,28 @@ export async function getVendorForOwner(userId: string) {
     where: { ownerId: userId },
     select: vendorSummarySelect,
   });
+}
+
+/**
+ * The studio an actor opens: the active business's vendor when the actor is a
+ * business member, otherwise the legacy vendor they own.
+ *
+ * A business with no linked vendor resolves to null rather than falling back to
+ * a vendor the actor owns elsewhere — the studio never mixes two businesses.
+ */
+export async function getStudioVendor(actor: Actor) {
+  if (actor.business) {
+    if (!actor.business.vendorId) {
+      return null;
+    }
+
+    return getDatabase().vendor.findUnique({
+      where: { id: actor.business.vendorId },
+      select: vendorSummarySelect,
+    });
+  }
+
+  return getVendorForOwner(actor.id);
 }
 
 export async function getVendorById(vendorId: string) {
