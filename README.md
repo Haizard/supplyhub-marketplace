@@ -145,6 +145,20 @@ rawBody))` before parsing, enforces the timestamp tolerance, accepts the previou
 - The first administrator is created with `npm run admin:promote -- you@example.com` after the
   account registers. There is no self-service admin sign-up.
 
+## Account security (Phase 6)
+
+- `/account/security` enables real TOTP 2FA. The secret is encrypted at rest with a
+  key derived from the server-only `AUTH_SECRET`; sign-in accepts a current
+  authenticator code or a single-use backup code. TOTP time steps are tracked so
+  the same code cannot be replayed.
+- Backup codes and phone verification challenges are stored as SHA-256 hashes in
+  `backup_codes` and `phone_verifications`. Verification, regeneration, and phone
+  confirmation consume codes once, are rate limited, and write audit events.
+- Disabling 2FA increments `sessionVersion`, ending every existing session.
+- SMS delivery is intentionally provider-neutral. Development writes codes to
+  `.local/sms-outbox`; production reports `phone.delivery_unconfigured` until an
+  SMS provider is chosen. Login-alert history remains a device-local aid.
+
 ## Storefront (Phase 2, now database-backed)
 
 - The catalogue was prototyped as an isolated demo layer and moved to PostgreSQL in Phase 4. The
@@ -429,8 +443,10 @@ docs/                  Product, architecture, security, and phase specifications
   policy, and HSTS in production.
 - Health responses are `no-store` and never expose database error details.
 - Passwords use Argon2id; sign-in spends the same work on unknown emails to avoid user enumeration.
-- Verification and reset tokens are single-use, expire, and are stored only as hashes. Password
-  resets revoke every other session.
+- TOTP secrets are encrypted with a server-derived AES-256-GCM key; authenticator codes are
+  replay-protected and backup codes are stored only as hashes and consumed once.
+- Verification, reset, phone, and backup codes are single-use, expire where applicable, and are
+  stored only as hashes. Password resets and disabling 2FA revoke every other session.
 - Every protected page and mutation calls a server-side guard. Client-supplied roles, vendor IDs,
   and statuses are never trusted.
 - Catalog mutations resolve the studio from the session, never from the form, and re-check product

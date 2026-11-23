@@ -6,6 +6,7 @@ import { cookies } from "next/headers";
 import { z } from "zod";
 
 import { emailField } from "@/features/identity/validation";
+import { verifySecondFactor } from "@/features/security/service";
 import { getServerEnv } from "@/lib/config/env";
 import { ACTIVE_BUSINESS_COOKIE } from "@/server/business/active-business";
 import { loadActiveBusiness } from "@/server/business/active-business-store";
@@ -19,6 +20,10 @@ const DUMMY_PASSWORD_HASH =
 const credentialsSchema = z.object({
   email: emailField,
   password: z.string().min(1).max(128),
+  twoFactorCode: z.preprocess(
+    (value) => (typeof value === "string" && value.trim() === "" ? undefined : value),
+    z.string().max(64).optional(),
+  ),
 });
 
 const env = getServerEnv();
@@ -42,6 +47,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
+        twoFactorCode: { label: "Authenticator or backup code", type: "text" },
       },
       async authorize(rawCredentials) {
         const parsed = credentialsSchema.safeParse(rawCredentials);
@@ -58,6 +64,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             name: true,
             passwordHash: true,
             status: true,
+            twoFactorEnabled: true,
           },
         });
 
@@ -68,6 +75,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         if (!user || !user.passwordHash || !passwordMatches || user.status !== "ACTIVE") {
           return null;
+        }
+
+        if (user.twoFactorEnabled) {
+          if (!parsed.data.twoFactorCode) {
+            return null;
+          }
+
+          const secondFactorValid = await verifySecondFactor(user.id, parsed.data.twoFactorCode);
+          if (!secondFactorValid) {
+            return null;
+          }
         }
 
         return { id: user.id, email: user.email, name: user.name };

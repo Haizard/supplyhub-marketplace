@@ -375,6 +375,9 @@ async function AccountContent({
 
             <div className="mt-5 flex flex-wrap gap-2">
               <Button asChild variant="secondary" size="sm">
+                <Link href="/account/security">{t("securitySettings.title")}</Link>
+              </Button>
+              <Button asChild variant="ghost" size="sm">
                 <Link href="/forgot-password">Send a password reset link</Link>
               </Button>
             </div>

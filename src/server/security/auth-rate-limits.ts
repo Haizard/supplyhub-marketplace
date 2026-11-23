@@ -16,4 +16,7 @@ export const AUTH_RATE_LIMITS = {
   paymentStatusByUser: { limit: 120, windowMs: 10 * 60 * 1000 },
   refundByAdmin: { limit: 20, windowMs: 10 * 60 * 1000 },
   payoutByAdmin: { limit: 20, windowMs: 10 * 60 * 1000 },
+  twoFactorByUser: { limit: 8, windowMs: 10 * 60 * 1000 },
+  phoneCodeByUser: { limit: 3, windowMs: 60 * 60 * 1000 },
+  phoneVerifyByUser: { limit: 8, windowMs: 10 * 60 * 1000 },
 } satisfies Record<string, RateLimitRule>;

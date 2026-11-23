@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Building2, GitBranch, Users } from "lucide-react";
+import { Building2, CreditCard, GitBranch, Users } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
@@ -12,7 +12,11 @@ import { getBusinessById } from "@/features/business/queries";
 import { getServerI18n } from "@/i18n/server";
 import { requireActor } from "@/server/auth/guards";
 import { getSessionActor } from "@/server/auth/session";
-import { BusinessAccessError, resolveBusinessContext } from "@/server/business/context";
+import {
+  BusinessAccessError,
+  hasPermission,
+  resolveBusinessContext,
+} from "@/server/business/context";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -58,7 +62,7 @@ async function BusinessContent({ params }: Props) {
   if (!business) notFound();
 
   // Verify access — resolves to not-found for non-members (admins bypass).
-  await resolveBusinessContext(actor, id).catch((error: unknown) => {
+  const context = await resolveBusinessContext(actor, id).catch((error: unknown) => {
     if (error instanceof BusinessAccessError) notFound();
     throw error;
   });
@@ -89,7 +93,7 @@ async function BusinessContent({ params }: Props) {
         </p>
       ) : null}
 
-      <div className="mt-8 grid gap-4 sm:grid-cols-3">
+      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Link
           href={`/business/${id}/members`}
           className="group flex items-center gap-3 rounded-lg border border-border bg-surface p-4 transition-colors hover:bg-surface-muted"
@@ -105,6 +109,16 @@ async function BusinessContent({ params }: Props) {
           <Building2 className="size-5 text-muted-foreground group-hover:text-foreground" />
           <span className="text-sm font-medium">{t("business.nav.roles")}</span>
         </Link>
+
+        {hasPermission(context, "subscription.manage") ? (
+          <Link
+            href={`/business/${id}/subscription`}
+            className="group flex items-center gap-3 rounded-lg border border-border bg-surface p-4 transition-colors hover:bg-surface-muted"
+          >
+            <CreditCard className="size-5 text-muted-foreground group-hover:text-foreground" />
+            <span className="text-sm font-medium">{t("subscriptions.navLabel")}</span>
+          </Link>
+        ) : null}
 
         <div className="flex items-center gap-3 rounded-lg border border-border bg-surface p-4">
           <GitBranch className="size-5 text-muted-foreground" />
@@ -177,7 +191,8 @@ function BusinessSkeleton() {
         <Skeleton className="h-5 w-24" />
         <Skeleton className="mt-4 h-11 w-72 max-w-full" />
         <Skeleton className="mt-4 h-4 w-full max-w-lg" />
-        <div className="mt-8 grid gap-4 sm:grid-cols-3">
+        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <Skeleton className="h-16 w-full rounded-lg" />
           <Skeleton className="h-16 w-full rounded-lg" />
           <Skeleton className="h-16 w-full rounded-lg" />
           <Skeleton className="h-16 w-full rounded-lg" />

@@ -3,6 +3,7 @@
 import {
   Banknote,
   ClipboardList,
+  CreditCard,
   FolderTree,
   ShieldCheck,
   Percent,
@@ -30,6 +31,7 @@ const links = [
   { href: "/admin/payouts", labelKey: "admin.payouts", icon: Banknote },
   { href: "/admin/promotions", labelKey: "admin.promotions", icon: Percent },
   { href: "/admin/coupons", labelKey: "admin.discountCodes", icon: Tag },
+  { href: "/admin/subscriptions", labelKey: "subscriptions.navLabel", icon: CreditCard },
   { href: "/admin/delivery", labelKey: "admin.delivery", icon: Truck },
 ];
 

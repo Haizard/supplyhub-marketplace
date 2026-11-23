@@ -331,6 +331,7 @@ const demoBusinesses = [
           "delivery.request.create",
           "pos.sale.create",
           "pos.register.close",
+          "subscription.manage",
         ],
       },
       {
@@ -463,6 +464,7 @@ const demoStaffPermissionKeys = [
   "messaging.reply",
   "crm.read",
   "crm.manage",
+  "subscription.manage",
 ];
 
 function normalize(value) {
@@ -1097,6 +1099,116 @@ try {
       ],
     );
   }
+
+  // Phase 6: subscription plans, a business subscription and its invoice.
+  const demoSubscriptionPlans = [
+    {
+      id: "b0000000-0000-4000-8000-000000000001",
+      code: "starter",
+      name: "Starter",
+      description: "For small buying teams that need the core B2B workspace.",
+      priceMonthly: 15000,
+      includedSeats: 3,
+      seatLimit: 10,
+      features: ["Wholesale catalog", "RFQs and quotations", "Email support"],
+      sortOrder: 1,
+    },
+    {
+      id: "b0000000-0000-4000-8000-000000000002",
+      code: "growth",
+      name: "Growth",
+      description: "For businesses running regular purchasing and fulfillment.",
+      priceMonthly: 35000,
+      includedSeats: 10,
+      seatLimit: 50,
+      features: ["Everything in Starter", "Purchase orders", "Priority support", "CRM seats"],
+      sortOrder: 2,
+    },
+    {
+      id: "b0000000-0000-4000-8000-000000000003",
+      code: "enterprise",
+      name: "Enterprise",
+      description: "For larger procurement teams with wider seat requirements.",
+      priceMonthly: 75000,
+      includedSeats: 25,
+      seatLimit: 200,
+      features: ["Everything in Growth", "Dedicated onboarding", "Custom reporting"],
+      sortOrder: 3,
+    },
+  ];
+
+  for (const plan of demoSubscriptionPlans) {
+    await client.query(
+      `INSERT INTO subscription_plans (
+         id, code, name, description, price_monthly, currency, included_seats, seat_limit,
+         features, status, sort_order, created_at, updated_at
+       )
+       VALUES ($1, $2, $3, $4, $5, 'TZS', $6, $7, $8::jsonb, 'ACTIVE', $9,
+         now() - interval '60 days', now())
+       ON CONFLICT (code) DO UPDATE SET
+         name = EXCLUDED.name,
+         description = EXCLUDED.description,
+         price_monthly = EXCLUDED.price_monthly,
+         included_seats = EXCLUDED.included_seats,
+         seat_limit = EXCLUDED.seat_limit,
+         features = EXCLUDED.features,
+         status = EXCLUDED.status,
+         sort_order = EXCLUDED.sort_order,
+         updated_at = now()`,
+      [
+        plan.id,
+        plan.code,
+        plan.name,
+        plan.description,
+        plan.priceMonthly,
+        plan.includedSeats,
+        plan.seatLimit,
+        JSON.stringify(plan.features),
+        plan.sortOrder,
+      ],
+    );
+  }
+
+  const demoSubscriptionBusinessId = await businessIdBySlug("atelier-nord-studio");
+  const demoSubscriptionId = "b0000000-0000-4000-8000-000000000101";
+  await client.query(
+    `INSERT INTO business_subscriptions (
+       id, business_id, plan_id, status, seats, current_period_start, current_period_end,
+       created_at, updated_at
+     )
+     VALUES ($1, $2, $3, 'ACTIVE', 12, now() - interval '12 days', now() + interval '18 days',
+       now() - interval '12 days', now())
+     ON CONFLICT (business_id) DO UPDATE SET
+       plan_id = EXCLUDED.plan_id,
+       status = EXCLUDED.status,
+       seats = EXCLUDED.seats,
+       current_period_start = EXCLUDED.current_period_start,
+       current_period_end = EXCLUDED.current_period_end,
+       updated_at = now()`,
+    [demoSubscriptionId, demoSubscriptionBusinessId, demoSubscriptionPlans[1].id],
+  );
+
+  await client.query(
+    `INSERT INTO subscription_invoices (
+       id, invoice_number, subscription_id, status, currency, subtotal, tax_total, total,
+       amount_paid, period_start, period_end, issued_at, due_at, paid_at, created_at, updated_at
+     )
+     VALUES ($1, 'SUBINV-DEMO-001', $2, 'ISSUED', 'TZS', 70000, 0, 70000, 0,
+       now() - interval '12 days', now() + interval '18 days', now() - interval '12 days',
+       now() + interval '5 days', null, now() - interval '12 days', now())
+     ON CONFLICT (invoice_number) DO UPDATE SET
+       subscription_id = EXCLUDED.subscription_id,
+       status = EXCLUDED.status,
+       subtotal = EXCLUDED.subtotal,
+       total = EXCLUDED.total,
+       amount_paid = EXCLUDED.amount_paid,
+       period_start = EXCLUDED.period_start,
+       period_end = EXCLUDED.period_end,
+       issued_at = EXCLUDED.issued_at,
+       due_at = EXCLUDED.due_at,
+       updated_at = now()`,
+    [demoSubscriptionId, demoSubscriptionId],
+  );
 
   // Phase 4: documented default delivery pricing (TZS).
   await client.query(

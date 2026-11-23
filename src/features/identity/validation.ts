@@ -58,6 +58,10 @@ const accountTokenField = z
 export const signInSchema = z.object({
   email: emailField,
   password: z.string().min(1, { error: "Enter your password." }).max(128),
+  twoFactorCode: z.preprocess(
+    (value) => (typeof value === "string" && value.trim() === "" ? undefined : value),
+    z.string().max(64).optional(),
+  ),
   next: z.string().max(512).optional(),
 });
 

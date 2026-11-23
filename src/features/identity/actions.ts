@@ -37,6 +37,7 @@ export async function signInAction(
   const parsed = signInSchema.safeParse({
     email: formValue(formData, "email"),
     password: formValue(formData, "password"),
+    twoFactorCode: formValue(formData, "twoFactorCode") || undefined,
     next: formValue(formData, "next") || undefined,
   });
 
@@ -63,6 +64,7 @@ export async function signInAction(
     await signIn("credentials", {
       email: parsed.data.email,
       password: parsed.data.password,
+      twoFactorCode: parsed.data.twoFactorCode,
       redirect: false,
       redirectTo: safeNextPath(parsed.data.next, "/account"),
     });

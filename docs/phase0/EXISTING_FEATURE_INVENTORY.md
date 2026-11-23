@@ -95,7 +95,7 @@
 | Vendor earnings view | ✅ | In vendor studio |
 | Sandbox payment simulation | ⚠️ | NEW: client-side only in experience centre; never charges real accounts |
 | Cash on delivery | 🔴 | Not present |
-| Subscription billing | 🔴 | Not present |
+| Subscription billing | ✅ | Business subscriptions, invoices, payments, cancellation and admin plan management |
 | Payment reconciliation (automated) | 🔴 | Manual only |
 
 ## Orders
@@ -136,7 +136,7 @@
 | Price watch notifications | 🔴 | Client-side localStorage only |
 | Buyer↔studio chat | ✅ | DB-backed threads at `/messages` and `/vendor/messages`, with read receipts |
 | Loyalty points | ✅ | DB-backed ledger at `/account/loyalty`, earned on delivery and redeemable for coupons |
-| Security (2FA, phone verify) | 🔴 | Client-side simulation only |
+| Security (2FA, phone verify) | ✅ | Database-backed TOTP, single-use backup codes and phone OTP at `/account/security`; production SMS provider still unresolved |
 | Dispute resolution | 🔴 | Not present |
 | Escrow / payment holding | 🔴 | Simulated in experience centre; no real escrow |
 
@@ -175,7 +175,7 @@
 | Audit log | ✅ | View all recorded actions |
 | CSV exports | ✅ | Orders, products, users |
 | Business verification (KYC) | 🔴 | Not present |
-| Subscription management | 🔴 | Not present |
+| Subscription management | ✅ | Admin plan editor at `/admin/subscriptions`; business page at `/business/[id]/subscription` |
 | Dispute resolution centre | 🔴 | Not present |
 | Platform analytics dashboard | 🔴 | No aggregate metrics |
 

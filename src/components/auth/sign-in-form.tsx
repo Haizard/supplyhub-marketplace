@@ -15,6 +15,7 @@ export function SignInForm({ next }: { next?: string }) {
   const [state, action] = useActionState(signInAction, initialFormState);
   const emailError = state.fieldErrors?.email;
   const passwordError = state.fieldErrors?.password;
+  const twoFactorError = state.fieldErrors?.twoFactorCode;
 
   return (
     <form action={action} className="space-y-5">
@@ -42,6 +43,23 @@ export function SignInForm({ next }: { next?: string }) {
           required
           aria-invalid={passwordError ? true : undefined}
           aria-describedby={passwordError ? "sign-in-password-error" : undefined}
+        />
+      </Field>
+
+      <Field
+        label="Authenticator or backup code (if enabled)"
+        htmlFor="sign-in-two-factor"
+        error={twoFactorError}
+      >
+        <Input
+          id="sign-in-two-factor"
+          name="twoFactorCode"
+          type="text"
+          autoComplete="one-time-code"
+          maxLength={64}
+          placeholder="6-digit code or backup code"
+          aria-invalid={twoFactorError ? true : undefined}
+          aria-describedby={twoFactorError ? "sign-in-two-factor-error" : undefined}
         />
       </Field>
 

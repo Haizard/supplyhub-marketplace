@@ -1,6 +1,6 @@
 # Implementation Roadmap
 
-> Phase 0 audit — updated for Phase 4 logistics implementation.
+> Phase 0 audit — updated for the Phase 6 account security slice.
 
 ## What is Already Done (confirmed after full re-inspection)
 
@@ -197,11 +197,44 @@ Delivered as database-backed features (not a prototype):
 - Three loyalty calculation tests plus seeded demo CRM records and a Silver-tier
   loyalty ledger for `customer@supplyhub.test`.
 
+### Delivered: subscriptions
+
+- `subscription_plans`, `business_subscriptions`, and `subscription_invoices`, applied in
+  migration `20261121100000_phase6_subscriptions`, with a new `subscription.manage`
+  business permission and subscription audit events.
+- Admin plan management at `/admin/subscriptions` creates and edits active, draft,
+  or archived plans with monthly pricing, seat limits, and feature lists.
+- Business subscription page at `/business/[id]/subscription` lets authorized
+  members choose a plan, set seats, cancel, and mark invoices paid. Plan cards
+  show monthly pricing per billable seat above the included allocation.
+- Subscription state transitions and billable-seat calculations are covered by
+  three unit tests, and the seed data includes three plans plus an active Growth
+  subscription and issued invoice for Atelier Nord Studio.
+
+### Delivered: account security
+
+- TOTP 2FA is now real: secrets are AES-256-GCM encrypted at rest with a key
+  derived from the server-only `AUTH_SECRET`, and sign-in accepts either a current
+  authenticator code or a single-use backup code.
+- `backup_codes` and `phone_verifications` tables (migrations
+  `20261123120000_phase6_account_security` and
+  `20261123121500_phase6_phone_verification_consumption`) store only hashes.
+  TOTP replay is blocked by `two_factor_last_step`; backup codes and phone codes
+  are consumed once, and phone verification is rate limited and audited.
+- The account security page at `/account/security` replaces the experience-centre
+  security simulation. Login-alert history remains a device-local aid; no real
+  event stream is recorded for it.
+- SMS delivery is provider-neutral: development writes codes to `.local/sms-outbox`,
+  while production reports `phone.delivery_unconfigured` rather than inventing a
+  provider. Choosing an SMS provider remains unresolved business policy.
+- Eight unit tests cover RFC 6238 vectors, replay blocking, backup-code hashing,
+  and phone-code binding.
+
 ### Remaining Phase 6 work
 
-- `subscription_plans`, `business_subscriptions`, `subscription_invoices`
 - `business_ai_insights`, `ai_recommendation_history`
-- Real security features (TOTP 2FA, phone OTP) — replace simulation
+- Choose and document an SMS provider before enabling phone verification in production
+- Replace the device-local login-alert simulation with real sign-in events
 
 **Deliverable**: Real chat, real loyalty, real 2FA, AI business insights, subscription revenue.
 
