@@ -193,6 +193,6 @@
 | Feature | Status | Notes |
 |---|---|---|
 | Search typo correction | ✅ | NEW: Levenshtein distance in `/api/search-suggest` |
-| AI shopping assistant | 🔴 | Not present |
-| Personalized recommendations | 🔴 | Not present |
-| Vendor business intelligence | 🔴 | Not present |
+| AI shopping assistant | 🔴 | Not present — rule-based insights are not a chat assistant |
+| Personalized recommendations | ✅ | Database-backed suggestions at `/recommendations` using orders, wishlists, catalog popularity, and stock |
+| Vendor business intelligence | ✅ | Deterministic business insights at `/business/[id]/insights` from sales, orders, inventory, and CRM data |

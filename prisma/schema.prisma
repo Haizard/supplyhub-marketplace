@@ -369,6 +369,9 @@ enum AuditAction {
   BACKUP_CODE_USED
   PHONE_VERIFICATION_SENT
   PHONE_VERIFIED
+  AI_INSIGHTS_GENERATED
+  AI_RECOMMENDATIONS_GENERATED
+  AI_RECOMMENDATION_DISMISSED
 }
 
 model User {
@@ -420,6 +423,7 @@ model User {
   loyaltyAccount            LoyaltyAccount?
   backupCodes               BackupCode[]
   phoneVerifications        PhoneVerification[]
+  aiRecommendations         AiRecommendationHistory[]
   createdAt                 DateTime                @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt                 DateTime                @updatedAt @map("updated_at") @db.Timestamptz(6)
 
@@ -469,6 +473,7 @@ model Business {
   purchaseOrders     BusinessPurchaseOrder[]
   invoices           BusinessInvoice[]
   subscriptions      BusinessSubscription[]
+  aiInsights         BusinessAiInsight[]
   createdAt          DateTime                @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt          DateTime                @updatedAt @map("updated_at") @db.Timestamptz(6)
 
@@ -719,6 +724,7 @@ model Product {
   reviews            ProductReview[]
   wholesaleListings  WholesaleListing[]
   chats              Chat[]
+  aiRecommendations  AiRecommendationHistory[]
   createdAt          DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt          DateTime            @updatedAt @map("updated_at") @db.Timestamptz(6)
 
@@ -2168,4 +2174,66 @@ model PhoneVerification {
 
   @@index([userId, phone, createdAt])
   @@map("phone_verifications")
+}
+
+enum InsightType {
+  LOW_STOCK
+  REVENUE_TREND
+  INVENTORY_IMBALANCE
+  CUSTOMER_RETENTION
+  RECOMMENDED_RESTOCK
+}
+
+enum InsightSeverity {
+  INFO
+  OPPORTUNITY
+  WARNING
+}
+
+enum RecommendationSurface {
+  HOME
+  CATALOG
+  ACCOUNT
+}
+
+/// Rule-based snapshot generated from first-party business data. No raw model
+/// output is stored and no external inference provider is required.
+model BusinessAiInsight {
+  id             String          @id @default(uuid()) @db.Uuid
+  businessId     String          @map("business_id") @db.Uuid
+  business       Business        @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  type           InsightType
+  severity       InsightSeverity @default(INFO)
+  title          String          @db.VarChar(160)
+  summary        String          @db.VarChar(600)
+  recommendation String          @db.VarChar(600)
+  confidence     Int             @default(80)
+  evidence       Json            @default("{}")
+  modelVersion   String          @default("configurable-rules-v1") @map("model_version") @db.VarChar(64)
+  generatedAt    DateTime        @default(now()) @map("generated_at") @db.Timestamptz(6)
+  expiresAt      DateTime?       @map("expires_at") @db.Timestamptz(6)
+  createdAt      DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([businessId, generatedAt])
+  @@map("business_ai_insights")
+}
+
+/// Persisted buyer-facing recommendations so the same suggestion can be
+/// explained, measured, and dismissed without recomputing on every render.
+model AiRecommendationHistory {
+  id           String                @id @default(uuid()) @db.Uuid
+  userId       String                @map("user_id") @db.Uuid
+  user         User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId    String                @map("product_id") @db.Uuid
+  product      Product               @relation(fields: [productId], references: [id], onDelete: Cascade)
+  surface      RecommendationSurface @default(CATALOG)
+  score        Decimal?              @db.Decimal(6, 3)
+  reason       String                @db.VarChar(300)
+  modelVersion String                @default("configurable-rules-v1") @map("model_version") @db.VarChar(64)
+  createdAt    DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
+  dismissedAt  DateTime?             @map("dismissed_at") @db.Timestamptz(6)
+
+  @@index([userId, createdAt])
+  @@index([productId])
+  @@map("ai_recommendation_history")
 }

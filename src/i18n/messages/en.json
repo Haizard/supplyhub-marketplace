@@ -1104,5 +1104,30 @@
     "done": "Done",
     "backToAccount": "Back to account",
     "saved": "Saved."
+  },
+  "insights": {
+    "eyebrow": "Business intelligence",
+    "title": "Signals from your business data",
+    "navLabel": "Insights",
+    "recommendationsNav": "Picked for you",
+    "recommendationsTitle": "Picked for you",
+    "recommendationsSubtitle": "Suggestions based on your past orders and saved products.",
+    "businessSubtitle": "Rule-based signals from sales, inventory, and customer records.",
+    "refresh": "Refresh insights",
+    "refreshRecommendations": "Refresh suggestions",
+    "generated": "Generated {date}",
+    "confidence": "{percent}% confidence",
+    "noInsights": "No insights yet",
+    "noInsightsBody": "Refresh to generate the first snapshot from current business data.",
+    "noRecommendations": "No recommendations yet",
+    "noRecommendationsBody": "Browse the catalog or save products to get better suggestions.",
+    "viewProduct": "View product",
+    "dismiss": "Dismiss",
+    "saved": "Updated.",
+    "severity": {
+      "INFO": "Info",
+      "OPPORTUNITY": "Opportunity",
+      "WARNING": "Warning"
+    }
   }
 }

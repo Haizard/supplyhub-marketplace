@@ -1104,5 +1104,30 @@
     "done": "Terminé",
     "backToAccount": "Retour au compte",
     "saved": "Enregistré."
+  },
+  "insights": {
+    "eyebrow": "Intelligence d’affaires",
+    "title": "Signaux issus de vos données",
+    "navLabel": "Analyses",
+    "recommendationsNav": "Sélectionné pour vous",
+    "recommendationsTitle": "Sélectionné pour vous",
+    "recommendationsSubtitle": "Suggestions basées sur vos commandes passées et vos produits enregistrés.",
+    "businessSubtitle": "Signaux déterministes issus des ventes, des stocks et des dossiers clients.",
+    "refresh": "Actualiser les analyses",
+    "refreshRecommendations": "Actualiser les suggestions",
+    "generated": "Généré le {date}",
+    "confidence": "Confiance {percent} %",
+    "noInsights": "Aucune analyse pour l’instant",
+    "noInsightsBody": "Actualisez pour créer un premier instantané à partir des données actuelles.",
+    "noRecommendations": "Aucune suggestion pour l’instant",
+    "noRecommendationsBody": "Parcourez le catalogue ou enregistrez des produits pour obtenir de meilleures suggestions.",
+    "viewProduct": "Voir le produit",
+    "dismiss": "Ignorer",
+    "saved": "Mis à jour.",
+    "severity": {
+      "INFO": "Info",
+      "OPPORTUNITY": "Opportunité",
+      "WARNING": "Alerte"
+    }
   }
 }

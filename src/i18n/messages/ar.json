@@ -1104,5 +1104,30 @@
     "done": "تم",
     "backToAccount": "العودة إلى الحساب",
     "saved": "تم الحفظ."
+  },
+  "insights": {
+    "eyebrow": "ذكاء الأعمال",
+    "title": "إشارات من بيانات نشاطك التجاري",
+    "navLabel": "رؤى",
+    "recommendationsNav": "مختارة لك",
+    "recommendationsTitle": "مختارة لك",
+    "recommendationsSubtitle": "اقتراحات مبنية على طلباتك السابقة والمنتجات المحفوظة.",
+    "businessSubtitle": "إشارات مبنية على القواعد من المبيعات والمخزون وسجلات العملاء.",
+    "refresh": "تحديث الرؤى",
+    "refreshRecommendations": "تحديث الاقتراحات",
+    "generated": "تم التوليد {date}",
+    "confidence": "ثقة {percent}%",
+    "noInsights": "لا توجد رؤى بعد",
+    "noInsightsBody": "حدّث لإنشاء أول ملخص من بيانات العمل الحالية.",
+    "noRecommendations": "لا توجد اقتراحات بعد",
+    "noRecommendationsBody": "تصفّح الكتالوج أو احفظ منتجات للحصول على اقتراحات أفضل.",
+    "viewProduct": "عرض المنتج",
+    "dismiss": "إخفاء",
+    "saved": "تم التحديث.",
+    "severity": {
+      "INFO": "معلومة",
+      "OPPORTUNITY": "فرصة",
+      "WARNING": "تحذير"
+    }
   }
 }

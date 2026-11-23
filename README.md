@@ -159,6 +159,20 @@ rawBody))` before parsing, enforces the timestamp tolerance, accepts the previou
   `.local/sms-outbox`; production reports `phone.delivery_unconfigured` until an
   SMS provider is chosen. Login-alert history remains a device-local aid.
 
+## Insights and recommendations (Phase 6)
+
+- `/business/[id]/insights` shows deterministic, rule-based snapshots built from
+  real sales, vendor orders, product stock, warehouse balances, and CRM records.
+  The rule version is `configurable-rules-v1`; no external model or network call
+  is made, and no business policy is inferred.
+- `/recommendations` ranks published products using past orders, wishlists,
+  catalog popularity, and availability. Scores are integer basis points stored
+  as decimals in `ai_recommendation_history`, so a suggestion can be explained,
+  refreshed, and dismissed.
+- Both surfaces are access-controlled: business insights require the
+  `insights.read` business permission, and recommendations are account-scoped.
+  Generation and dismissal write audit events.
+
 ## Storefront (Phase 2, now database-backed)
 
 - The catalogue was prototyped as an isolated demo layer and moved to PostgreSQL in Phase 4. The

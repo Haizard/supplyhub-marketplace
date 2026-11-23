@@ -19,4 +19,6 @@ export const AUTH_RATE_LIMITS = {
   twoFactorByUser: { limit: 8, windowMs: 10 * 60 * 1000 },
   phoneCodeByUser: { limit: 3, windowMs: 60 * 60 * 1000 },
   phoneVerifyByUser: { limit: 8, windowMs: 10 * 60 * 1000 },
+  insightsByUser: { limit: 12, windowMs: 10 * 60 * 1000 },
+  recommendationsByUser: { limit: 12, windowMs: 10 * 60 * 1000 },
 } satisfies Record<string, RateLimitRule>;

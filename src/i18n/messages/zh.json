@@ -1104,5 +1104,30 @@
     "done": "完成",
     "backToAccount": "返回账户",
     "saved": "已保存。"
+  },
+  "insights": {
+    "eyebrow": "商业智能",
+    "title": "来自业务数据的信号",
+    "navLabel": "洞察",
+    "recommendationsNav": "为你精选",
+    "recommendationsTitle": "为你精选",
+    "recommendationsSubtitle": "根据您过去的订单和收藏商品生成的建议。",
+    "businessSubtitle": "基于销售、库存和客户记录的规则信号。",
+    "refresh": "刷新洞察",
+    "refreshRecommendations": "刷新建议",
+    "generated": "生成于 {date}",
+    "confidence": "置信度 {percent}%",
+    "noInsights": "暂无洞察",
+    "noInsightsBody": "刷新后可根据当前业务数据生成首份快照。",
+    "noRecommendations": "暂无建议",
+    "noRecommendationsBody": "浏览目录或收藏商品，以获得更好的建议。",
+    "viewProduct": "查看商品",
+    "dismiss": "忽略",
+    "saved": "已更新。",
+    "severity": {
+      "INFO": "信息",
+      "OPPORTUNITY": "机会",
+      "WARNING": "提醒"
+    }
   }
 }

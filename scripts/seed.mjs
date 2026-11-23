@@ -332,6 +332,7 @@ const demoBusinesses = [
           "pos.sale.create",
           "pos.register.close",
           "subscription.manage",
+          "insights.read",
         ],
       },
       {
@@ -465,6 +466,7 @@ const demoStaffPermissionKeys = [
   "crm.read",
   "crm.manage",
   "subscription.manage",
+  "insights.read",
 ];
 
 function normalize(value) {

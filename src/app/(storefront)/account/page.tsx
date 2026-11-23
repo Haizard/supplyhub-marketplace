@@ -210,6 +210,9 @@ async function AccountContent({
                 <Link href="/account/orders">View your orders</Link>
               </Button>
               <Button asChild variant="ghost" size="sm">
+                <Link href="/recommendations">{t("insights.recommendationsNav")}</Link>
+              </Button>
+              <Button asChild variant="ghost" size="sm">
                 <Link href="/cart">Open your cart</Link>
               </Button>
             </div>

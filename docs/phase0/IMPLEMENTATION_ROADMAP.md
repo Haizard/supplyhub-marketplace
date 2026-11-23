@@ -1,6 +1,6 @@
 # Implementation Roadmap
 
-> Phase 0 audit — updated for the Phase 6 account security slice.
+> Phase 0 audit — updated for the Phase 6 AI insights slice.
 
 ## What is Already Done (confirmed after full re-inspection)
 
@@ -230,9 +230,23 @@ Delivered as database-backed features (not a prototype):
 - Eight unit tests cover RFC 6238 vectors, replay blocking, backup-code hashing,
   and phone-code binding.
 
+### Delivered: AI insights and recommendations
+
+- `business_ai_insights` and `ai_recommendation_history`, applied in migration
+  `20261123124500_phase6_ai_insights`, with a new `insights.read` business permission
+  and audit events for generation and dismissal.
+- Business insights at `/business/[id]/insights` are deterministic rule snapshots
+  under version `configurable-rules-v1`. They are built from real sales, vendor
+  orders, product stock, warehouse balances, and CRM customer records. No external
+  model or provider is called.
+- Buyer recommendations at `/recommendations` use orders, wishlists, catalog
+  popularity, and stock. Scores are integer basis points persisted as decimals and
+  every suggestion can be refreshed or dismissed.
+- Four unit tests cover threshold generation, stable fallback output, wishlist
+  affinity scoring, and deterministic ranking.
+
 ### Remaining Phase 6 work
 
-- `business_ai_insights`, `ai_recommendation_history`
 - Choose and document an SMS provider before enabling phone verification in production
 - Replace the device-local login-alert simulation with real sign-in events
 

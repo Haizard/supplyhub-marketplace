@@ -1104,5 +1104,30 @@
     "done": "Imefanyika",
     "backToAccount": "Rudi kwenye akaunti",
     "saved": "Imehifadhiwa."
+  },
+  "insights": {
+    "eyebrow": "Akili za biashara",
+    "title": "Ishara kutoka kwa data ya biashara yako",
+    "navLabel": "Ufahamu",
+    "recommendationsNav": "Zilizochaguliwa kwa ajili yako",
+    "recommendationsTitle": "Zilizochaguliwa kwa ajili yako",
+    "recommendationsSubtitle": "Mapendekezo kulingana na maagizo yako ya awali na bidhaa ulizohifadhi.",
+    "businessSubtitle": "Ishara za kanuni kutoka kwa mauzo, hesabu, na rekodi za wateja.",
+    "refresh": "Sasisha ufahamu",
+    "refreshRecommendations": "Sasisha mapendekezo",
+    "generated": "Imetengenezwa {date}",
+    "confidence": "Uaminifu {percent}%",
+    "noInsights": "Hakuna ufahamu bado",
+    "noInsightsBody": "Sasisha ili kutengeneza muhtasari wa kwanza kutoka kwa data ya sasa.",
+    "noRecommendations": "Hakuna mapendekezo bado",
+    "noRecommendationsBody": "Vinjari katalogi au hifadhi bidhaa ili kupata mapendekezo bora.",
+    "viewProduct": "Tazama bidhaa",
+    "dismiss": "Futa",
+    "saved": "Imesasishwa.",
+    "severity": {
+      "INFO": "Taarifa",
+      "OPPORTUNITY": "Fursa",
+      "WARNING": "Onyo"
+    }
   }
 }
