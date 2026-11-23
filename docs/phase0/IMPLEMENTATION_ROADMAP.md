@@ -183,9 +183,22 @@ Delivered as database-backed features (not a prototype):
 - Three messaging unit tests plus a seeded demo conversation between
   `customer@supplyhub.test` and Atelier Nord.
 
+### Delivered: CRM and loyalty
+
+- `customers`, `loyalty_accounts`, and `loyalty_transactions` tables, applied in
+  migration `20261121093000_phase6_crm_loyalty`, plus `crm.read` and
+  `crm.manage` studio permissions.
+- Studio CRM at `/vendor/customers`: one record per buyer, with order/spend
+  aggregates derived from real `VendorOrder` rows and editable private notes and
+  segments. Records are created automatically when an order is placed.
+- Buyer loyalty at `/account/loyalty`: points balance, lifetime tier progress,
+  transaction history, and single-use checkout coupon redemption (500 points →
+  5,000 TZS). Points are awarded exactly once when an order reaches delivered.
+- Three loyalty calculation tests plus seeded demo CRM records and a Silver-tier
+  loyalty ledger for `customer@supplyhub.test`.
+
 ### Remaining Phase 6 work
 
-- `customers` (vendor-scoped CRM), `loyalty_accounts`, `loyalty_transactions`
 - `subscription_plans`, `business_subscriptions`, `subscription_invoices`
 - `business_ai_insights`, `ai_recommendation_history`
 - Real security features (TOTP 2FA, phone OTP) — replace simulation

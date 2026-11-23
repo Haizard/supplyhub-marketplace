@@ -563,7 +563,9 @@
     "earningsShort": "Gains",
     "profileShort": "Profil",
     "messages": "Messages",
-    "messagesShort": "Chat"
+    "messagesShort": "Chat",
+    "customers": "Clients",
+    "customersShort": "Clients"
   },
   "admin": {
     "nav": "Administration",
@@ -960,5 +962,56 @@
     "error": "Ce message n’a pas pu être envoyé.",
     "opening": "Ouverture…",
     "select": "Sélectionnez une conversation à lire."
+  },
+  "loyalty": {
+    "eyebrow": "Fidélité",
+    "title": "Points de fidélité",
+    "subtitle": "Les points sont attribués automatiquement à la livraison de votre commande.",
+    "balance": "Points disponibles",
+    "tier": "Votre niveau",
+    "tiers": {
+      "BRONZE": "Bronze",
+      "SILVER": "Argent",
+      "GOLD": "Or"
+    },
+    "nextTier": "{tier} · {remaining} points restants",
+    "maxTier": "Niveau maximal débloqué",
+    "lifetime": "{points} points cumulés",
+    "redeemTitle": "Convertir vos points",
+    "redeemBody": "Échangez {cost} points contre un bon de {value} TZS.",
+    "redeem": "Échanger {cost} points",
+    "redeemSuccess": "Code de récompense : {code}",
+    "needMore": "Il vous manque {remaining} points.",
+    "error": "La récompense n’a pas pu être échangée.",
+    "history": "Historique des points",
+    "empty": "Aucune activité de points.",
+    "balanceAfter": "{points} pts après",
+    "type": {
+      "EARNED_PURCHASE": "Commande livrée",
+      "REDEEMED_REWARD": "Récompense échangée",
+      "ADJUSTMENT": "Ajustement",
+      "REFUND_REVERSAL": "Annulation de remboursement"
+    }
+  },
+  "crm": {
+    "title": "Clients",
+    "subtitle": "Acheteurs ayant commandé à votre studio.",
+    "empty": "Aucun client",
+    "emptyBody": "Les fiches clients sont créées automatiquement à la commande.",
+    "orders": "Commandes",
+    "spend": "Dépenses",
+    "lastOrder": "Dernière commande",
+    "note": "Note du studio",
+    "notePlaceholder": "Ajoutez une note privée sur cet acheteur…",
+    "noteLabel": "Note",
+    "segmentLabel": "Segment client",
+    "segment": {
+      "NEW": "Nouveau",
+      "RETURNING": "Récurrent",
+      "VIP": "VIP"
+    },
+    "save": "Enregistrer",
+    "saved": "Fiche client enregistrée.",
+    "error": "La fiche client n’a pas pu être enregistrée."
   }
 }

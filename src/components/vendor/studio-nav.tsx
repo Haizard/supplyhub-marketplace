@@ -10,6 +10,7 @@ import {
   RotateCcw,
   Truck,
   UserRound,
+  Users,
   Wallet,
   Warehouse,
 } from "lucide-react";
@@ -67,6 +68,13 @@ export const studioTabs = [
     mobileLabelKey: "studio.messagesShort",
     icon: MessageSquare,
     active: (pathname: string) => pathname.startsWith("/vendor/messages"),
+  },
+  {
+    href: "/vendor/customers",
+    labelKey: "studio.customers",
+    mobileLabelKey: "studio.customersShort",
+    icon: Users,
+    active: (pathname: string) => pathname.startsWith("/vendor/customers"),
   },
   {
     href: "/vendor/wholesale",

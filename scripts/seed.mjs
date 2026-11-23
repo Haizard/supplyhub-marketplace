@@ -461,6 +461,8 @@ const demoStaffPermissionKeys = [
   "b2b.purchase_order.create",
   "b2b.invoice.read",
   "messaging.reply",
+  "crm.read",
+  "crm.manage",
 ];
 
 function normalize(value) {
@@ -1041,6 +1043,60 @@ try {
        read_at = EXCLUDED.read_at`,
     [demoChatId, customer.id, studios[0].ownerId],
   );
+
+  // Phase 6: CRM records and a loyalty ledger for the demo buyer.
+  const demoLoyaltyAccountId = "80000000-0000-4000-8000-000000000001";
+  await client.query(
+    `INSERT INTO loyalty_accounts (
+       id, user_id, points_balance, lifetime_points, tier, created_at, updated_at
+     )
+     VALUES ($1, $2, 2400, 3400, 'SILVER', now() - interval '2 months', now())
+     ON CONFLICT (user_id) DO UPDATE SET
+       points_balance = EXCLUDED.points_balance,
+       lifetime_points = EXCLUDED.lifetime_points,
+       tier = EXCLUDED.tier`,
+    [demoLoyaltyAccountId, customer.id],
+  );
+  await client.query(
+    `INSERT INTO loyalty_transactions (
+       id, account_id, type, points, balance_after, reference_type, reference_id,
+       description, created_at
+     )
+     VALUES
+       ('80000000-0000-4000-8000-000000000011', $1, 'EARNED_PURCHASE', 1800, 1800,
+        'order', 'LOYD-DEMO-001', 'Points earned from a delivered order.', now() - interval '50 days'),
+       ('80000000-0000-4000-8000-000000000012', $1, 'EARNED_PURCHASE', 1600, 3400,
+        'order', 'LOYD-DEMO-002', 'Points earned from a delivered order.', now() - interval '20 days'),
+       ('80000000-0000-4000-8000-000000000013', $1, 'REDEEMED_REWARD', -500, 2900,
+        'coupon', 'LOYC-DEMO-001', 'Redeemed for a checkout reward.', now() - interval '10 days'),
+       ('80000000-0000-4000-8000-000000000014', $1, 'REDEEMED_REWARD', -500, 2400,
+        'coupon', 'LOYC-DEMO-002', 'Redeemed for a checkout reward.', now() - interval '2 days')
+     ON CONFLICT (id) DO NOTHING`,
+    [demoLoyaltyAccountId],
+  );
+
+  for (const [index, studio] of studios.entries()) {
+    await client.query(
+      `INSERT INTO customers (
+         id, vendor_id, user_id, segment, note, created_at, updated_at
+       )
+       VALUES ($1, $2, $3, $4, $5, now() - interval '30 days', now())
+       ON CONFLICT (vendor_id, user_id) DO UPDATE SET
+         segment = EXCLUDED.segment,
+         note = EXCLUDED.note`,
+      [
+        `90000000-0000-4000-8000-00000000000${index + 1}`,
+        studio.id,
+        customer.id,
+        index === 0 ? "VIP" : index === 1 ? "RETURNING" : "NEW",
+        index === 0
+          ? "Prefers speckled glazes. Follow up when new ceramics arrive."
+          : index === 1
+            ? "Regular stockroom buyer; asks for volume tiers."
+            : "First contact via studio chat.",
+      ],
+    );
+  }
 
   // Phase 4: documented default delivery pricing (TZS).
   await client.query(

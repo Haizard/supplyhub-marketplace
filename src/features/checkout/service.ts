@@ -3,6 +3,7 @@ import "server-only";
 import type { PrismaClient } from "@/generated/prisma/client";
 import { Prisma } from "@/generated/prisma/client";
 import { centsToDecimalString, decimalToCents } from "@/features/catalog/money";
+import { ensureCustomerRecord } from "@/features/crm/service";
 import {
   evaluateCoupon,
   normalizeCouponCode,
@@ -502,6 +503,8 @@ async function runCheckout(database: PrismaClient, input: PlaceOrderInput): Prom
         },
         select: { id: true },
       });
+
+      await ensureCustomerRecord(transaction, group.vendorId, input.customerId);
 
       await recordOrderStatusChange(transaction, {
         orderId: order.id,

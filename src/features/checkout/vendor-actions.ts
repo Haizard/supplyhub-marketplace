@@ -8,6 +8,7 @@ import { requireStudioAccess } from "@/server/business/studio-access";
 import { getDatabase } from "@/server/db/client";
 import { logger } from "@/lib/logging/logger";
 import { firstFieldErrors, formValue, type FormState } from "@/features/identity/form-state";
+import { awardOrderPoints } from "@/features/loyalty/service";
 import { shipmentSchema } from "@/features/shipments/validation";
 import { nextVendorOrderStatus } from "./status";
 import { recordOrderStatusChange } from "./status-history";
@@ -132,7 +133,7 @@ export async function updateVendorOrderStatusAction(
       if (aggregate) {
         const parent = await transaction.order.findUnique({
           where: { id: current.orderId },
-          select: { status: true },
+          select: { status: true, total: true, customerId: true },
         });
         if (
           parent &&
@@ -158,6 +159,15 @@ export async function updateVendorOrderStatusAction(
             targetId: current.orderId,
             metadata: { from: parent.status, to: aggregate, source: "vendor_fulfillment" },
           });
+
+          if (aggregate === "DELIVERED") {
+            await awardOrderPoints(transaction, {
+              orderId: current.orderId,
+              customerId: parent.customerId,
+              total: parent.total,
+              actorId: actor.id,
+            });
+          }
         }
       }
       return "updated" as const;

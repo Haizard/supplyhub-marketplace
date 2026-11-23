@@ -33,7 +33,7 @@
 | Staff roles and permissions | 🔴 | No sub-vendor role system |
 | POS (point of sale) | 🔴 | Not present |
 | Vendor business analytics | 🔴 | No analytics beyond order list |
-| Vendor CRM | 🔴 | Not present |
+| Vendor CRM | ✅ | Database-backed `/vendor/customers` with notes, segments and order aggregates |
 | Supplier / procurement management | 🔴 | Not present |
 
 ## Catalog & Products
@@ -135,6 +135,7 @@
 | Wishlist (persistent) | ✅ | DB-backed via `WishlistItem`, shared by catalog and experience centre |
 | Price watch notifications | 🔴 | Client-side localStorage only |
 | Buyer↔studio chat | ✅ | DB-backed threads at `/messages` and `/vendor/messages`, with read receipts |
+| Loyalty points | ✅ | DB-backed ledger at `/account/loyalty`, earned on delivery and redeemable for coupons |
 | Security (2FA, phone verify) | 🔴 | Client-side simulation only |
 | Dispute resolution | 🔴 | Not present |
 | Escrow / payment holding | 🔴 | Simulated in experience centre; no real escrow |

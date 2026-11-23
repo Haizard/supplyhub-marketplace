@@ -227,6 +227,27 @@ enum PayoutStatus {
   FAILED
 }
 
+// ── Phase 6: CRM and loyalty ────────────────────────────────────────────────
+
+enum CustomerSegment {
+  NEW
+  RETURNING
+  VIP
+}
+
+enum LoyaltyTier {
+  BRONZE
+  SILVER
+  GOLD
+}
+
+enum LoyaltyTransactionType {
+  EARNED_PURCHASE
+  REDEEMED_REWARD
+  ADJUSTMENT
+  REFUND_REVERSAL
+}
+
 enum AuditAction {
   VENDOR_APPLICATION_SUBMITTED
   VENDOR_APPROVED
@@ -308,6 +329,11 @@ enum AuditAction {
   INVOICE_PAID
   CHAT_CREATED
   CHAT_MESSAGE_SENT
+  CUSTOMER_CREATED
+  CUSTOMER_UPDATED
+  LOYALTY_ACCOUNT_CREATED
+  LOYALTY_POINTS_EARNED
+  LOYALTY_POINTS_REDEEMED
 }
 
 model User {
@@ -351,6 +377,8 @@ model User {
   submittedPurchaseOrders   BusinessPurchaseOrder[] @relation("PurchaseOrderSubmitter")
   buyerChats                Chat[]                  @relation("BuyerChats")
   chatMessages              ChatMessage[]           @relation("ChatMessageSender")
+  customerRecords           Customer[]              @relation("CustomerUser")
+  loyaltyAccount            LoyaltyAccount?
   createdAt                 DateTime                @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt                 DateTime                @updatedAt @map("updated_at") @db.Timestamptz(6)
 
@@ -563,6 +591,7 @@ model Vendor {
   purchaseOrders     BusinessPurchaseOrder[]
   invoices           BusinessInvoice[]
   chats              Chat[]                  @relation("VendorChats")
+  customers          Customer[]
   createdAt          DateTime                @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt          DateTime                @updatedAt @map("updated_at") @db.Timestamptz(6)
 
@@ -1952,4 +1981,53 @@ model ChatMessage {
 
   @@index([chatId, createdAt])
   @@map("chat_messages")
+}
+
+/// Vendor-scoped CRM record for a buyer. Aggregates are derived from paid
+/// orders; this table stores the studio's own note and segmentation.
+model Customer {
+  id        String          @id @default(uuid()) @db.Uuid
+  vendorId  String          @map("vendor_id") @db.Uuid
+  vendor    Vendor          @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  userId    String          @map("user_id") @db.Uuid
+  user      User            @relation("CustomerUser", fields: [userId], references: [id], onDelete: Cascade)
+  segment   CustomerSegment @default(NEW)
+  note      String?         @db.Text
+  createdAt DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime        @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@unique([vendorId, userId])
+  @@index([vendorId, segment])
+  @@map("customers")
+}
+
+model LoyaltyAccount {
+  id             String                @id @default(uuid()) @db.Uuid
+  userId         String                @unique @map("user_id") @db.Uuid
+  user           User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pointsBalance  Int                   @default(0) @map("points_balance")
+  lifetimePoints Int                   @default(0) @map("lifetime_points")
+  tier           LoyaltyTier           @default(BRONZE)
+  transactions   LoyaltyTransaction[]
+  createdAt      DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime              @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("loyalty_accounts")
+}
+
+model LoyaltyTransaction {
+  id            String                  @id @default(uuid()) @db.Uuid
+  accountId     String                  @map("account_id") @db.Uuid
+  account       LoyaltyAccount          @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  type          LoyaltyTransactionType
+  points        Int
+  balanceAfter  Int                     @map("balance_after")
+  referenceType String?                 @map("reference_type") @db.VarChar(40)
+  referenceId   String?                 @map("reference_id") @db.VarChar(64)
+  description   String
+  createdAt     DateTime                @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@unique([referenceType, referenceId, type])
+  @@index([accountId, createdAt])
+  @@map("loyalty_transactions")
 }

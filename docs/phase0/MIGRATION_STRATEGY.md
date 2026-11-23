@@ -94,6 +94,7 @@ business_invoices, business_invoice_items
 -- New tables
 subscription_plans, business_subscriptions, subscription_invoices,
 chats, chat_messages,       -- replaces experience centre simulation
+customers, loyalty_accounts, loyalty_transactions,
 agent_payouts,
 financial_accounts, journal_entries, journal_lines,
 reconciliation_records

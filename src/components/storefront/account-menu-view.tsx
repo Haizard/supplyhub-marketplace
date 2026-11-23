@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Award,
   Bike,
   Building2,
   ChevronDown,
@@ -83,6 +84,12 @@ export function AccountMenuView({ actor }: { actor: Actor | null }) {
           <Link href="/messages" className="w-full">
             <MessageSquare className="size-4" aria-hidden="true" />
             {t("messaging.title")}
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href="/account/loyalty" className="w-full">
+            <Award className="size-4" aria-hidden="true" />
+            {t("loyalty.title")}
           </Link>
         </DropdownMenuItem>
         {actor.business ? (

@@ -563,7 +563,9 @@
     "earningsShort": "الأرباح",
     "profileShort": "الملف",
     "messages": "الرسائل",
-    "messagesShort": "دردشة"
+    "messagesShort": "دردشة",
+    "customers": "العملاء",
+    "customersShort": "العملاء"
   },
   "admin": {
     "nav": "الإدارة",
@@ -960,5 +962,56 @@
     "error": "تعذّر إرسال هذه الرسالة.",
     "opening": "جارٍ الفتح…",
     "select": "اختر محادثة لقراءتها."
+  },
+  "loyalty": {
+    "eyebrow": "الولاء",
+    "title": "نقاط الولاء",
+    "subtitle": "تُكتسب النقاط تلقائيًا عند تسليم طلبك.",
+    "balance": "النقاط المتاحة",
+    "tier": "مستواك",
+    "tiers": {
+      "BRONZE": "برونزي",
+      "SILVER": "فضي",
+      "GOLD": "ذهبي"
+    },
+    "nextTier": "{tier} · تبقّت {remaining} نقطة",
+    "maxTier": "تم فتح أعلى مستوى",
+    "lifetime": "{points} نقطة إجمالًا",
+    "redeemTitle": "حوّل النقاط إلى مكافأة",
+    "redeemBody": "استبدل {cost} نقطة بقسيمة تسوّق بقيمة {value} شلن.",
+    "redeem": "استبدل {cost} نقطة",
+    "redeemSuccess": "رمز المكافأة: {code}",
+    "needMore": "تحتاج إلى {remaining} نقطة إضافية.",
+    "error": "تعذّر استبدال المكافأة.",
+    "history": "سجل النقاط",
+    "empty": "لا توجد حركة نقاط بعد.",
+    "balanceAfter": "{points} نقطة بعد",
+    "type": {
+      "EARNED_PURCHASE": "طلب تم تسليمه",
+      "REDEEMED_REWARD": "مكافأة مستبدلة",
+      "ADJUSTMENT": "تعديل",
+      "REFUND_REVERSAL": "عكس استرداد"
+    }
+  },
+  "crm": {
+    "title": "العملاء",
+    "subtitle": "المشترون الذين طلبوا من استوديوك.",
+    "empty": "لا يوجد عملاء بعد",
+    "emptyBody": "تُنشأ سجلات العملاء تلقائيًا عند الدفع.",
+    "orders": "الطلبات",
+    "spend": "الإنفاق",
+    "lastOrder": "آخر طلب",
+    "note": "ملاحظة الاستوديو",
+    "notePlaceholder": "أضف ملاحظة خاصة عن هذا المشتري…",
+    "noteLabel": "ملاحظة",
+    "segmentLabel": "فئة العميل",
+    "segment": {
+      "NEW": "جديد",
+      "RETURNING": "عودة",
+      "VIP": "VIP"
+    },
+    "save": "حفظ",
+    "saved": "تم حفظ سجل العميل.",
+    "error": "تعذّر حفظ سجل العميل."
   }
 }

@@ -563,7 +563,9 @@
     "earningsShort": "Mapato",
     "profileShort": "Wasifu",
     "messages": "Ujumbe",
-    "messagesShort": "Ongea"
+    "messagesShort": "Ongea",
+    "customers": "Wateja",
+    "customersShort": "Wateja"
   },
   "admin": {
     "nav": "Utawala",
@@ -960,5 +962,56 @@
     "error": "Ujumbe hauwezi kutumwa.",
     "opening": "Inafungua…",
     "select": "Chagua mazungumzo kuyasoma."
+  },
+  "loyalty": {
+    "eyebrow": "Uaminifu",
+    "title": "Pointi za uaminifu",
+    "subtitle": "Pointi hupatikana kiotomatiki agizo lako linapowasilishwa.",
+    "balance": "Pointi zilizopo",
+    "tier": "Kiwango chako",
+    "tiers": {
+      "BRONZE": "Shaba",
+      "SILVER": "Fedha",
+      "GOLD": "Dhahabu"
+    },
+    "nextTier": "{tier} · pointi {remaining} zimesalia",
+    "maxTier": "Kiwango cha juu kimefunguliwa",
+    "lifetime": "Pointi {points} za jumla",
+    "redeemTitle": "Badilisha pointi kuwa zawadi",
+    "redeemBody": "Badilisha pointi {cost} kupata kodi ya TZS {value}.",
+    "redeem": "Badilisha pointi {cost}",
+    "redeemSuccess": "Kodi ya zawadi: {code}",
+    "needMore": "Unahitaji pointi {remaining} zaidi.",
+    "error": "Zawadi haikuweza kubadilishwa.",
+    "history": "Historia ya pointi",
+    "empty": "Hakuna shughuli za pointi bado.",
+    "balanceAfter": "Pointi {points} baada",
+    "type": {
+      "EARNED_PURCHASE": "Agizo lililowasilishwa",
+      "REDEEMED_REWARD": "Zawadi iliyobadilishwa",
+      "ADJUSTMENT": "Marekebisho",
+      "REFUND_REVERSAL": "Kurudisha fedha"
+    }
+  },
+  "crm": {
+    "title": "Wateja",
+    "subtitle": "Wanunuzi waliowahi kuagiza kutoka studiou yako.",
+    "empty": "Hakuna wateja bado",
+    "emptyBody": "Rekodi za wateja huundwa kiotomatiki wakati wa malipo.",
+    "orders": "Maagizo",
+    "spend": "Matumizi",
+    "lastOrder": "Agizo la mwisho",
+    "note": "Dokezi la studio",
+    "notePlaceholder": "Andika dokezi la faragha kuhusu mnunuzi…",
+    "noteLabel": "Dokezi",
+    "segmentLabel": "Kikundi cha mteja",
+    "segment": {
+      "NEW": "Mpya",
+      "RETURNING": "Anarudi",
+      "VIP": "VIP"
+    },
+    "save": "Hifadhi",
+    "saved": "Rekodi ya mteja imehifadhiwa.",
+    "error": "Rekodi ya mteja haikuweza kuhifadhiwa."
   }
 }

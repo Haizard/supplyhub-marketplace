@@ -563,7 +563,9 @@
     "earningsShort": "Earnings",
     "profileShort": "Profile",
     "messages": "Messages",
-    "messagesShort": "Chat"
+    "messagesShort": "Chat",
+    "customers": "Customers",
+    "customersShort": "Customers"
   },
   "admin": {
     "nav": "Administration",
@@ -960,5 +962,56 @@
     "error": "That message could not be sent.",
     "opening": "Opening…",
     "select": "Select a conversation to read it."
+  },
+  "loyalty": {
+    "eyebrow": "Loyalty",
+    "title": "Loyalty points",
+    "subtitle": "Points are earned automatically when your order is delivered.",
+    "balance": "Available points",
+    "tier": "Your tier",
+    "tiers": {
+      "BRONZE": "Bronze",
+      "SILVER": "Silver",
+      "GOLD": "Gold"
+    },
+    "nextTier": "{tier} · {remaining} points to go",
+    "maxTier": "Top tier unlocked",
+    "lifetime": "{points} lifetime points",
+    "redeemTitle": "Turn points into a reward",
+    "redeemBody": "Redeem {cost} points for a {value} TZS checkout coupon.",
+    "redeem": "Redeem {cost} points",
+    "redeemSuccess": "Reward code: {code}",
+    "needMore": "You need {remaining} more points.",
+    "error": "The reward could not be redeemed.",
+    "history": "Point history",
+    "empty": "No points activity yet.",
+    "balanceAfter": "{points} pts after",
+    "type": {
+      "EARNED_PURCHASE": "Delivered order",
+      "REDEEMED_REWARD": "Reward redeemed",
+      "ADJUSTMENT": "Adjustment",
+      "REFUND_REVERSAL": "Refund reversal"
+    }
+  },
+  "crm": {
+    "title": "Customers",
+    "subtitle": "Buyers who have ordered from your studio.",
+    "empty": "No customers yet",
+    "emptyBody": "Customer records are created automatically at checkout.",
+    "orders": "Orders",
+    "spend": "Spend",
+    "lastOrder": "Last order",
+    "note": "Studio note",
+    "notePlaceholder": "Add a private note about this buyer…",
+    "noteLabel": "Note",
+    "segmentLabel": "Customer segment",
+    "segment": {
+      "NEW": "New",
+      "RETURNING": "Returning",
+      "VIP": "VIP"
+    },
+    "save": "Save",
+    "saved": "Customer record saved.",
+    "error": "The customer record could not be saved."
   }
 }

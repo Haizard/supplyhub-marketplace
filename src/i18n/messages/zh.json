@@ -563,7 +563,9 @@
     "earningsShort": "收益",
     "profileShort": "资料",
     "messages": "消息",
-    "messagesShort": "沟通"
+    "messagesShort": "沟通",
+    "customers": "客户",
+    "customersShort": "客户"
   },
   "admin": {
     "nav": "管理后台",
@@ -960,5 +962,56 @@
     "error": "消息发送失败。",
     "opening": "正在打开…",
     "select": "选择一条对话进行阅读。"
+  },
+  "loyalty": {
+    "eyebrow": "会员积分",
+    "title": "积分",
+    "subtitle": "订单送达后会自动获得积分。",
+    "balance": "可用积分",
+    "tier": "当前等级",
+    "tiers": {
+      "BRONZE": "青铜",
+      "SILVER": "白银",
+      "GOLD": "黄金"
+    },
+    "nextTier": "{tier} · 还差 {remaining} 积分",
+    "maxTier": "已解锁最高等级",
+    "lifetime": "累计 {points} 积分",
+    "redeemTitle": "兑换奖励",
+    "redeemBody": "用 {cost} 积分兑换 {value} 坦桑尼亚先令优惠券。",
+    "redeem": "兑换 {cost} 积分",
+    "redeemSuccess": "奖励码：{code}",
+    "needMore": "还需要 {remaining} 积分。",
+    "error": "奖励兑换失败。",
+    "history": "积分记录",
+    "empty": "暂无积分记录。",
+    "balanceAfter": "之后 {points} 积分",
+    "type": {
+      "EARNED_PURCHASE": "订单送达奖励",
+      "REDEEMED_REWARD": "奖励兑换",
+      "ADJUSTMENT": "调整",
+      "REFUND_REVERSAL": "退款回冲"
+    }
+  },
+  "crm": {
+    "title": "客户",
+    "subtitle": "曾向您的工作室下单的买家。",
+    "empty": "暂无客户",
+    "emptyBody": "客户记录会在结账时自动创建。",
+    "orders": "订单数",
+    "spend": "消费额",
+    "lastOrder": "最近订单",
+    "note": "工作室备注",
+    "notePlaceholder": "添加关于该买家的私密备注…",
+    "noteLabel": "备注",
+    "segmentLabel": "客户分组",
+    "segment": {
+      "NEW": "新客户",
+      "RETURNING": "回头客",
+      "VIP": "VIP"
+    },
+    "save": "保存",
+    "saved": "客户记录已保存。",
+    "error": "客户记录保存失败。"
   }
 }
