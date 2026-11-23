@@ -352,6 +352,49 @@ events through a durable outbox rather than ad-hoc side effects.
 
 ---
 
+## Phase 8 — Trust, Verification and Operations (IMPLEMENTED)
+
+**Goal**: Close the remaining operational trust gaps so administrators can verify
+businesses, resolve buyer disputes, see platform-wide metrics from defined sources,
+and reconcile payments automatically instead of by hand.
+
+### Delivered: business verification (KYC)
+
+- `business_verification_documents` and `business_verification_reviews` tables with
+  `VerificationDocumentType` and `VerificationReviewStatus` enums, applied in migration
+  `20261123180000_phase8_trust`.
+- Businesses submit document type, reference and storage key from
+  `/business/[id]/verification`; admins approve or reject each document with a reason at
+  `/admin/verification`. Approving the last required document moves the business to
+  `verified`, rejecting moves it to `rejected`.
+- Every submission and review is guarded, Zod-validated, audited and published through
+  the outbox in the same transaction.
+
+### Delivered: dispute resolution centre
+
+- `disputes` and `dispute_messages` tables with the `DisputeStatus` enum.
+- Buyers open a dispute against one of their vendor orders at `/account/disputes` and
+  exchange messages at `/account/disputes/[disputeId]`.
+- Administrators triage at `/admin/disputes` and resolve at `/admin/disputes/[disputeId]`;
+  forward-only state machine OPEN → UNDER_REVIEW → RESOLVED | REJECTED, with a required
+  resolution note. All reads and mutations are actor/admin guarded and audited.
+
+### Delivered: platform analytics
+
+- Read-only `/admin/analytics` aggregates GMV, paid orders, active studios, commission,
+  refunds, payouts, new customers and dispute load directly from existing tables. Every
+  metric has a named source so the dashboard cannot disagree with the ledger.
+
+### Delivered: automated payment reconciliation
+
+- `reconciliation_runs` and `reconciliation_findings` tables. A server-only service
+  compares each payment attempt with the ledger and flags missing, short or excess
+  entries; it is idempotent per run and records findings in one transaction.
+- Admin page `/admin/reconciliation` with a "Run now" action and a cron-friendly
+  `POST /api/admin/reconciliation` endpoint guarded by `requireAdmin()`.
+
+---
+
 ## Dependency Graph
 
 ```
@@ -371,4 +414,6 @@ Phase 5 (B2B)                        ← Requires Phase 1 + Phase 4
 Phase 6 (Growth + AI + Trust)        ← Requires Phase 1, 2, 3; CRM can start earlier
     ↓
 Phase 7 (Ecosystem)                  ← DONE — requires all earlier phases
+    ↓
+Phase 8 (Trust & Operations)         ← DONE — requires Phase 7 and the payment ledger
 ```

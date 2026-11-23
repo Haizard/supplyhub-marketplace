@@ -606,7 +606,11 @@
     "rejected": "Rejetées",
     "suspended": "Suspendus",
     "featureFlags": "Indicateurs de fonctionnalités",
-    "outbox": "Boîte d’envoi"
+    "outbox": "Boîte d’envoi",
+    "verification": "Verification",
+    "disputes": "Disputes",
+    "analytics": "Analytics",
+    "reconciliation": "Reconciliation"
   },
   "experience": {
     "eyebrow": "Confiance & expérience",

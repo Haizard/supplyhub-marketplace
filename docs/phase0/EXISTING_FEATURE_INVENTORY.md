@@ -96,7 +96,7 @@
 | Sandbox payment simulation | ⚠️ | NEW: client-side only in experience centre; never charges real accounts |
 | Cash on delivery | 🔴 | Not present |
 | Subscription billing | ✅ | Business subscriptions, invoices, payments, cancellation and admin plan management |
-| Payment reconciliation (automated) | 🔴 | Manual only |
+| Payment reconciliation (automated) | ✅ | Idempotent sweep over payments, commission ledger and refund reversals with durable findings |
 
 ## Orders
 
@@ -137,7 +137,7 @@
 | Buyer↔studio chat | ✅ | DB-backed threads at `/messages` and `/vendor/messages`, with read receipts |
 | Loyalty points | ✅ | DB-backed ledger at `/account/loyalty`, earned on delivery and redeemable for coupons |
 | Security (2FA, sign-in history) | ✅ | Database-backed TOTP and single-use backup codes at `/account/security`; real `sign_in_events` history; phone verification intentionally disabled until an SMS provider is chosen |
-| Dispute resolution | 🔴 | Not present |
+| Dispute resolution | ✅ | Buyer dispute centre with admin triage and recorded decisions |
 | Escrow / payment holding | 🔴 | Simulated in experience centre; no real escrow |
 
 ## Internationalisation
@@ -174,10 +174,10 @@
 | Payout management | ✅ | Approve, mark paid, reconcile |
 | Audit log | ✅ | View all recorded actions |
 | CSV exports | ✅ | Orders, products, users |
-| Business verification (KYC) | 🔴 | Not present |
+| Business verification (KYC) | ✅ | Document submission and admin review at `/business/[id]/verification` and `/admin/verification` |
 | Subscription management | ✅ | Admin plan editor at `/admin/subscriptions`; business page at `/business/[id]/subscription` |
-| Dispute resolution centre | 🔴 | Not present |
-| Platform analytics dashboard | 🔴 | No aggregate metrics |
+| Dispute resolution centre | ✅ | `/admin/disputes` with forward-only state machine and conversation |
+| Platform analytics dashboard | ✅ | `/admin/analytics` with source-labelled aggregates |
 
 ## B2B / Wholesale
 

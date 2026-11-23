@@ -23,7 +23,11 @@ endpoint lets a scheduler drain published domain events. Three flagged slices sh
 services marketplace (`/services`, `/vendor/services`), group buying (`/group-buy`,
 `/vendor/group-buy`), and regional logistics (`/corridors`, `/admin/corridors`). Every slice has a
 forward-only state machine, server-side guards, audit events, and outbox events written in the same
-transaction. The detailed phase ledger is in
+transaction. Phase 8 adds trust and operations tooling: business KYC submission and admin review at
+`/business/[id]/verification` and `/admin/verification`, a dispute centre at `/account/disputes` and
+`/admin/disputes`, read-only platform metrics at `/admin/analytics` where every number names its
+source table, and automated payment reconciliation at `/admin/reconciliation` (with a cron-friendly
+`POST /api/admin/reconciliation`). The detailed phase ledger is in
 [docs/phase0/IMPLEMENTATION_ROADMAP.md](docs/phase0/IMPLEMENTATION_ROADMAP.md).
 
 The Phase 3 gate is covered by unit tests that prove customers, vendors, and administrators cannot

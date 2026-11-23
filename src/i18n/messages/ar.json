@@ -606,7 +606,11 @@
     "rejected": "مرفوض",
     "suspended": "موقوف",
     "featureFlags": "ميزات التفعيل",
-    "outbox": "قائمة الأحداث"
+    "outbox": "قائمة الأحداث",
+    "verification": "Verification",
+    "disputes": "Disputes",
+    "analytics": "Analytics",
+    "reconciliation": "Reconciliation"
   },
   "experience": {
     "eyebrow": "الثقة والتجربة",

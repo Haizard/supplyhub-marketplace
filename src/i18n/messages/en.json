@@ -606,7 +606,11 @@
     "rejected": "Rejected",
     "suspended": "Suspended",
     "featureFlags": "Feature flags",
-    "outbox": "Outbox"
+    "outbox": "Outbox",
+    "verification": "Verification",
+    "disputes": "Disputes",
+    "analytics": "Analytics",
+    "reconciliation": "Reconciliation"
   },
   "experience": {
     "eyebrow": "Trust & experience",

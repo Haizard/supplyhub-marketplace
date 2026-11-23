@@ -606,7 +606,11 @@
     "rejected": "已拒绝",
     "suspended": "已停用",
     "featureFlags": "功能开关",
-    "outbox": "事件发件箱"
+    "outbox": "事件发件箱",
+    "verification": "Verification",
+    "disputes": "Disputes",
+    "analytics": "Analytics",
+    "reconciliation": "Reconciliation"
   },
   "experience": {
     "eyebrow": "信任与体验",

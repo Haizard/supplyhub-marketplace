@@ -398,6 +398,12 @@ enum AuditAction {
   REGIONAL_CORRIDOR_UPDATED
   REGIONAL_CORRIDOR_ACTIVATED
   REGIONAL_CORRIDOR_DEACTIVATED
+  BUSINESS_VERIFICATION_SUBMITTED
+  BUSINESS_VERIFICATION_REVIEWED
+  DISPUTE_OPENED
+  DISPUTE_MESSAGE_ADDED
+  DISPUTE_STATUS_CHANGED
+  RECONCILIATION_RUN_COMPLETED
 }
 
 model User {
@@ -2534,4 +2540,138 @@ model CorridorStop {
 
   @@index([corridorId, stopOrder])
   @@map("corridor_stops")
+}
+
+// ── Phase 8: Trust, verification and operations ─────────────────────────────
+
+enum VerificationDocumentType {
+  BUSINESS_REGISTRATION
+  TAX_ID
+  ID_DOCUMENT
+  BANK_STATEMENT
+  OTHER
+}
+
+enum VerificationReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum DisputeStatus {
+  OPEN
+  UNDER_REVIEW
+  RESOLVED
+  REJECTED
+}
+
+enum ReconciliationRunStatus {
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+enum FindingSeverity {
+  INFO
+  WARNING
+  ERROR
+}
+
+/// A KYC document submitted by a business for administrator review.
+model BusinessVerificationDocument {
+  id           String                   @id @default(uuid()) @db.Uuid
+  businessId   String                   @map("business_id") @db.Uuid
+  documentType VerificationDocumentType @map("document_type")
+  reference    String                   @db.VarChar(160)
+  storageKey   String                   @map("storage_key") @db.VarChar(255)
+  status       VerificationReviewStatus @default(PENDING)
+  reviewNote   String?                  @map("review_note") @db.Text
+  reviewedById String?                  @map("reviewed_by_id") @db.Uuid
+  reviewedAt   DateTime?                @map("reviewed_at") @db.Timestamptz(6)
+  createdAt    DateTime                 @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime                 @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([businessId, status])
+  @@index([status, createdAt])
+  @@map("business_verification_documents")
+}
+
+/// Append-only record of every KYC decision.
+model BusinessVerificationReview {
+  id         String                   @id @default(uuid()) @db.Uuid
+  businessId String                   @map("business_id") @db.Uuid
+  documentId String?                  @map("document_id") @db.Uuid
+  reviewerId String                   @map("reviewer_id") @db.Uuid
+  decision   VerificationReviewStatus
+  note       String                   @default("") @db.Text
+  createdAt  DateTime                 @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([businessId, createdAt])
+  @@map("business_verification_reviews")
+}
+
+/// A buyer-initiated dispute about one of their vendor orders.
+model Dispute {
+  id             String        @id @default(uuid()) @db.Uuid
+  disputeNumber  String        @unique @map("dispute_number")
+  orderId        String        @map("order_id") @db.Uuid
+  vendorOrderId  String        @map("vendor_order_id") @db.Uuid
+  buyerId        String        @map("buyer_id") @db.Uuid
+  vendorId       String        @map("vendor_id") @db.Uuid
+  reason         String        @db.VarChar(160)
+  description    String        @db.Text
+  status         DisputeStatus @default(OPEN)
+  resolutionNote String?       @map("resolution_note") @db.Text
+  resolvedById   String?       @map("resolved_by_id") @db.Uuid
+  resolvedAt     DateTime?     @map("resolved_at") @db.Timestamptz(6)
+  createdAt      DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([buyerId, createdAt])
+  @@index([vendorId, status])
+  @@index([status, createdAt])
+  @@map("disputes")
+}
+
+/// Conversation attached to a dispute; buyers and administrators can post.
+model DisputeMessage {
+  id        String   @id @default(uuid()) @db.Uuid
+  disputeId String   @map("dispute_id") @db.Uuid
+  senderId  String   @map("sender_id") @db.Uuid
+  body      String   @db.Text
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([disputeId, createdAt])
+  @@map("dispute_messages")
+}
+
+/// One idempotent reconciliation sweep over the payment and ledger tables.
+model ReconciliationRun {
+  id            String                 @id @default(uuid()) @db.Uuid
+  runNumber     String                 @unique @map("run_number")
+  status        ReconciliationRunStatus @default(RUNNING)
+  checkedCount  Int                    @default(0) @map("checked_count")
+  findingCount  Int                    @default(0) @map("finding_count")
+  initiatedById String?                @map("initiated_by_id") @db.Uuid
+  finishedAt    DateTime?              @map("finished_at") @db.Timestamptz(6)
+  createdAt     DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([status, createdAt])
+  @@map("reconciliation_runs")
+}
+
+/// A single mismatch found by a reconciliation sweep.
+model ReconciliationFinding {
+  id        String          @id @default(uuid()) @db.Uuid
+  runId     String          @map("run_id") @db.Uuid
+  paymentId String?         @map("payment_id") @db.Uuid
+  severity  FindingSeverity
+  code      String          @db.VarChar(80)
+  message   String          @db.Text
+  expected  String?         @db.VarChar(80)
+  actual    String?         @db.VarChar(80)
+  createdAt DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([runId, severity])
+  @@map("reconciliation_findings")
 }

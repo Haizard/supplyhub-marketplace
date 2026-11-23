@@ -471,6 +471,7 @@ const demoStaffPermissionKeys = [
   "insights.read",
   "groupbuy.manage",
   "services.manage",
+  "verification.manage",
 ];
 
 function normalize(value) {

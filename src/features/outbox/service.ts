@@ -132,6 +132,28 @@ const handlers: Record<string, OutboxHandler> = {
       status: event.payload.status,
     });
   },
+  // ── Phase 8 domain handlers ─────────────────────────────────────────────
+  "dispute.opened": async (event) => {
+    logger.info("outbox.dispute.opened", { id: event.aggregateId });
+  },
+  "dispute.message_added": async (event) => {
+    logger.info("outbox.dispute.message_added", { id: event.aggregateId });
+  },
+  "dispute.status_changed": async (event) => {
+    logger.info("outbox.dispute.status_changed", {
+      id: event.aggregateId,
+      status: event.payload.status,
+    });
+  },
+  "verification.document_submitted": async (event) => {
+    logger.info("outbox.verification.document_submitted", { id: event.aggregateId });
+  },
+  "verification.document_reviewed": async (event) => {
+    logger.info("outbox.verification.document_reviewed", {
+      id: event.aggregateId,
+      decision: event.payload.decision,
+    });
+  },
 };
 
 const handlerAliases: Record<string, string> = {

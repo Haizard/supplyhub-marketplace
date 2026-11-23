@@ -606,7 +606,11 @@
     "rejected": "Yamekataliwa",
     "suspended": "Yamesimamishwa",
     "featureFlags": "Bendera za kipengele",
-    "outbox": "Kikasha cha nje"
+    "outbox": "Kikasha cha nje",
+    "verification": "Verification",
+    "disputes": "Disputes",
+    "analytics": "Analytics",
+    "reconciliation": "Reconciliation"
   },
   "experience": {
     "eyebrow": "Uaminifu na uzoefu",

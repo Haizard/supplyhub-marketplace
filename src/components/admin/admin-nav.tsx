@@ -2,13 +2,17 @@
 
 import {
   Banknote,
+  ChartNoAxesCombined,
   ClipboardList,
   CreditCard,
   Flag,
   FolderTree,
   Inbox,
   ShieldCheck,
+  MessageSquareWarning,
   Percent,
+  RefreshCw,
+  ShieldAlert,
   Tag,
   ShoppingBag,
   Store,
@@ -37,6 +41,10 @@ const links = [
   { href: "/admin/delivery", labelKey: "admin.delivery", icon: Truck },
   { href: "/admin/feature-flags", labelKey: "admin.featureFlags", icon: Flag },
   { href: "/admin/outbox", labelKey: "admin.outbox", icon: Inbox },
+  { href: "/admin/verification", labelKey: "admin.verification", icon: ShieldAlert },
+  { href: "/admin/disputes", labelKey: "admin.disputes", icon: MessageSquareWarning },
+  { href: "/admin/analytics", labelKey: "admin.analytics", icon: ChartNoAxesCombined },
+  { href: "/admin/reconciliation", labelKey: "admin.reconciliation", icon: RefreshCw },
 ];
 
 export function AdminNav() {
