@@ -397,6 +397,33 @@ and reconcile payments automatically instead of by hand.
 
 ---
 
+## Phase 9 — Logistics Business Network (PLANNED — not started)
+
+**Goal**: Promote logistics companies to first-class commercial partners that can run
+their own fleet, drivers, merchant clients, contracts and finances through the platform,
+while keeping one shared delivery engine and one permission vocabulary.
+
+This phase is deliberately split into L1–L12 slices. The full repository-first
+technical proposal, data-model mapping, ownership decisions, permission hierarchy and
+test strategy are in
+[docs/phase0/LOGISTICS_BUSINESS_NETWORK_PROPOSAL.md](LOGISTICS_BUSINESS_NETWORK_PROPOSAL.md).
+
+- **L1** Company registration, verification, members/roles and tenant context — first slice.
+- **L2** Company dashboard, profile, branches and settings.
+- **L3** Fleet, vehicles, documents, driver profiles, memberships and assignments.
+- **L4** Independent merchant clients and contacts.
+- **L5** Contracts, pricing, SLAs, versions and performance.
+- **L6** Company dispatch and delivery management on the existing job state machine.
+- **L7** Company financials, driver compensation, earnings and settlements.
+- **L8** Platform dispatch marketplace and company eligibility.
+- **L9** Partner acquisition, attribution and reward eligibility (requires L4 + L5).
+- **L10** External e-commerce APIs. **L11** Fleet sharing and hubs. **L12** AI optimisation.
+
+All slices sit behind the `phase9.logisticsNetwork` feature flag. No code has been
+implemented for this phase at the time of writing; the first slice awaits approval.
+
+---
+
 ## Dependency Graph
 
 ```
@@ -418,4 +445,6 @@ Phase 6 (Growth + AI + Trust)        ← Requires Phase 1, 2, 3; CRM can start e
 Phase 7 (Ecosystem)                  ← DONE — requires all earlier phases
     ↓
 Phase 8 (Trust & Operations)         ← DONE — requires Phase 7 and the payment ledger
+    ↓
+Phase 9 (Logistics Business Network) ← PLANNED — L1 identity first; L9 needs L4 + L5
 ```
