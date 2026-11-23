@@ -250,8 +250,10 @@ Delivered as database-backed features (not a prototype):
 
 ### Remaining Phase 6 work
 
-- Configure the Gemini key and wire a live-model slice behind the existing
-  `configurable-rules-v1` contract when provider access is available
+- The Gemini live-model slice is now wired behind `configurable-rules-v1`: it is
+  opt-in via `AI_INSIGHTS_PROVIDER=gemini` plus `GEMINI_API_KEY`, sends only aggregate
+  signals, validates responses, and falls back to deterministic rules on any failure.
+  No key is configured in this workspace, so the shipped default remains offline.
 - Choose an SMS provider before re-enabling phone verification; it remains
   intentionally disabled for now
 

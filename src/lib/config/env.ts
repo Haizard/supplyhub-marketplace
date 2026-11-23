@@ -90,6 +90,14 @@ const serverEnvSchema = z
       .string()
       .regex(/^[a-z0-9][a-z0-9-]{1,63}$/, "must be a lowercase rule version")
       .default("configurable-default-v1"),
+    // Opt-in live-model slice. Without a key (or when disabled) the insights
+    // contract always falls back to the deterministic configurable-rules-v1 rules.
+    AI_INSIGHTS_PROVIDER: z.enum(["rules", "gemini"]).default("rules"),
+    GEMINI_API_KEY: optionalText,
+    GEMINI_MODEL: z
+      .string()
+      .regex(/^[a-zA-Z0-9._-]{2,64}$/, "must be a valid model name")
+      .default("gemini-2.0-flash"),
   })
   .superRefine((value, context) => {
     if (value.STORAGE_DRIVER === "s3") {

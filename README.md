@@ -179,10 +179,11 @@ rawBody))` before parsing, enforces the timestamp tolerance, accepts the previou
 
 - `/business/[id]/insights` shows deterministic, rule-based snapshots built from
   real sales, vendor orders, product stock, warehouse balances, and CRM records.
-  The rule version is `configurable-rules-v1`; no external model or network call
-  is made, and no business policy is inferred. Gemini is the selected provider
-  direction for a future live-model slice, but no Gemini key is configured in this
-  workspace, so the shipped implementation remains deterministic.
+  The rule version is `configurable-rules-v1`, and no business policy is inferred.
+  An opt-in live-model slice can call Gemini when `AI_INSIGHTS_PROVIDER=gemini` and
+  `GEMINI_API_KEY` are set; the key travels in a request header, only aggregate
+  signals are sent, responses are validated against the same contract, and any
+  failure falls back to the deterministic rules. With no key, nothing external is called.
 - `/recommendations` ranks published products using past orders, wishlists,
   catalog popularity, and availability. Scores are integer basis points stored
   as decimals in `ai_recommendation_history`, so a suggestion can be explained,

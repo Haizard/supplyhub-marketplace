@@ -4,6 +4,7 @@ import { decimalToCents } from "@/features/catalog/money";
 import { recordAuditEvent } from "@/server/audit/audit-log";
 import { getDatabase } from "@/server/db/client";
 
+import { generateLiveInsights } from "./gemini";
 import { buildBusinessInsights } from "./insight-rules";
 import { rankRecommendations } from "./recommendation-rules";
 import type {
@@ -148,7 +149,9 @@ export async function generateBusinessInsights(
     return [];
   }
 
-  const insights = buildBusinessInsights(signals);
+  const live = await generateLiveInsights(signals);
+  const insights = live && live.length > 0 ? live : buildBusinessInsights(signals);
+  const provider = live && live.length > 0 ? "gemini-live" : "rules";
   const now = new Date();
   const { insightCutoff } = windowBounds(now);
   const expiresAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
@@ -179,7 +182,7 @@ export async function generateBusinessInsights(
       action: "AI_INSIGHTS_GENERATED",
       targetType: "business",
       targetId: businessId,
-      metadata: { count: insights.length, modelVersion: INSIGHTS_MODEL_VERSION },
+      metadata: { count: insights.length, modelVersion: INSIGHTS_MODEL_VERSION, provider },
     });
   });
 
