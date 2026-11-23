@@ -378,6 +378,10 @@ All scenarios must assert real database state transitions, not mocked success.
 
 ## 11. Acceptance for this proposal
 
-- [ ] Proposal reviewed and first slice (L1) approved.
-- [ ] Phase 9 entry added to the roadmap as **PLANNED**.
-- [ ] No code changed before approval (true at time of writing).
+- [x] Proposal reviewed and first slice (L1) approved.
+- [x] Phase 9 entry added to the roadmap.
+- [x] No application code was changed before the proposal was written.
+- [x] L1 implemented: migration `20261124120000_phase9_logistics_l1`, company
+      identity, memberships, roles, tenant resolver, 11 permission keys, feature flag,
+      `/logistics` and `/admin/logistics` pages, and unit tests.
+- [ ] L2–L12 remain to be approved and implemented one slice at a time.

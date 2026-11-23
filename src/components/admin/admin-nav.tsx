@@ -45,6 +45,7 @@ const links = [
   { href: "/admin/disputes", labelKey: "admin.disputes", icon: MessageSquareWarning },
   { href: "/admin/analytics", labelKey: "admin.analytics", icon: ChartNoAxesCombined },
   { href: "/admin/reconciliation", labelKey: "admin.reconciliation", icon: RefreshCw },
+  { href: "/admin/logistics", labelKey: "admin.logistics", icon: Truck },
 ];
 
 export function AdminNav() {

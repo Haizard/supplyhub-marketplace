@@ -404,6 +404,14 @@ enum AuditAction {
   DISPUTE_MESSAGE_ADDED
   DISPUTE_STATUS_CHANGED
   RECONCILIATION_RUN_COMPLETED
+  LOGISTICS_COMPANY_REGISTERED
+  LOGISTICS_COMPANY_SUBMITTED
+  LOGISTICS_COMPANY_APPROVED
+  LOGISTICS_COMPANY_REJECTED
+  LOGISTICS_MEMBER_INVITED
+  LOGISTICS_MEMBER_STATUS_CHANGED
+  LOGISTICS_ROLE_CREATED
+  LOGISTICS_ROLE_ASSIGNED
 }
 
 model User {
@@ -545,6 +553,7 @@ model Permission {
   permissionKey String           @unique @map("permission_key")
   description   String           @default("")
   roles         RolePermission[]
+  logisticsRolePermissions LogisticsRolePermission[]
 
   @@map("permissions")
 }
@@ -2674,4 +2683,106 @@ model ReconciliationFinding {
 
   @@index([runId, severity])
   @@map("reconciliation_findings")
+}
+
+// ── Phase 9 L1: Logistics Business Network — company identity ───────────────
+
+enum LogisticsCompanyStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SUSPENDED
+}
+
+enum LogisticsMemberStatus {
+  INVITED
+  ACTIVE
+  SUSPENDED
+}
+
+/// A first-class logistics business operating its own fleet and merchant clients.
+model LogisticsCompany {
+  id                 String                 @id @default(uuid()) @db.Uuid
+  companyCode        String                 @unique @map("company_code")
+  name               String
+  slug               String                 @unique
+  registrationNumber String?                @map("registration_number") @db.VarChar(80)
+  description        String?                @db.Text
+  contactPhone       String?                @map("contact_phone") @db.VarChar(40)
+  contactEmail       String?                @map("contact_email") @db.VarChar(160)
+  address            String?                @db.VarChar(300)
+  city               String?                @db.VarChar(120)
+  countryCode        String                 @default("TZ") @map("country_code") @db.VarChar(2)
+  latitude           Decimal?               @db.Decimal(10, 7)
+  longitude          Decimal?               @db.Decimal(10, 7)
+  status             LogisticsCompanyStatus @default(PENDING)
+  businessId         String?                @map("business_id") @db.Uuid
+  plan               String                 @default("starter") @db.VarChar(40)
+  settingsJson       Json?                  @map("settings_json")
+  submittedAt        DateTime?              @map("submitted_at") @db.Timestamptz(6)
+  reviewedById       String?                @map("reviewed_by_id") @db.Uuid
+  reviewedAt         DateTime?              @map("reviewed_at") @db.Timestamptz(6)
+  rejectionReason    String?                @map("rejection_reason") @db.Text
+  createdAt          DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime               @updatedAt @map("updated_at") @db.Timestamptz(6)
+  members            LogisticsCompanyMember[]
+  roles              LogisticsCompanyRole[]
+
+  @@index([status, createdAt])
+  @@map("logistics_companies")
+}
+
+/// A platform user's membership in a logistics company. Ownership is never stored on User.
+model LogisticsCompanyMember {
+  id          String                 @id @default(uuid()) @db.Uuid
+  companyId   String                 @map("company_id") @db.Uuid
+  company     LogisticsCompany       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  userId      String                 @map("user_id") @db.Uuid
+  status      LogisticsMemberStatus @default(INVITED)
+  invitedById String?                @map("invited_by_id") @db.Uuid
+  joinedAt    DateTime?              @map("joined_at") @db.Timestamptz(6)
+  createdAt   DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime               @updatedAt @map("updated_at") @db.Timestamptz(6)
+  roles       LogisticsMemberRole[]
+
+  @@unique([companyId, userId])
+  @@index([companyId, status])
+  @@map("logistics_company_members")
+}
+
+/// Company-specific role. Permission keys come from the shared Permission table.
+model LogisticsCompanyRole {
+  id          String                    @id @default(uuid()) @db.Uuid
+  companyId   String                    @map("company_id") @db.Uuid
+  company     LogisticsCompany          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  name        String
+  isSystem    Boolean                   @default(false) @map("is_system")
+  description String?                   @db.VarChar(300)
+  createdAt   DateTime                  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime                  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  members     LogisticsMemberRole[]
+  permissions LogisticsRolePermission[]
+
+  @@unique([companyId, name])
+  @@map("logistics_company_roles")
+}
+
+model LogisticsMemberRole {
+  memberId String               @map("member_id") @db.Uuid
+  member   LogisticsCompanyMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  roleId   String               @map("role_id") @db.Uuid
+  role     LogisticsCompanyRole @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([memberId, roleId])
+  @@map("logistics_member_roles")
+}
+
+model LogisticsRolePermission {
+  roleId       String               @map("role_id") @db.Uuid
+  role         LogisticsCompanyRole @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permissionId String               @map("permission_id") @db.Uuid
+  permission   Permission           @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@map("logistics_role_permissions")
 }

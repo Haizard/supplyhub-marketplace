@@ -28,7 +28,7 @@ export class BusinessAccessError extends Error {
  * Returns true if the context grants the requested permission.
  * Admin contexts (permissions = Set(['*'])) always return true.
  */
-export function hasPermission(ctx: BusinessContext, key: string): boolean {
+export function hasPermission(ctx: { permissions: ReadonlySet<string> }, key: string): boolean {
   return ctx.permissions.has("*") || ctx.permissions.has(key);
 }
 

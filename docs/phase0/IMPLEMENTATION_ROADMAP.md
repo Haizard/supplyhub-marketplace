@@ -397,7 +397,7 @@ and reconcile payments automatically instead of by hand.
 
 ---
 
-## Phase 9 — Logistics Business Network (PLANNED — not started)
+## Phase 9 — Logistics Business Network (IN PROGRESS — L1 delivered)
 
 **Goal**: Promote logistics companies to first-class commercial partners that can run
 their own fleet, drivers, merchant clients, contracts and finances through the platform,
@@ -408,7 +408,11 @@ technical proposal, data-model mapping, ownership decisions, permission hierarch
 test strategy are in
 [docs/phase0/LOGISTICS_BUSINESS_NETWORK_PROPOSAL.md](LOGISTICS_BUSINESS_NETWORK_PROPOSAL.md).
 
-- **L1** Company registration, verification, members/roles and tenant context — first slice.
+- **L1 — DELIVERED** Company registration, verification submission and admin review,
+  members/roles, `resolveLogisticsContext`, eleven company-scoped permission keys and
+  the `phase9.logisticsNetwork` flag (off by default). Pages at `/logistics` and
+  `/admin/logistics` are membership-scoped from PostgreSQL; lifecycle and permission
+  rules have unit tests.
 - **L2** Company dashboard, profile, branches and settings.
 - **L3** Fleet, vehicles, documents, driver profiles, memberships and assignments.
 - **L4** Independent merchant clients and contacts.
@@ -419,8 +423,8 @@ test strategy are in
 - **L9** Partner acquisition, attribution and reward eligibility (requires L4 + L5).
 - **L10** External e-commerce APIs. **L11** Fleet sharing and hubs. **L12** AI optimisation.
 
-All slices sit behind the `phase9.logisticsNetwork` feature flag. No code has been
-implemented for this phase at the time of writing; the first slice awaits approval.
+All slices sit behind the `phase9.logisticsNetwork` feature flag. L1 is implemented;
+L2–L12 remain planned and should be delivered one slice at a time.
 
 ---
 
@@ -446,5 +450,5 @@ Phase 7 (Ecosystem)                  ← DONE — requires all earlier phases
     ↓
 Phase 8 (Trust & Operations)         ← DONE — requires Phase 7 and the payment ledger
     ↓
-Phase 9 (Logistics Business Network) ← PLANNED — L1 identity first; L9 needs L4 + L5
+Phase 9 (Logistics Business Network) ← IN PROGRESS — L1 done; L9 needs L4 + L5
 ```

@@ -1254,6 +1254,18 @@ try {
     );
   }
 
+  // Phase 9: the logistics network stays off until an administrator enables it.
+  await client.query(
+    `INSERT INTO feature_flags (id, key, name, description, enabled, created_at, updated_at)
+     VALUES (gen_random_uuid(), $1, $2, $3, false, now(), now())
+     ON CONFLICT (key) DO NOTHING`,
+    [
+      "phase9.logisticsNetwork",
+      "Logistics business network",
+      "Company fleets, drivers, clients and contracts on a shared delivery engine.",
+    ],
+  );
+
   // ── Phase 7: Ecosystem demo data ──────────────────────────────────────
   // Services marketplace
   const atelierVendorId = studios[0].id;

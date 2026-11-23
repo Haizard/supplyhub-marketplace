@@ -1,0 +1,186 @@
+import "server-only";
+
+import type { LogisticsCompanyStatus, LogisticsMemberStatus } from "@/generated/prisma/enums";
+import { getDatabase } from "@/server/db/client";
+
+export interface LogisticsCompanyView {
+  id: string;
+  companyCode: string;
+  name: string;
+  slug: string;
+  description: string;
+  city: string | null;
+  status: LogisticsCompanyStatus;
+  plan: string;
+  memberCount: number;
+  roleCount: number;
+  createdAt: string;
+}
+
+export interface CompanyMemberView {
+  id: string;
+  userId: string;
+  name: string;
+  email: string;
+  status: LogisticsMemberStatus;
+  joinedAt: string | null;
+  roles: { id: string; name: string; isSystem: boolean }[];
+}
+
+export interface CompanyRoleView {
+  id: string;
+  name: string;
+  isSystem: boolean;
+  description: string;
+  permissions: string[];
+  memberCount: number;
+}
+
+export async function listActorCompanies(userId: string): Promise<LogisticsCompanyView[]> {
+  const rows = await getDatabase().logisticsCompany.findMany({
+    where: { members: { some: { userId, status: "ACTIVE" } } },
+    orderBy: { createdAt: "desc" },
+    select: {
+      id: true,
+      companyCode: true,
+      name: true,
+      slug: true,
+      description: true,
+      city: true,
+      status: true,
+      plan: true,
+      createdAt: true,
+      _count: { select: { members: true, roles: true } },
+    },
+  });
+  return rows.map((row) => ({
+    id: row.id,
+    companyCode: row.companyCode,
+    name: row.name,
+    slug: row.slug,
+    description: row.description ?? "",
+    city: row.city,
+    status: row.status,
+    plan: row.plan,
+    memberCount: row._count.members,
+    roleCount: row._count.roles,
+    createdAt: row.createdAt.toISOString(),
+  }));
+}
+
+export async function getLogisticsCompany(companyId: string): Promise<LogisticsCompanyView | null> {
+  const row = await getDatabase().logisticsCompany.findUnique({
+    where: { id: companyId },
+    select: {
+      id: true,
+      companyCode: true,
+      name: true,
+      slug: true,
+      description: true,
+      city: true,
+      status: true,
+      plan: true,
+      createdAt: true,
+      _count: { select: { members: true, roles: true } },
+    },
+  });
+  if (!row) return null;
+  return {
+    id: row.id,
+    companyCode: row.companyCode,
+    name: row.name,
+    slug: row.slug,
+    description: row.description ?? "",
+    city: row.city,
+    status: row.status,
+    plan: row.plan,
+    memberCount: row._count.members,
+    roleCount: row._count.roles,
+    createdAt: row.createdAt.toISOString(),
+  };
+}
+
+export async function listCompanyMembers(companyId: string): Promise<CompanyMemberView[]> {
+  const rows = await getDatabase().logisticsCompanyMember.findMany({
+    where: { companyId },
+    orderBy: { createdAt: "asc" },
+    select: {
+      id: true,
+      userId: true,
+      status: true,
+      joinedAt: true,
+      roles: {
+        select: { role: { select: { id: true, name: true, isSystem: true } } },
+      },
+    },
+  });
+  const users = await getDatabase().user.findMany({
+    where: { id: { in: rows.map((row) => row.userId) } },
+    select: { id: true, name: true, email: true },
+  });
+  const byId = new Map(users.map((user) => [user.id, user]));
+  return rows.map((row) => ({
+    id: row.id,
+    userId: row.userId,
+    name: byId.get(row.userId)?.name ?? "User",
+    email: byId.get(row.userId)?.email ?? "",
+    status: row.status,
+    joinedAt: row.joinedAt?.toISOString() ?? null,
+    roles: row.roles.map((assignment) => assignment.role),
+  }));
+}
+
+export async function listCompanyRoles(companyId: string): Promise<CompanyRoleView[]> {
+  const rows = await getDatabase().logisticsCompanyRole.findMany({
+    where: { companyId },
+    orderBy: [{ isSystem: "desc" }, { name: "asc" }],
+    select: {
+      id: true,
+      name: true,
+      isSystem: true,
+      description: true,
+      _count: { select: { members: true } },
+      permissions: { select: { permission: { select: { permissionKey: true } } } },
+    },
+  });
+  return rows.map((row) => ({
+    id: row.id,
+    name: row.name,
+    isSystem: row.isSystem,
+    description: row.description ?? "",
+    permissions: row.permissions.map((grant) => grant.permission.permissionKey),
+    memberCount: row._count.members,
+  }));
+}
+
+export async function listPendingLogisticsCompanies(): Promise<LogisticsCompanyView[]> {
+  const rows = await getDatabase().logisticsCompany.findMany({
+    where: { status: "PENDING", submittedAt: { not: null } },
+    orderBy: { submittedAt: "asc" },
+    select: {
+      id: true,
+      companyCode: true,
+      name: true,
+      slug: true,
+      description: true,
+      city: true,
+      status: true,
+      plan: true,
+      createdAt: true,
+      _count: { select: { members: true, roles: true } },
+    },
+  });
+  return rows.map((row) => ({
+    id: row.id,
+    companyCode: row.companyCode,
+    name: row.name,
+    slug: row.slug,
+    description: row.description ?? "",
+    city: row.city,
+    status: row.status,
+    plan: row.plan,
+    memberCount: row._count.members,
+    roleCount: row._count.roles,
+    createdAt: row.createdAt.toISOString(),
+  }));
+}
