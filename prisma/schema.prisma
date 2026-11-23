@@ -427,6 +427,10 @@ enum AuditAction {
   LOGISTICS_DRIVER_SCHEDULE_SAVED
   LOGISTICS_DRIVER_VEHICLE_ASSIGNED
   LOGISTICS_DRIVER_VEHICLE_RELEASED
+  LOGISTICS_CLIENT_CREATED
+  LOGISTICS_CLIENT_UPDATED
+  LOGISTICS_CLIENT_CONTACT_SAVED
+  LOGISTICS_CLIENT_RELATIONSHIP_CHANGED
 }
 
 model User {
@@ -2747,6 +2751,7 @@ model LogisticsCompany {
   fleets             LogisticsFleet[]
   vehicles           LogisticsVehicle[]
   driverMemberships  DriverCompanyMembership[]
+  clientRelationships CompanyClientRelationship[]
 
   @@index([status, createdAt])
   @@map("logistics_companies")
@@ -3055,4 +3060,82 @@ model DriverVehicleAssignment {
   @@index([membershipId, status])
   @@index([vehicleId, status])
   @@map("driver_vehicle_assignments")
+}
+
+// ── Phase 9 L4: independent merchant clients ────────────────────────────────
+
+enum LogisticsClientStatus {
+  PROSPECT
+  ACTIVE
+  SUSPENDED
+  ENDED
+}
+
+enum ClientRelationshipStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+  ENDED
+}
+
+/// A merchant served by logistics companies. No marketplace vendor account required.
+model LogisticsClient {
+  id              String              @id @default(uuid()) @db.Uuid
+  clientNumber    String              @unique @map("client_number")
+  name            String
+  businessName    String?             @map("business_name")
+  phone           String?             @db.VarChar(40)
+  email           String?             @db.VarChar(160)
+  businessId      String?             @map("business_id") @db.Uuid
+  vendorId        String?             @map("vendor_id") @db.Uuid
+  address         String?             @db.VarChar(300)
+  city            String?             @db.VarChar(120)
+  latitude        Decimal?            @db.Decimal(10, 7)
+  longitude       Decimal?            @db.Decimal(10, 7)
+  status          LogisticsClientStatus @default(PROSPECT)
+  referralCode    String?             @map("referral_code") @db.VarChar(64)
+  verifiedAt      DateTime?           @map("verified_at") @db.Timestamptz(6)
+  createdById     String?             @map("created_by_id") @db.Uuid
+  createdAt       DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime            @updatedAt @map("updated_at") @db.Timestamptz(6)
+  contacts        ClientContact[]
+  relationships   CompanyClientRelationship[]
+
+  @@index([status, createdAt])
+  @@map("logistics_clients")
+}
+
+/// A company's relationship to a merchant. A merchant may have several companies.
+model CompanyClientRelationship {
+  id            String                    @id @default(uuid()) @db.Uuid
+  companyId     String                    @map("company_id") @db.Uuid
+  company       LogisticsCompany          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  clientId      String                    @map("client_id") @db.Uuid
+  client        LogisticsClient           @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  status        ClientRelationshipStatus  @default(PENDING)
+  accountCode   String?                   @map("account_code") @db.VarChar(64)
+  serviceNotes  String?                   @map("service_notes") @db.Text
+  verifiedById  String?                   @map("verified_by_id") @db.Uuid
+  verifiedAt    DateTime?                 @map("verified_at") @db.Timestamptz(6)
+  createdAt     DateTime                  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime                  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@unique([companyId, clientId])
+  @@index([companyId, status])
+  @@map("company_client_relationships")
+}
+
+model ClientContact {
+  id          String          @id @default(uuid()) @db.Uuid
+  clientId    String          @map("client_id") @db.Uuid
+  client      LogisticsClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  name        String
+  role        String?         @db.VarChar(80)
+  phone       String?         @db.VarChar(40)
+  email       String?         @db.VarChar(160)
+  isPrimary   Boolean         @default(false) @map("is_primary")
+  createdAt   DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([clientId, isPrimary])
+  @@map("logistics_client_contacts")
 }

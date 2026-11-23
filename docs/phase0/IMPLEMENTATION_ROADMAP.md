@@ -421,7 +421,10 @@ test strategy are in
   company-independent driver profiles with `driver_company_memberships`, compensation
   agreements, shifts and vehicle assignments with reassignment. A driver can belong to
   several companies; no exclusive company ID is stored on the identity.
-- **L4** Independent merchant clients and contacts.
+- **L4 — DELIVERED** `logistics_clients` with optional links to a marketplace
+  business/vendor, per-company `company_client_relationships` so one merchant can work
+  with several companies, and primary contacts. Relationship status moves
+  independently of the global client status.
 - **L5** Contracts, pricing, SLAs, versions and performance.
 - **L6** Company dispatch and delivery management on the existing job state machine.
 - **L7** Company financials, driver compensation, earnings and settlements.
@@ -429,8 +432,8 @@ test strategy are in
 - **L9** Partner acquisition, attribution and reward eligibility (requires L4 + L5).
 - **L10** External e-commerce APIs. **L11** Fleet sharing and hubs. **L12** AI optimisation.
 
-All slices sit behind the `phase9.logisticsNetwork` feature flag. L1–L3 are
-implemented; L4–L12 remain planned and should be delivered one slice at a time.
+All slices sit behind the `phase9.logisticsNetwork` feature flag. L1–L4 are
+implemented; L5–L12 remain planned and should be delivered one slice at a time.
 
 ---
 
@@ -456,5 +459,5 @@ Phase 7 (Ecosystem)                  ← DONE — requires all earlier phases
     ↓
 Phase 8 (Trust & Operations)         ← DONE — requires Phase 7 and the payment ledger
     ↓
-Phase 9 (Logistics Business Network) ← IN PROGRESS — L1-L3 done; L9 needs L4 + L5
+Phase 9 (Logistics Business Network) ← IN PROGRESS — L1-L4 done; L9 needs L5
 ```

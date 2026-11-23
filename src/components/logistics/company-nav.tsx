@@ -8,6 +8,7 @@ const links = [
   { key: "branches", label: "Branches", suffix: "/branches" },
   { key: "fleet", label: "Fleet", suffix: "/fleet" },
   { key: "drivers", label: "Drivers", suffix: "/drivers" },
+  { key: "clients", label: "Clients", suffix: "/clients" },
   { key: "members", label: "Members", suffix: "/members" },
   { key: "roles", label: "Roles", suffix: "/roles" },
   { key: "settings", label: "Settings", suffix: "/settings" },
