@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Building2,
   Calculator,
   LayoutDashboard,
   Package,
@@ -58,6 +59,16 @@ export const studioTabs = [
     labelKey: "studio.returns",
     icon: RotateCcw,
     active: (pathname: string) => pathname.startsWith("/vendor/returns"),
+  },
+  {
+    href: "/vendor/wholesale",
+    labelKey: "studio.wholesale",
+    mobileLabelKey: "studio.wholesaleShort",
+    icon: Building2,
+    active: (pathname: string) =>
+      ["/vendor/wholesale", "/vendor/rfq", "/vendor/purchase-orders", "/vendor/invoices"].some(
+        (prefix) => pathname.startsWith(prefix),
+      ),
   },
   {
     href: "/delivery-live?persona=seller",

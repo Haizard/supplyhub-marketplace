@@ -135,12 +135,31 @@ Delivered as database-backed features (not a prototype):
 
 ---
 
-## Phase 5 — B2B Network
+## Phase 5 — B2B Network ✅ IMPLEMENTED
+
+Delivered as database-backed features (not a prototype):
+
+- `wholesale_listings`, `wholesale_price_tiers`, `rfqs`, `rfq_items`,
+  `supplier_quotations`, `quotation_items`, `business_purchase_orders`,
+  `business_purchase_order_items`, `business_invoices`, `business_invoice_items`
+  — all applied in migrations `20261120170000_phase5_b2b` and
+  `20261120170100_phase5_b2b_permissions`.
+- Buyer workspace at `/b2b`: catalog browsing with volume tiers, RFQ creation,
+  quotation review/acceptance, purchase orders and invoice payment.
+- Seller workspace under `/vendor`: wholesale listing management, incoming RFQs,
+  supplier quotations, order fulfilment status, and invoice issuance.
+- Business-scoped permissions (`wholesale.read`, `wholesale.manage`,
+  `b2b.rfq.create`, `b2b.purchase_order.create`, `b2b.invoice.read`) with
+  server-side checks on every read and mutation.
+- Forward-only document state machines for RFQs, quotations, purchase orders and
+  invoices, with audit events recorded in the same transaction.
+- Decimal-safe tier pricing and total calculation, plus a demo RFQ → quotation →
+  purchase order → invoice chain in `scripts/seed.mjs`.
 
 ### New tables
-`wholesale_listings`, `rfqs`, `rfq_items`, `supplier_quotations`, `business_purchase_orders`, `business_purchase_order_items`, `business_invoices`
+`wholesale_listings`, `wholesale_price_tiers`, `rfqs`, `rfq_items`, `supplier_quotations`, `quotation_items`, `business_purchase_orders`, `business_purchase_order_items`, `business_invoices`, `business_invoice_items`
 
-**Deliverable**: Retailers search wholesale stock, request quotes, place bulk orders.
+**Deliverable**: Retailers search wholesale stock, request quotes, place bulk orders, and settle invoices.
 
 ---
 

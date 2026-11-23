@@ -455,6 +455,11 @@ const demoStaffPermissionKeys = [
   "catalog.product.create",
   "catalog.product.update",
   "catalog.product.publish",
+  "wholesale.read",
+  "wholesale.manage",
+  "b2b.rfq.create",
+  "b2b.purchase_order.create",
+  "b2b.invoice.read",
 ];
 
 function normalize(value) {
@@ -869,6 +874,142 @@ try {
       await assignRole(memberId, roleId);
     }
   }
+
+  // Phase 5: demo wholesale network data.
+  const businessIdBySlug = async (slug) => {
+    const { rows } = await client.query("SELECT id FROM businesses WHERE slug = $1", [slug]);
+    if (!rows[0]) throw new Error(`Missing seeded business: ${slug}`);
+    return rows[0].id;
+  };
+  const productIdBySlug = async (slug) => {
+    const { rows } = await client.query("SELECT id FROM products WHERE slug = $1", [slug]);
+    if (!rows[0]) throw new Error(`Missing seeded product: ${slug}`);
+    return rows[0].id;
+  };
+
+  const supplierBusinessId = await businessIdBySlug("atelier-nord-studio");
+  const buyerBusinessId = await businessIdBySlug("field-and-form-workshop");
+  const supplierVendorId = studios[0].id;
+  const buyerOwnerId = studios[1].ownerId;
+  const carafeProductId = await productIdBySlug("ridge-carafe");
+
+  const demoListingId = "50000000-0000-4000-8000-000000000001";
+  await client.query(
+    `INSERT INTO wholesale_listings (
+       id, listing_number, vendor_id, business_id, product_id, title, description,
+       sku, currency, unit_price, minimum_order, stock_available, lead_time_days,
+       status, published_at, created_at, updated_at
+     )
+     VALUES ($1, 'WL-DEMO-001', $2, $3, $4, 'Ridge carafe — wholesale',
+       'Hand-thrown stoneware carafe, sold in studio batches.', 'WL-RIDGE-001',
+       'TZS', 85000, 12, 120, 14, 'ACTIVE', now(), now(), now())
+     ON CONFLICT (id) DO NOTHING`,
+    [demoListingId, supplierVendorId, supplierBusinessId, carafeProductId],
+  );
+  await client.query(
+    `INSERT INTO wholesale_price_tiers (
+       id, listing_id, min_qty, max_qty, unit_price, created_at
+     )
+     VALUES ('50000000-0000-4000-8000-000000000002', $1, 24, 59, 78000, now())
+     ON CONFLICT (id) DO NOTHING`,
+    [demoListingId],
+  );
+  await client.query(
+    `INSERT INTO wholesale_price_tiers (
+       id, listing_id, min_qty, max_qty, unit_price, created_at
+     )
+     VALUES ('50000000-0000-4000-8000-000000000003', $1, 60, NULL, 72000, now())
+     ON CONFLICT (id) DO NOTHING`,
+    [demoListingId],
+  );
+
+  const demoRfqId = "50000000-0000-4000-8000-000000000010";
+  await client.query(
+    `INSERT INTO rfqs (
+       id, rfq_number, buyer_business_id, supplier_vendor_id, submitted_by_id,
+       status, currency, note, target_date, submitted_at, created_at, updated_at
+     )
+     VALUES ($1, 'RFQ-DEMO-001', $2, $3, $4, 'QUOTED', 'TZS',
+       'Please quote for our stockroom reorder.', now() + interval '30 days', now(), now(), now())
+     ON CONFLICT (id) DO NOTHING`,
+    [demoRfqId, buyerBusinessId, supplierVendorId, buyerOwnerId],
+  );
+  await client.query(
+    `INSERT INTO rfq_items (
+       id, rfq_id, listing_id, product_name, sku, quantity, unit, target_price, created_at
+     )
+     VALUES ('50000000-0000-4000-8000-000000000011', $1, $2,
+       'Ridge carafe', 'WL-RIDGE-001', 24, 'each', 80000, now())
+     ON CONFLICT (id) DO NOTHING`,
+    [demoRfqId, demoListingId],
+  );
+
+  const demoQuotationId = "50000000-0000-4000-8000-000000000020";
+  await client.query(
+    `INSERT INTO supplier_quotations (
+       id, quotation_number, rfq_id, supplier_vendor_id, business_id, status,
+       currency, subtotal, note, valid_until, sent_at, created_at, updated_at
+     )
+     VALUES ($1, 'QT-DEMO-001', $2, $3, $4, 'SENT', 'TZS', 1872000,
+       'Volume price applied at 24 units.', now() + interval '14 days', now(), now(), now())
+     ON CONFLICT (id) DO NOTHING`,
+    [demoQuotationId, demoRfqId, supplierVendorId, supplierBusinessId],
+  );
+  await client.query(
+    `INSERT INTO quotation_items (
+       id, quotation_id, rfq_item_id, product_name, sku, quantity,
+       unit_price, line_total, currency, created_at
+     )
+     VALUES ('50000000-0000-4000-8000-000000000021', $1,
+       '50000000-0000-4000-8000-000000000011', 'Ridge carafe', 'WL-RIDGE-001',
+       24, 78000, 1872000, 'TZS', now())
+     ON CONFLICT (id) DO NOTHING`,
+    [demoQuotationId],
+  );
+
+  const demoPoId = "50000000-0000-4000-8000-000000000030";
+  await client.query(
+    `INSERT INTO business_purchase_orders (
+       id, po_number, business_id, supplier_vendor_id, quotation_id, submitted_by_id,
+       status, currency, subtotal, tax_total, shipping_total, total, note,
+       ordered_at, created_at, updated_at
+     )
+     VALUES ($1, 'PO-DEMO-001', $2, $3, $4, $5, 'SHIPPED', 'TZS',
+       1872000, 0, 50000, 1922000, 'Stockroom reorder.', now(), now(), now())
+     ON CONFLICT (id) DO NOTHING`,
+    [demoPoId, buyerBusinessId, supplierVendorId, demoQuotationId, buyerOwnerId],
+  );
+  await client.query(
+    `INSERT INTO business_purchase_order_items (
+       id, purchase_order_id, listing_id, product_name, sku, quantity,
+       unit_price, line_total, currency, created_at
+     )
+     VALUES ('50000000-0000-4000-8000-000000000031', $1, $2,
+       'Ridge carafe', 'WL-RIDGE-001', 24, 78000, 1872000, 'TZS', now())
+     ON CONFLICT (id) DO NOTHING`,
+    [demoPoId, demoListingId],
+  );
+
+  await client.query(
+    `INSERT INTO business_invoices (
+       id, invoice_number, purchase_order_id, business_id, supplier_vendor_id,
+       status, currency, subtotal, tax_total, total, amount_paid, issued_at,
+       created_at, updated_at
+     )
+     VALUES ('50000000-0000-4000-8000-000000000040', 'INV-DEMO-001', $1, $2, $3,
+       'ISSUED', 'TZS', 1872000, 0, 1922000, 0, now(), now(), now())
+     ON CONFLICT (id) DO NOTHING`,
+    [demoPoId, buyerBusinessId, supplierVendorId],
+  );
+  await client.query(
+    `INSERT INTO business_invoice_items (
+       id, invoice_id, description, quantity, unit_price, line_total, currency, created_at
+     )
+     VALUES ('50000000-0000-4000-8000-000000000041',
+       '50000000-0000-4000-8000-000000000040', 'Ridge carafe',
+       24, 78000, 1872000, 'TZS', now())
+     ON CONFLICT (id) DO NOTHING`,
+  );
 
   // Phase 4: documented default delivery pricing (TZS).
   await client.query(

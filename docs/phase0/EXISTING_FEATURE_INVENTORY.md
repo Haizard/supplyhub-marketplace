@@ -182,9 +182,10 @@
 
 | Feature | Status | Notes |
 |---|---|---|
-| Wholesale listings | 🔴 | Not present |
-| RFQ / quotation system | 🔴 | Not present |
-| B2B purchase orders | 🔴 | Not present |
+| Wholesale listings | ✅ | `/b2b/wholesale` catalog, `/vendor/wholesale` management, volume price tiers |
+| RFQ / quotation system | ✅ | `/b2b/rfq` buyers, `/vendor/rfq` suppliers, state machine + audit trail |
+| B2B purchase orders | ✅ | Buyer creation, supplier fulfilment lifecycle, `/b2b/purchase-orders` |
+| B2B invoices | ✅ | Supplier issuance, buyer payment tracking, `/b2b/invoices` |
 
 ## AI & Personalization
 

@@ -137,6 +137,51 @@ enum AgentEarningStatus {
   PAID
 }
 
+// ── Phase 5: B2B Wholesale Network ──────────────────────────────────────────
+
+enum WholesaleListingStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  CLOSED
+}
+
+enum RfqStatus {
+  DRAFT
+  SUBMITTED
+  QUOTED
+  ACCEPTED
+  REJECTED
+  CANCELLED
+  EXPIRED
+}
+
+enum QuotationStatus {
+  DRAFT
+  SENT
+  ACCEPTED
+  REJECTED
+  EXPIRED
+}
+
+enum PurchaseOrderStatus {
+  DRAFT
+  SENT
+  CONFIRMED
+  PROCESSING
+  SHIPPED
+  RECEIVED
+  CANCELLED
+}
+
+enum InvoiceStatus {
+  DRAFT
+  ISSUED
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
 enum PaymentProvider {
   LYNXPAY
 }
@@ -247,6 +292,20 @@ enum AuditAction {
   DELIVERY_OTP_VERIFIED
   DELIVERY_EARNING_PAID
   DELIVERY_PRICING_UPDATED
+  WHOLESALE_LISTING_CREATED
+  WHOLESALE_LISTING_UPDATED
+  WHOLESALE_LISTING_ARCHIVED
+  RFQ_CREATED
+  RFQ_SUBMITTED
+  RFQ_CANCELLED
+  QUOTATION_CREATED
+  QUOTATION_SENT
+  QUOTATION_ACCEPTED
+  QUOTATION_REJECTED
+  PURCHASE_ORDER_CREATED
+  PURCHASE_ORDER_STATUS_CHANGED
+  INVOICE_ISSUED
+  INVOICE_PAID
 }
 
 model User {
@@ -286,6 +345,8 @@ model User {
   deliveryRequests          DeliveryRequest[]       @relation("DeliveryRequester")
   reviewedAgentDocuments    AgentDocument[]         @relation("AgentDocumentReviewer")
   deliveryStatusEvents      DeliveryStatusHistory[] @relation("DeliveryStatusActor")
+  submittedRfqs             Rfq[]                   @relation("RfqSubmitter")
+  submittedPurchaseOrders   BusinessPurchaseOrder[] @relation("PurchaseOrderSubmitter")
   createdAt                 DateTime                @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt                 DateTime                @updatedAt @map("updated_at") @db.Timestamptz(6)
 
@@ -311,18 +372,18 @@ model BusinessCategory {
 }
 
 model Business {
-  id                 String             @id @default(uuid()) @db.Uuid
-  businessCode       String             @unique @map("business_code")
+  id                 String                  @id @default(uuid()) @db.Uuid
+  businessCode       String                  @unique @map("business_code")
   name               String
-  slug               String             @unique
-  categoryId         String?            @map("category_id") @db.Uuid
-  category           BusinessCategory?  @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  verificationStatus String             @default("unverified") @map("verification_status")
+  slug               String                  @unique
+  categoryId         String?                 @map("category_id") @db.Uuid
+  category           BusinessCategory?       @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  verificationStatus String                  @default("unverified") @map("verification_status")
   description        String?
-  logoKey            String?            @map("logo_key")
+  logoKey            String?                 @map("logo_key")
   website            String?
-  contactPhone       String?            @map("contact_phone")
-  contactEmail       String?            @map("contact_email")
+  contactPhone       String?                 @map("contact_phone")
+  contactEmail       String?                 @map("contact_email")
   members            BusinessMember[]
   branches           BusinessBranch[]
   roles              BusinessRole[]
@@ -330,8 +391,12 @@ model Business {
   settings           BusinessSettings?
   vendors            Vendor[]
   deliveryRequests   DeliveryRequest[]
-  createdAt          DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt          DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
+  wholesaleListings  WholesaleListing[]
+  buyingRfqs         Rfq[]                   @relation("RfqBuyer")
+  purchaseOrders     BusinessPurchaseOrder[]
+  invoices           BusinessInvoice[]
+  createdAt          DateTime                @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime                @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   @@index([verificationStatus])
   @@map("businesses")
@@ -448,33 +513,33 @@ model BusinessSettings {
 // ── End Phase 1 ───────────────────────────────────────────────────────────────
 
 model Vendor {
-  id                 String              @id @default(uuid()) @db.Uuid
-  ownerId            String              @unique @map("owner_id") @db.Uuid
-  owner              User                @relation("VendorOwner", fields: [ownerId], references: [id], onDelete: Restrict)
-  businessId         String?             @map("business_id") @db.Uuid
-  business           Business?           @relation(fields: [businessId], references: [id], onDelete: SetNull)
+  id                 String                  @id @default(uuid()) @db.Uuid
+  ownerId            String                  @unique @map("owner_id") @db.Uuid
+  owner              User                    @relation("VendorOwner", fields: [ownerId], references: [id], onDelete: Restrict)
+  businessId         String?                 @map("business_id") @db.Uuid
+  business           Business?               @relation(fields: [businessId], references: [id], onDelete: SetNull)
   name               String
-  slug               String              @unique
+  slug               String                  @unique
   description        String?
   monogram           String?
   location           String?
-  contactPhone       String?             @map("contact_phone")
+  contactPhone       String?                 @map("contact_phone")
   city               String?
   street             String?
   address            String?
-  latitude           Decimal?            @db.Decimal(10, 7)
-  longitude          Decimal?            @db.Decimal(10, 7)
+  latitude           Decimal?                @db.Decimal(10, 7)
+  longitude          Decimal?                @db.Decimal(10, 7)
   discipline         String?
   story              String?
-  status             VendorStatus        @default(PENDING)
-  reviewNote         String?             @map("review_note")
-  appealReason       String?             @map("appeal_reason")
-  appealedAt         DateTime?           @map("appealed_at") @db.Timestamptz(6)
-  appealReviewedAt   DateTime?           @map("appeal_reviewed_at") @db.Timestamptz(6)
-  appealReviewNote   String?             @map("appeal_review_note")
-  reviewedAt         DateTime?           @map("reviewed_at") @db.Timestamptz(6)
-  reviewedById       String?             @map("reviewed_by_id") @db.Uuid
-  reviewedBy         User?               @relation("VendorReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+  status             VendorStatus            @default(PENDING)
+  reviewNote         String?                 @map("review_note")
+  appealReason       String?                 @map("appeal_reason")
+  appealedAt         DateTime?               @map("appealed_at") @db.Timestamptz(6)
+  appealReviewedAt   DateTime?               @map("appeal_reviewed_at") @db.Timestamptz(6)
+  appealReviewNote   String?                 @map("appeal_review_note")
+  reviewedAt         DateTime?               @map("reviewed_at") @db.Timestamptz(6)
+  reviewedById       String?                 @map("reviewed_by_id") @db.Uuid
+  reviewedBy         User?                   @relation("VendorReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
   departments        VendorDepartment[]
   products           Product[]
   vendorOrders       VendorOrder[]
@@ -488,8 +553,13 @@ model Vendor {
   posSessions        PosSession[]
   sales              Sale[]
   expenses           Expense[]
-  createdAt          DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt          DateTime            @updatedAt @map("updated_at") @db.Timestamptz(6)
+  wholesaleListings  WholesaleListing[]
+  supplierRfqs       Rfq[]                   @relation("RfqSupplier")
+  quotations         SupplierQuotation[]
+  purchaseOrders     BusinessPurchaseOrder[]
+  invoices           BusinessInvoice[]
+  createdAt          DateTime                @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime                @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   @@index([status])
   @@index([status, createdAt])
@@ -571,6 +641,7 @@ model Product {
   saleItems          SaleItem[]
   wishlistedBy       WishlistItem[]
   reviews            ProductReview[]
+  wholesaleListings  WholesaleListing[]
   createdAt          DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt          DateTime            @updatedAt @map("updated_at") @db.Timestamptz(6)
 
@@ -1605,4 +1676,237 @@ model DeliveryCommission {
   createdAt DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
 
   @@map("delivery_commissions")
+}
+
+// ── Phase 5: B2B Wholesale Network ──────────────────────────────────────────
+
+/// A supplier's bulk offer. Optional link to a retail product for reuse of
+/// imagery/details; standalone listings are allowed for raw or made-to-order stock.
+model WholesaleListing {
+  id             String                 @id @default(uuid()) @db.Uuid
+  listingNumber  String                 @unique @map("listing_number")
+  vendorId       String                 @map("vendor_id") @db.Uuid
+  vendor         Vendor                 @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  businessId     String?                @map("business_id") @db.Uuid
+  business       Business?              @relation(fields: [businessId], references: [id], onDelete: SetNull)
+  productId      String?                @map("product_id") @db.Uuid
+  product        Product?               @relation(fields: [productId], references: [id], onDelete: SetNull)
+  title          String
+  description    String                 @default("")
+  sku            String
+  currency       String                 @db.VarChar(3)
+  unitPrice      Decimal                @map("unit_price") @db.Decimal(12, 2)
+  minimumOrder   Int                    @map("minimum_order")
+  stockAvailable Int                    @map("stock_available")
+  leadTimeDays   Int                    @default(7) @map("lead_time_days")
+  status         WholesaleListingStatus @default(DRAFT)
+  publishedAt    DateTime?              @map("published_at") @db.Timestamptz(6)
+  priceTiers     WholesalePriceTier[]
+  createdAt      DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime               @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@unique([vendorId, sku])
+  @@index([status, publishedAt])
+  @@index([vendorId, status])
+  @@map("wholesale_listings")
+}
+
+/// Volume breaks. `maxQty` null means "and above".
+model WholesalePriceTier {
+  id        String           @id @default(uuid()) @db.Uuid
+  listingId String           @map("listing_id") @db.Uuid
+  listing   WholesaleListing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  minQty    Int              @map("min_qty")
+  maxQty    Int?             @map("max_qty")
+  unitPrice Decimal          @map("unit_price") @db.Decimal(12, 2)
+  createdAt DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@unique([listingId, minQty])
+  @@index([listingId])
+  @@map("wholesale_price_tiers")
+}
+
+/// A buyer business requests prices and terms from one supplier.
+model Rfq {
+  id               String              @id @default(uuid()) @db.Uuid
+  rfqNumber        String              @unique @map("rfq_number")
+  buyerBusinessId  String              @map("buyer_business_id") @db.Uuid
+  buyerBusiness    Business            @relation("RfqBuyer", fields: [buyerBusinessId], references: [id], onDelete: Restrict)
+  supplierVendorId String              @map("supplier_vendor_id") @db.Uuid
+  supplierVendor   Vendor              @relation("RfqSupplier", fields: [supplierVendorId], references: [id], onDelete: Restrict)
+  submittedById    String              @map("submitted_by_id") @db.Uuid
+  submittedBy      User                @relation("RfqSubmitter", fields: [submittedById], references: [id], onDelete: Restrict)
+  status           RfqStatus           @default(DRAFT)
+  currency         String              @db.VarChar(3)
+  note             String?
+  targetDate       DateTime?           @map("target_date") @db.Timestamptz(6)
+  expiresAt        DateTime?           @map("expires_at") @db.Timestamptz(6)
+  submittedAt      DateTime?           @map("submitted_at") @db.Timestamptz(6)
+  items            RfqItem[]
+  quotations       SupplierQuotation[]
+  createdAt        DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime            @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([buyerBusinessId, status])
+  @@index([supplierVendorId, status])
+  @@map("rfqs")
+}
+
+model RfqItem {
+  id             String          @id @default(uuid()) @db.Uuid
+  rfqId          String          @map("rfq_id") @db.Uuid
+  rfq            Rfq             @relation(fields: [rfqId], references: [id], onDelete: Cascade)
+  listingId      String?         @map("listing_id") @db.Uuid
+  productName    String          @map("product_name")
+  sku            String?
+  quantity       Int
+  unit           String          @default("each")
+  targetPrice    Decimal?        @map("target_price") @db.Decimal(12, 2)
+  note           String?
+  quotationItems QuotationItem[]
+  createdAt      DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([rfqId])
+  @@map("rfq_items")
+}
+
+/// A supplier's priced response to a buyer RFQ.
+model SupplierQuotation {
+  id               String                  @id @default(uuid()) @db.Uuid
+  quotationNumber  String                  @unique @map("quotation_number")
+  rfqId            String                  @map("rfq_id") @db.Uuid
+  rfq              Rfq                     @relation(fields: [rfqId], references: [id], onDelete: Cascade)
+  supplierVendorId String                  @map("supplier_vendor_id") @db.Uuid
+  supplierVendor   Vendor                  @relation(fields: [supplierVendorId], references: [id], onDelete: Restrict)
+  businessId       String?                 @map("business_id") @db.Uuid
+  status           QuotationStatus         @default(DRAFT)
+  currency         String                  @db.VarChar(3)
+  subtotal         Decimal                 @db.Decimal(12, 2)
+  note             String?
+  validUntil       DateTime?               @map("valid_until") @db.Timestamptz(6)
+  sentAt           DateTime?               @map("sent_at") @db.Timestamptz(6)
+  acceptedAt       DateTime?               @map("accepted_at") @db.Timestamptz(6)
+  items            QuotationItem[]
+  purchaseOrders   BusinessPurchaseOrder[]
+  createdAt        DateTime                @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime                @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([rfqId])
+  @@index([supplierVendorId, status])
+  @@map("supplier_quotations")
+}
+
+model QuotationItem {
+  id          String            @id @default(uuid()) @db.Uuid
+  quotationId String            @map("quotation_id") @db.Uuid
+  quotation   SupplierQuotation @relation(fields: [quotationId], references: [id], onDelete: Cascade)
+  rfqItemId   String            @map("rfq_item_id") @db.Uuid
+  rfqItem     RfqItem           @relation(fields: [rfqItemId], references: [id], onDelete: Restrict)
+  productName String            @map("product_name")
+  sku         String?
+  quantity    Int
+  unitPrice   Decimal           @map("unit_price") @db.Decimal(12, 2)
+  lineTotal   Decimal           @map("line_total") @db.Decimal(12, 2)
+  currency    String            @db.VarChar(3)
+  note        String?
+  createdAt   DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@unique([quotationId, rfqItemId])
+  @@map("quotation_items")
+}
+
+/// A business's bulk order, normally created from an accepted quotation.
+model BusinessPurchaseOrder {
+  id               String                      @id @default(uuid()) @db.Uuid
+  poNumber         String                      @unique @map("po_number")
+  businessId       String                      @map("business_id") @db.Uuid
+  business         Business                    @relation(fields: [businessId], references: [id], onDelete: Restrict)
+  supplierVendorId String                      @map("supplier_vendor_id") @db.Uuid
+  supplierVendor   Vendor                      @relation(fields: [supplierVendorId], references: [id], onDelete: Restrict)
+  quotationId      String?                     @map("quotation_id") @db.Uuid
+  quotation        SupplierQuotation?          @relation(fields: [quotationId], references: [id], onDelete: SetNull)
+  submittedById    String                      @map("submitted_by_id") @db.Uuid
+  submittedBy      User                        @relation("PurchaseOrderSubmitter", fields: [submittedById], references: [id], onDelete: Restrict)
+  status           PurchaseOrderStatus         @default(DRAFT)
+  currency         String                      @db.VarChar(3)
+  subtotal         Decimal                     @db.Decimal(12, 2)
+  taxTotal         Decimal                     @default(0) @map("tax_total") @db.Decimal(12, 2)
+  shippingTotal    Decimal                     @default(0) @map("shipping_total") @db.Decimal(12, 2)
+  total            Decimal                     @db.Decimal(12, 2)
+  note             String?
+  orderedAt        DateTime?                   @map("ordered_at") @db.Timestamptz(6)
+  confirmedAt      DateTime?                   @map("confirmed_at") @db.Timestamptz(6)
+  receivedAt       DateTime?                   @map("received_at") @db.Timestamptz(6)
+  cancelledAt      DateTime?                   @map("cancelled_at") @db.Timestamptz(6)
+  items            BusinessPurchaseOrderItem[]
+  invoices         BusinessInvoice[]
+  createdAt        DateTime                    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime                    @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([businessId, status])
+  @@index([supplierVendorId, status])
+  @@map("business_purchase_orders")
+}
+
+model BusinessPurchaseOrderItem {
+  id               String                @id @default(uuid()) @db.Uuid
+  purchaseOrderId  String                @map("purchase_order_id") @db.Uuid
+  purchaseOrder    BusinessPurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  listingId        String?               @map("listing_id") @db.Uuid
+  productName      String                @map("product_name")
+  sku              String?
+  quantity         Int
+  receivedQuantity Int                   @default(0) @map("received_quantity")
+  unitPrice        Decimal               @map("unit_price") @db.Decimal(12, 2)
+  lineTotal        Decimal               @map("line_total") @db.Decimal(12, 2)
+  currency         String                @db.VarChar(3)
+  createdAt        DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([purchaseOrderId])
+  @@map("business_purchase_order_items")
+}
+
+/// Immutable invoice issued for a purchase order. Payment is manual until a
+/// business payment policy is chosen in docs/01-product-vision.md.
+model BusinessInvoice {
+  id               String                @id @default(uuid()) @db.Uuid
+  invoiceNumber    String                @unique @map("invoice_number")
+  purchaseOrderId  String                @map("purchase_order_id") @db.Uuid
+  purchaseOrder    BusinessPurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Restrict)
+  businessId       String                @map("business_id") @db.Uuid
+  business         Business              @relation(fields: [businessId], references: [id], onDelete: Restrict)
+  supplierVendorId String                @map("supplier_vendor_id") @db.Uuid
+  supplierVendor   Vendor                @relation(fields: [supplierVendorId], references: [id], onDelete: Restrict)
+  status           InvoiceStatus         @default(DRAFT)
+  currency         String                @db.VarChar(3)
+  subtotal         Decimal               @db.Decimal(12, 2)
+  taxTotal         Decimal               @default(0) @map("tax_total") @db.Decimal(12, 2)
+  total            Decimal               @db.Decimal(12, 2)
+  amountPaid       Decimal               @default(0) @map("amount_paid") @db.Decimal(12, 2)
+  note             String?
+  dueAt            DateTime?             @map("due_at") @db.Timestamptz(6)
+  issuedAt         DateTime?             @map("issued_at") @db.Timestamptz(6)
+  paidAt           DateTime?             @map("paid_at") @db.Timestamptz(6)
+  items            BusinessInvoiceItem[]
+  createdAt        DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime              @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([businessId, status])
+  @@index([supplierVendorId, status])
+  @@map("business_invoices")
+}
+
+model BusinessInvoiceItem {
+  id          String          @id @default(uuid()) @db.Uuid
+  invoiceId   String          @map("invoice_id") @db.Uuid
+  invoice     BusinessInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  description String
+  quantity    Int
+  unitPrice   Decimal         @map("unit_price") @db.Decimal(12, 2)
+  lineTotal   Decimal         @map("line_total") @db.Decimal(12, 2)
+  currency    String          @db.VarChar(3)
+  createdAt   DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([invoiceId])
+  @@map("business_invoice_items")
 }

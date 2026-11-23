@@ -2,6 +2,7 @@
 
 import {
   Bike,
+  Building2,
   ChevronDown,
   Heart,
   LayoutDashboard,
@@ -77,6 +78,14 @@ export function AccountMenuView({ actor }: { actor: Actor | null }) {
             {t("wishlist.title")}
           </Link>
         </DropdownMenuItem>
+        {actor.business ? (
+          <DropdownMenuItem asChild>
+            <Link href="/b2b" className="w-full">
+              <Building2 className="size-4" aria-hidden="true" />
+              {t("account.b2bWorkspace")}
+            </Link>
+          </DropdownMenuItem>
+        ) : null}
         <DropdownMenuItem asChild>
           <Link href="/delivery/request" className="w-full">
             <Truck className="size-4" aria-hidden="true" />
