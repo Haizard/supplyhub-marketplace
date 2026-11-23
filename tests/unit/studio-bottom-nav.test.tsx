@@ -40,7 +40,7 @@ describe("StudioBottomNav", () => {
     for (const [name, href] of [
       ["Products", "/vendor/products"],
       ["Orders", "/vendor/orders"],
-      ["Deliveries", "/delivery-live?persona=seller"],
+      ["Deliveries", "/delivery/request"],
       ["Earnings", "/vendor/earnings"],
       ["Studio profile", "/vendor/profile"],
     ] as const) {

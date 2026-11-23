@@ -108,7 +108,7 @@
 | Sandbox order simulation with escrow + OTP | ⚠️ | NEW: client-side only in experience centre |
 | Order status history | 🔴 | No history table; current status only |
 | Customer-initiated returns | 🔴 | No real return flow (sandbox only) |
-| Delivery tracking (live) | ⚠️ | NEW: full UI prototype, no database backend |
+| Delivery tracking (live) | ✅ | Database-backed at `/delivery/track/[jobId]` with courier location pings and status history |
 
 ## Delivery & Logistics
 
@@ -116,14 +116,14 @@
 |---|---|---|
 | Delivery method choice at checkout | ✅ | PICKUP / DELIVERY |
 | Delivery fee calculation (haversine) | ✅ | Per-km rate + minimum |
-| Live delivery map (OpenStreetMap + Leaflet) | ⚠️ | NEW: full UI prototype, demo data only |
-| Road routing (OSRM) | ⚠️ | NEW: live road geometry, falls back gracefully offline |
-| Delivery status state machine | ⚠️ | NEW: client-side only (pending → delivered) |
-| Delivery agent entity (database) | 🔴 | No `delivery_agents` table |
-| Dispatch engine | 🔴 | Not present |
-| Delivery OTP / proof of delivery | 🔴 | Simulated in experience centre only |
-| Agent earnings / payouts | 🔴 | Not present |
-| External delivery requests | 🔴 | Not present |
+| Live delivery map (OpenStreetMap + Leaflet) | ✅ | Shows real pickup/drop-off and last courier ping on `/delivery/track/[jobId]` |
+| Road routing (OSRM) | ⚠️ | Kept only in the retired map simulation; not used by the real tracking route |
+| Delivery status state machine | ✅ | Database-backed job lifecycle with status history |
+| Delivery agent entity (database) | ✅ | Verified courier profiles, presence, service areas, and documents |
+| Dispatch engine | ✅ | Admin dispatch with distance, rating, and capacity scoring |
+| Delivery OTP / proof of delivery | ✅ | OTP hand-over plus photo/signature proof records |
+| Agent earnings / payouts | ✅ | Ledger and admin reconciliation at `/admin/delivery` |
+| External delivery requests | ✅ | Session-authenticated `/api/delivery/requests` with idempotency |
 
 ## Buyer Experience & Trust
 
@@ -136,7 +136,7 @@
 | Price watch notifications | 🔴 | Client-side localStorage only |
 | Buyer↔studio chat | ✅ | DB-backed threads at `/messages` and `/vendor/messages`, with read receipts |
 | Loyalty points | ✅ | DB-backed ledger at `/account/loyalty`, earned on delivery and redeemable for coupons |
-| Security (2FA, phone verify) | ✅ | Database-backed TOTP, single-use backup codes and phone OTP at `/account/security`; production SMS provider still unresolved |
+| Security (2FA, sign-in history) | ✅ | Database-backed TOTP and single-use backup codes at `/account/security`; real `sign_in_events` history; phone verification intentionally disabled until an SMS provider is chosen |
 | Dispute resolution | 🔴 | Not present |
 | Escrow / payment holding | 🔴 | Simulated in experience centre; no real escrow |
 

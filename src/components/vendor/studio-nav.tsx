@@ -87,7 +87,7 @@ export const studioTabs = [
       ),
   },
   {
-    href: "/delivery-live?persona=seller",
+    href: "/delivery/request",
     labelKey: "studio.deliveries",
     icon: Truck,
     mobileLabelKey: "studio.deliveriesShort",

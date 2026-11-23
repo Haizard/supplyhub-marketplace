@@ -694,15 +694,16 @@
       "signIn": "Ingia"
     },
     "security": {
-      "title": "Usalama wa akaunti",
+      "title": "Usalama uko kwenye akaunti",
       "twoFactor": "Uthibitishaji wa hatua mbili",
       "twoFactorBody": "Omba msimbo wakati wa kuingia kwa usalama zaidi.",
       "phone": "Uthibitishaji wa simu",
       "phoneBody": "Wawezeshe wajumbe wa uwasilishaji kukufikia kwa uhakika.",
       "verify": "Thibitisha",
       "loginAlerts": "Arifa za kuingia",
-      "simulate": "Igiza kuingia",
-      "secret": "Ufunguo wako wa siri"
+      "secret": "Ufunguo wako wa siri",
+      "body": "2FA, namba za chelezo, na historia ya kuingia vimehifadhiwa kwenye akaunti yako — si hapa kwenye jaribu.",
+      "openSettings": "Fungua usalama wa akaunti"
     },
     "saved": {
       "title": "Orodha yako ya matamanio",
@@ -1075,7 +1076,7 @@
   "securitySettings": {
     "eyebrow": "Usalama wa akaunti",
     "title": "Mipangilio ya usalama",
-    "subtitle": "Linda kuingia na programu ya uthibitishaji na uthibitishe namba yako ya simu.",
+    "subtitle": "Linda kuingia kwa kutumia programu ya uthibitishaji na angalia historia halisi ya kuingia.",
     "twoFactor": "Uthibitishaji wa hatua mbili",
     "twoFactorBody": "Hitaji namba ya muda kutoka programu ya uthibitishaji unapoingia.",
     "enabled": "Imewezeshwa",
@@ -1093,7 +1094,7 @@
     "remaining": "Namba {count} zimesalia",
     "regenerate": "Tengeneza namba mpya",
     "phone": "Uthibitishaji wa simu",
-    "phoneBody": "Thibitisha namba ya simu kwa arifa za kurejesha akaunti.",
+    "phoneBody": "Uthibitishaji wa simu umesitishwa hadi mtoa huduma wa SMS achaguliwe.",
     "phoneLabel": "Namba ya simu",
     "sendCode": "Tuma namba",
     "phoneCodeLabel": "Namba ya uthibitishaji",
@@ -1103,7 +1104,15 @@
     "error": "Mabadiliko hayo hayakuweza kukamilika.",
     "done": "Imefanyika",
     "backToAccount": "Rudi kwenye akaunti",
-    "saved": "Imehifadhiwa."
+    "saved": "Imehifadhiwa.",
+    "phoneDisabled": "Uthibitishaji wa simu bado haujawezeshwa. Akaunti yako bado inalindwa na nenosiri na 2FA ya hiari.",
+    "signInHistory": "Historia ya kuingia",
+    "signInHistoryBody": "Kila kuingia mwenye mafanikio huhifadhiwa kwenye seva na kifaa, eneo takribani, na njia ya kuingia.",
+    "noSignInEvents": "Hakuna kuingia kulikoandikwa bado.",
+    "newDevice": "Kifaa kipya",
+    "methodPassword": "Nenosiri",
+    "methodTotp": "Nenosiri + programu ya uthibitishaji",
+    "methodBackup": "Nenosiri + namba ya chelezo"
   },
   "insights": {
     "eyebrow": "Akili za biashara",

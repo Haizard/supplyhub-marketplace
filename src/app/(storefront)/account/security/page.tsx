@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { PageShell } from "@/components/storefront/page-shell";
+import { listSignInEvents } from "@/features/security/sign-in-events";
 import { getSecurityStatus } from "@/features/security/service";
 import { SecuritySettings } from "@/features/security/components/security-settings";
 import { getServerI18n } from "@/i18n/server";
@@ -9,13 +10,17 @@ import { requireActor } from "@/server/auth/guards";
 
 export const metadata: Metadata = {
   title: "Security settings",
-  description: "Manage two-factor authentication and phone verification.",
+  description: "Manage two-factor authentication and review real sign-in history.",
   robots: { index: false, follow: false },
 };
 
 export default async function AccountSecurityPage() {
   const actor = await requireActor("/account/security");
-  const [status, { t }] = await Promise.all([getSecurityStatus(actor.id), getServerI18n()]);
+  const [status, signInEvents, { t }] = await Promise.all([
+    getSecurityStatus(actor.id),
+    listSignInEvents(actor.id),
+    getServerI18n(),
+  ]);
 
   if (!status) {
     redirect("/sign-in?next=/account/security");
@@ -34,7 +39,7 @@ export default async function AccountSecurityPage() {
       </div>
 
       <div className="mt-10">
-        <SecuritySettings initialStatus={status} />
+        <SecuritySettings initialStatus={status} initialSignInEvents={signInEvents} />
       </div>
     </PageShell>
   );

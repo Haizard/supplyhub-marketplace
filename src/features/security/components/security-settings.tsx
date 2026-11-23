@@ -1,6 +1,6 @@
 "use client";
 
-import { KeyRound, ShieldCheck, Smartphone } from "lucide-react";
+import { KeyRound, LogIn, ShieldCheck, Smartphone } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition, type ReactNode } from "react";
@@ -15,12 +15,10 @@ import {
   confirmTwoFactorSetupAction,
   disableTwoFactorAction,
   regenerateBackupCodesAction,
-  sendPhoneCodeAction,
   startTwoFactorSetupAction,
-  verifyPhoneCodeAction,
   type SecurityActionResult,
 } from "../actions";
-import type { SecurityStatus } from "../types";
+import type { SecurityStatus, SignInEventView } from "../types";
 
 type Feedback = { tone: "success" | "danger"; text: string };
 
@@ -47,7 +45,13 @@ function Section({
   );
 }
 
-export function SecuritySettings({ initialStatus }: { initialStatus: SecurityStatus }) {
+export function SecuritySettings({
+  initialStatus,
+  initialSignInEvents,
+}: {
+  initialStatus: SecurityStatus;
+  initialSignInEvents: SignInEventView[];
+}) {
   const { t } = useI18n();
   const router = useRouter();
   const [status, setStatus] = useState(initialStatus);
@@ -55,9 +59,13 @@ export function SecuritySettings({ initialStatus }: { initialStatus: SecuritySta
   const [setupSecret, setSetupSecret] = useState<string | null>(null);
   const [backupCodes, setBackupCodes] = useState<string[] | null>(null);
   const [twoFactorCode, setTwoFactorCode] = useState("");
-  const [phone, setPhone] = useState(initialStatus.phone ?? "");
-  const [phoneCode, setPhoneCode] = useState("");
   const [pending, startTransition] = useTransition();
+
+  const methodLabels: Record<string, string> = {
+    PASSWORD: t("securitySettings.methodPassword"),
+    PASSWORD_TOTP: t("securitySettings.methodTotp"),
+    PASSWORD_BACKUP_CODE: t("securitySettings.methodBackup"),
+  };
 
   function run(
     operation: () => Promise<SecurityActionResult>,
@@ -274,67 +282,44 @@ export function SecuritySettings({ initialStatus }: { initialStatus: SecuritySta
         title={t("securitySettings.phone")}
         body={t("securitySettings.phoneBody")}
       >
-        <p className="text-sm">
-          <span className="font-medium">
-            {status.phoneVerified
-              ? t("securitySettings.verified")
-              : t("securitySettings.notVerified")}
-          </span>
-          {status.phone ? ` · ${status.phone}` : null}
-        </p>
+        <Notice tone="info">{t("securitySettings.phoneDisabled")}</Notice>
+      </Section>
 
-        <Field label={t("securitySettings.phoneLabel")} htmlFor="security-phone">
-          <Input
-            id="security-phone"
-            value={phone}
-            onChange={(event) => setPhone(event.target.value)}
-            autoComplete="tel"
-            inputMode="tel"
-            placeholder="+255 7XX XXX XXX"
-          />
-        </Field>
-
-        <div className="flex flex-wrap gap-3">
-          <Button
-            type="button"
-            variant="secondary"
-            disabled={pending || phone.trim().length < 7}
-            onClick={() => run(() => sendPhoneCodeAction(phone))}
-          >
-            {t("securitySettings.sendCode")}
-          </Button>
-        </div>
-
-        <Field label={t("securitySettings.phoneCodeLabel")} htmlFor="phone-verification-code">
-          <Input
-            id="phone-verification-code"
-            value={phoneCode}
-            onChange={(event) => setPhoneCode(event.target.value)}
-            autoComplete="one-time-code"
-            inputMode="numeric"
-            maxLength={6}
-          />
-        </Field>
-
-        <Button
-          type="button"
-          disabled={pending || phoneCode.trim().length !== 6}
-          onClick={() =>
-            run(
-              () => verifyPhoneCodeAction(phoneCode),
-              (result) => {
-                setStatus((current) => ({
-                  ...current,
-                  phone: result.phone ?? current.phone,
-                  phoneVerified: true,
-                }));
-                setPhoneCode("");
-              },
-            )
-          }
-        >
-          {t("securitySettings.verifyPhone")}
-        </Button>
+      <Section
+        icon={<LogIn className="size-5" />}
+        title={t("securitySettings.signInHistory")}
+        body={t("securitySettings.signInHistoryBody")}
+      >
+        {initialSignInEvents.length === 0 ? (
+          <p className="text-sm text-muted-foreground">{t("securitySettings.noSignInEvents")}</p>
+        ) : (
+          <ul className="divide-y divide-border rounded-lg border border-border bg-surface-muted">
+            {initialSignInEvents.map((event) => (
+              <li key={event.id} className="flex flex-wrap items-start justify-between gap-3 p-3">
+                <div className="min-w-0">
+                  <p className="flex flex-wrap items-center gap-2 text-sm font-medium">
+                    {event.device}
+                    {event.newDevice ? (
+                      <span className="rounded-full bg-accent/10 px-2 py-0.5 text-[0.625rem] font-semibold text-accent">
+                        {t("securitySettings.newDevice")}
+                      </span>
+                    ) : null}
+                  </p>
+                  <p className="mt-0.5 truncate text-xs text-muted-foreground">{event.location}</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    {methodLabels[event.method] ?? event.method}
+                  </p>
+                </div>
+                <time
+                  className="shrink-0 text-xs text-muted-foreground"
+                  dateTime={event.occurredAt}
+                >
+                  {new Date(event.occurredAt).toLocaleString()}
+                </time>
+              </li>
+            ))}
+          </ul>
+        )}
       </Section>
 
       <p className="flex items-center gap-2 text-sm text-muted-foreground">

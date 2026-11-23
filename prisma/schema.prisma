@@ -372,6 +372,7 @@ enum AuditAction {
   AI_INSIGHTS_GENERATED
   AI_RECOMMENDATIONS_GENERATED
   AI_RECOMMENDATION_DISMISSED
+  SIGN_IN_SUCCEEDED
 }
 
 model User {
@@ -424,6 +425,7 @@ model User {
   backupCodes               BackupCode[]
   phoneVerifications        PhoneVerification[]
   aiRecommendations         AiRecommendationHistory[]
+  signInEvents              SignInEvent[]
   createdAt                 DateTime                @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt                 DateTime                @updatedAt @map("updated_at") @db.Timestamptz(6)
 
@@ -2174,6 +2176,24 @@ model PhoneVerification {
 
   @@index([userId, phone, createdAt])
   @@map("phone_verifications")
+}
+
+/// A successful credentials sign-in. Device and location are derived from the
+/// request at sign-in time; no client-supplied history is trusted.
+model SignInEvent {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  occurredAt DateTime @default(now()) @map("occurred_at") @db.Timestamptz(6)
+  device     String   @db.VarChar(120)
+  location   String   @db.VarChar(160)
+  ipAddress  String?  @map("ip_address") @db.VarChar(64)
+  method     String   @db.VarChar(32)
+  newDevice  Boolean  @default(false) @map("new_device")
+
+  @@index([userId, occurredAt])
+  @@index([userId, device])
+  @@map("sign_in_events")
 }
 
 enum InsightType {

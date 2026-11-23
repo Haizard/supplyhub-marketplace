@@ -6,6 +6,8 @@ import { cookies } from "next/headers";
 import { z } from "zod";
 
 import { emailField } from "@/features/identity/validation";
+import { normalizeBackupCode } from "@/features/security/backup-codes";
+import { recordSuccessfulSignIn, type SignInMethod } from "@/features/security/sign-in-events";
 import { verifySecondFactor } from "@/features/security/service";
 import { getServerEnv } from "@/lib/config/env";
 import { ACTIVE_BUSINESS_COOKIE } from "@/server/business/active-business";
@@ -49,7 +51,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         password: { label: "Password", type: "password" },
         twoFactorCode: { label: "Authenticator or backup code", type: "text" },
       },
-      async authorize(rawCredentials) {
+      async authorize(rawCredentials, request) {
         const parsed = credentialsSchema.safeParse(rawCredentials);
 
         if (!parsed.success) {
@@ -77,16 +79,27 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           return null;
         }
 
+        let method: SignInMethod = "PASSWORD";
+
         if (user.twoFactorEnabled) {
           if (!parsed.data.twoFactorCode) {
             return null;
           }
+
+          method = /^\d{6}$/.test(parsed.data.twoFactorCode)
+            ? "PASSWORD_TOTP"
+            : normalizeBackupCode(parsed.data.twoFactorCode).length === 10
+              ? "PASSWORD_BACKUP_CODE"
+              : "PASSWORD_TOTP";
 
           const secondFactorValid = await verifySecondFactor(user.id, parsed.data.twoFactorCode);
           if (!secondFactorValid) {
             return null;
           }
         }
+
+        // Security history must never block a valid sign-in if the audit write fails.
+        await recordSuccessfulSignIn({ userId: user.id, request, method }).catch(() => undefined);
 
         return { id: user.id, email: user.email, name: user.name };
       },

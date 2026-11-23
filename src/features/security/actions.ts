@@ -11,11 +11,9 @@ import {
   disableTwoFactor,
   getSecurityStatus,
   regenerateBackupCodes,
-  sendPhoneVerification,
   startTwoFactorSetup,
-  verifyPhoneVerification,
 } from "./service";
-import { secondFactorCodeSchema, sendPhoneCodeSchema, verifyPhoneCodeSchema } from "./validation";
+import { secondFactorCodeSchema } from "./validation";
 
 export type SecurityActionResult = {
   ok: boolean;
@@ -118,47 +116,18 @@ export async function regenerateBackupCodesAction(code: string): Promise<Securit
   };
 }
 
+/**
+ * Phone verification is intentionally deferred until an SMS provider is chosen.
+ * The schema and service remain in place, but no code is sent or consumed.
+ */
 export async function sendPhoneCodeAction(phone: string): Promise<SecurityActionResult> {
-  const actor = await requireActor("/account/security");
-
-  if (!consumeRateLimit(`phone:send:${actor.id}`, AUTH_RATE_LIMITS.phoneCodeByUser)) {
-    return { ok: false, message: "Too many codes requested. Try again later." };
-  }
-
-  const parsed = sendPhoneCodeSchema.safeParse({ phone });
-  if (!parsed.success) {
-    return { ok: false, message: "Enter a valid phone number with its country code." };
-  }
-
-  const { delivered } = await sendPhoneVerification(actor.id, parsed.data.phone);
-  refreshSecurity();
-
-  return {
-    ok: delivered,
-    message: delivered
-      ? "Verification code sent. It expires in 10 minutes."
-      : "SMS delivery is not configured for this environment.",
-    phone: parsed.data.phone,
-  };
+  await requireActor("/account/security");
+  void phone;
+  return { ok: false, message: "Phone verification is not enabled yet." };
 }
 
 export async function verifyPhoneCodeAction(code: string): Promise<SecurityActionResult> {
-  const actor = await requireActor("/account/security");
-
-  if (!consumeRateLimit(`phone:verify:${actor.id}`, AUTH_RATE_LIMITS.phoneVerifyByUser)) {
-    return { ok: false, message: "Too many attempts. Wait a few minutes." };
-  }
-
-  const parsed = verifyPhoneCodeSchema.safeParse({ code });
-  if (!parsed.success) {
-    return { ok: false, message: "Enter the 6-digit verification code." };
-  }
-
-  if (!(await verifyPhoneVerification(actor.id, parsed.data.code))) {
-    return { ok: false, message: "That code is invalid, expired, or has already been used." };
-  }
-
-  refreshSecurity();
-  const status = await getSecurityStatus(actor.id);
-  return { ok: true, message: "Phone number verified.", phone: status?.phone ?? undefined };
+  await requireActor("/account/security");
+  void code;
+  return { ok: false, message: "Phone verification is not enabled yet." };
 }

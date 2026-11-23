@@ -1,6 +1,6 @@
 # Implementation Roadmap
 
-> Phase 0 audit — updated for the Phase 6 AI insights slice.
+> Phase 0 audit — updated for persisted sign-in events, retired delivery simulation, and the Gemini provider decision.
 
 ## What is Already Done (confirmed after full re-inspection)
 
@@ -27,8 +27,7 @@
   external delivery request API (`/api/delivery/requests`), live tracking (`/delivery/track/[jobId]`)
 
 ### Prototype only (UI exists, no database backing)
-- ⚠️ The original `/delivery-live` map demo (kept for illustration; real tracking is now DB-backed at `/delivery/request` and `/delivery/track/[jobId]`)
-- ⚠️ Buyer experience centre (wishlist, price watch, chat, escrow, reviews, security)
+- ⚠️ Buyer experience centre (wishlist, price watch, chat, escrow, reviews; security now links to the account-backed page)
 - ⚠️ Sandbox payment simulation
 
 ---
@@ -129,7 +128,7 @@ Delivered as database-backed features (not a prototype):
 - External delivery request API (businesses use delivery independently)
 - Agent earnings and payouts
 
-**Note**: The TypeScript types in `src/components/delivery/model.ts` are the schema specification — use them directly when designing these tables.
+**Note**: The original `src/components/delivery` map simulation has been retired from the UI. `/delivery-live` now resolves to the database-backed request, courier, or admin delivery view, and tracking links go to `/delivery/track/[jobId]`.
 
 **Deliverable**: Orders assigned to real agents; live tracking backed by DB; external businesses use delivery.
 
@@ -222,13 +221,16 @@ Delivered as database-backed features (not a prototype):
   TOTP replay is blocked by `two_factor_last_step`; backup codes and phone codes
   are consumed once, and phone verification is rate limited and audited.
 - The account security page at `/account/security` replaces the experience-centre
-  security simulation. Login-alert history remains a device-local aid; no real
-  event stream is recorded for it.
-- SMS delivery is provider-neutral: development writes codes to `.local/sms-outbox`,
-  while production reports `phone.delivery_unconfigured` rather than inventing a
-  provider. Choosing an SMS provider remains unresolved business policy.
-- Eight unit tests cover RFC 6238 vectors, replay blocking, backup-code hashing,
-  and phone-code binding.
+  security simulation, which now links to the real account page. Successful
+  credentials sign-ins are persisted in `sign_in_events` with a request-derived
+  device, deployment geo headers, a coarse IP, the sign-in method, and a
+  new-device flag. A `SIGN_IN_SUCCEEDED` audit event is written in the same
+  transaction. Audit failure never blocks a valid sign-in.
+- Phone verification is explicitly deferred. The provider-neutral schema and
+  service remain, but the UI no longer offers phone verification and the server
+  actions return a disabled message instead of sending or consuming a code.
+- Eleven unit tests cover RFC 6238 vectors, replay blocking, backup-code hashing,
+  phone-code binding, and sign-in request detail parsing.
 
 ### Delivered: AI insights and recommendations
 
@@ -238,7 +240,8 @@ Delivered as database-backed features (not a prototype):
 - Business insights at `/business/[id]/insights` are deterministic rule snapshots
   under version `configurable-rules-v1`. They are built from real sales, vendor
   orders, product stock, warehouse balances, and CRM customer records. No external
-  model or provider is called.
+  model or provider is called. Gemini is the selected provider direction, but no
+  key is configured in this workspace, so a live-model slice has not been wired.
 - Buyer recommendations at `/recommendations` use orders, wishlists, catalog
   popularity, and stock. Scores are integer basis points persisted as decimals and
   every suggestion can be refreshed or dismissed.
@@ -247,10 +250,13 @@ Delivered as database-backed features (not a prototype):
 
 ### Remaining Phase 6 work
 
-- Choose and document an SMS provider before enabling phone verification in production
-- Replace the device-local login-alert simulation with real sign-in events
+- Configure the Gemini key and wire a live-model slice behind the existing
+  `configurable-rules-v1` contract when provider access is available
+- Choose an SMS provider before re-enabling phone verification; it remains
+  intentionally disabled for now
 
-**Deliverable**: Real chat, real loyalty, real 2FA, AI business insights, subscription revenue.
+**Deliverable**: Real chat, real loyalty, real 2FA, persisted sign-in history, real
+delivery tracking entry points, AI business insights, and subscription revenue.
 
 ---
 

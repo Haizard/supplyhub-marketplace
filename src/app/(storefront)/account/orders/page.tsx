@@ -55,7 +55,7 @@ async function OrdersContent() {
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Button asChild size="sm">
-            <Link href="/delivery-live?persona=buyer">Track delivery</Link>
+            <Link href="/delivery/request">Track delivery</Link>
           </Button>
           <Button asChild variant="secondary" size="sm">
             <Link href="/products">Continue browsing</Link>

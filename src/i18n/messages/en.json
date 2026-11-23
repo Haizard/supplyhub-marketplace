@@ -694,15 +694,16 @@
       "signIn": "Sign in"
     },
     "security": {
-      "title": "Account security",
+      "title": "Security is account-based",
       "twoFactor": "Two-factor authentication",
       "twoFactorBody": "Ask for a code at sign-in for extra safety.",
       "phone": "Phone verification",
       "phoneBody": "Let delivery couriers reach you reliably.",
       "verify": "Verify",
       "loginAlerts": "Login alerts",
-      "simulate": "Simulate sign-in",
-      "secret": "Your secret key"
+      "secret": "Your secret key",
+      "body": "Two-factor authentication, backup codes, and sign-in history are stored on your account — not in this sandbox.",
+      "openSettings": "Open account security"
     },
     "saved": {
       "title": "Your wishlist",
@@ -1075,7 +1076,7 @@
   "securitySettings": {
     "eyebrow": "Account security",
     "title": "Security settings",
-    "subtitle": "Protect sign-in with an authenticator app and verify your phone number.",
+    "subtitle": "Protect sign-in with an authenticator app and review real sign-in history.",
     "twoFactor": "Two-factor authentication",
     "twoFactorBody": "Require a one-time code from an authenticator app when signing in.",
     "enabled": "Enabled",
@@ -1093,7 +1094,7 @@
     "remaining": "{count} codes remaining",
     "regenerate": "Generate new codes",
     "phone": "Phone verification",
-    "phoneBody": "Verify a phone number for account recovery notices.",
+    "phoneBody": "Phone verification is deferred until an SMS provider is chosen.",
     "phoneLabel": "Phone number",
     "sendCode": "Send code",
     "phoneCodeLabel": "Verification code",
@@ -1103,7 +1104,15 @@
     "error": "That change could not be completed.",
     "done": "Done",
     "backToAccount": "Back to account",
-    "saved": "Saved."
+    "saved": "Saved.",
+    "phoneDisabled": "Phone verification is not enabled yet. Your account remains protected by password and optional 2FA.",
+    "signInHistory": "Sign-in history",
+    "signInHistoryBody": "Every successful sign-in is stored on the server with its device, approximate location, and sign-in method.",
+    "noSignInEvents": "No sign-ins recorded yet.",
+    "newDevice": "New device",
+    "methodPassword": "Password",
+    "methodTotp": "Password + authenticator",
+    "methodBackup": "Password + backup code"
   },
   "insights": {
     "eyebrow": "Business intelligence",

@@ -13,6 +13,7 @@ import { Notice } from "@/components/ui/notice";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatMoney } from "@/features/catalog/money";
 import { getOrderForViewer } from "@/features/checkout/queries";
+import { listCustomerJobs } from "@/features/logistics/queries";
 import { listCustomerReturns, RETURNABLE_ORDER_STATUSES } from "@/features/returns/queries";
 import { listCustomerShipments } from "@/features/shipments/queries";
 import { RETURN_STATUS_TONES } from "@/features/returns/status";
@@ -66,6 +67,10 @@ async function OrderContent({
   if (!order) {
     notFound();
   }
+
+  const deliveryJobs = await listCustomerJobs(actor.id);
+  const deliveryJob = deliveryJobs.find((job) => job.orderNumber === order.orderNumber);
+  const trackingHref = deliveryJob ? `/delivery/track/${deliveryJob.id}` : "/delivery/request";
 
   const [returns, shipments] = await Promise.all([
     listCustomerReturns(order.id, actor.id),
@@ -472,7 +477,7 @@ async function OrderContent({
               ) : null}
             </address>
             <Button asChild variant="secondary" className="mt-5 w-full">
-              <Link href="/delivery-live?persona=buyer">
+              <Link href={trackingHref}>
                 <Navigation className="size-4" aria-hidden="true" />
                 Track live delivery
               </Link>

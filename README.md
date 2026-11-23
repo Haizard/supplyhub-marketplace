@@ -151,20 +151,25 @@ rawBody))` before parsing, enforces the timestamp tolerance, accepts the previou
   key derived from the server-only `AUTH_SECRET`; sign-in accepts a current
   authenticator code or a single-use backup code. TOTP time steps are tracked so
   the same code cannot be replayed.
-- Backup codes and phone verification challenges are stored as SHA-256 hashes in
-  `backup_codes` and `phone_verifications`. Verification, regeneration, and phone
-  confirmation consume codes once, are rate limited, and write audit events.
+- Backup codes are stored as SHA-256 hashes in `backup_codes`. Regeneration and
+  backup-code use consume codes once, are rate limited, and write audit events.
 - Disabling 2FA increments `sessionVersion`, ending every existing session.
-- SMS delivery is intentionally provider-neutral. Development writes codes to
-  `.local/sms-outbox`; production reports `phone.delivery_unconfigured` until an
-  SMS provider is chosen. Login-alert history remains a device-local aid.
+- `/account/security` shows real sign-in history from `sign_in_events`. Each
+  successful credentials sign-in stores the derived device, deployment-provided
+  approximate location, coarse IP, sign-in method, and new-device flag on the
+  server; the device-local "simulate sign-in" control has been removed.
+- Phone verification is deferred. The `phone_verifications` schema and service
+  remain provider-neutral, but no phone code is sent or consumed and the account
+  security UI does not offer phone verification until an SMS provider is chosen.
 
 ## Insights and recommendations (Phase 6)
 
 - `/business/[id]/insights` shows deterministic, rule-based snapshots built from
   real sales, vendor orders, product stock, warehouse balances, and CRM records.
   The rule version is `configurable-rules-v1`; no external model or network call
-  is made, and no business policy is inferred.
+  is made, and no business policy is inferred. Gemini is the selected provider
+  direction for a future live-model slice, but no Gemini key is configured in this
+  workspace, so the shipped implementation remains deterministic.
 - `/recommendations` ranks published products using past orders, wishlists,
   catalog popularity, and availability. Scores are integer basis points stored
   as decimals in `ai_recommendation_history`, so a suggestion can be explained,

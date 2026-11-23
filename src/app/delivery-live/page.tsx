@@ -1,55 +1,38 @@
 import type { Metadata } from "next";
-import { Suspense } from "react";
+import { redirect } from "next/navigation";
 
-import { DeliveryHub } from "@/components/delivery/delivery-hub";
+import { getSessionActor } from "@/server/auth/session";
+import { getDatabase } from "@/server/db/client";
+
+export const instant = false;
 
 export const metadata: Metadata = {
   title: "Live delivery",
   description:
-    "Track your package in real time. Sellers dispatch couriers, delivery agents run the route, and buyers watch the vehicle move on the map.",
+    "Open the database-backed delivery views: request and track your own jobs, manage courier jobs, or dispatch from the admin console.",
   robots: { index: false, follow: false },
 };
 
-type Persona = "seller" | "courier" | "buyer";
+/**
+ * The original /delivery-live page was a device-local map simulation. Real
+ * tracking lives in the logistics tables, so this route now resolves to the
+ * correct database-backed view for the signed-in role.
+ */
+export default async function DeliveryLivePage() {
+  const actor = await getSessionActor();
 
-function parsePersona(value: string | string[] | undefined): Persona {
-  const raw = Array.isArray(value) ? value[0] : value;
-  return raw === "seller" || raw === "courier" || raw === "buyer" ? raw : "buyer";
-}
+  if (!actor) {
+    redirect("/delivery/request");
+  }
 
-export default function DeliveryLivePage({
-  searchParams,
-}: {
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
-}) {
-  return (
-    <Suspense fallback={<DeliveryHubFallback />}>
-      <DeliveryLiveContent searchParams={searchParams} />
-    </Suspense>
-  );
-}
+  if (actor.role === "ADMIN") {
+    redirect("/admin/delivery");
+  }
 
-async function DeliveryLiveContent({
-  searchParams,
-}: {
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
-}) {
-  const params = await searchParams;
-  const persona = parsePersona(params.persona);
+  const agent = await getDatabase().deliveryAgent.findFirst({
+    where: { userId: actor.id },
+    select: { id: true },
+  });
 
-  return <DeliveryHub initialPersona={persona} />;
-}
-
-function DeliveryHubFallback() {
-  return (
-    <div className="grid min-h-dvh place-items-center bg-[#070a14] text-[#a7b1c7]">
-      <div className="flex flex-col items-center gap-4">
-        <span className="relative flex size-3">
-          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#f97316] opacity-60" />
-          <span className="relative inline-flex size-3 rounded-full bg-[#f97316]" />
-        </span>
-        <p className="font-mono text-xs tracking-[0.18em] uppercase">Connecting live map…</p>
-      </div>
-    </div>
-  );
+  redirect(agent ? "/courier" : "/delivery/request");
 }

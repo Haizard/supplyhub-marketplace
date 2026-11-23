@@ -694,15 +694,16 @@
       "signIn": "Se connecter"
     },
     "security": {
-      "title": "Sécurité du compte",
+      "title": "La sécurité est liée au compte",
       "twoFactor": "Authentification à deux facteurs",
       "twoFactorBody": "Demandez un code à la connexion pour plus de sécurité.",
       "phone": "Vérification du téléphone",
       "phoneBody": "Permettez aux coursiers de vous joindre facilement.",
       "verify": "Vérifier",
       "loginAlerts": "Alertes de connexion",
-      "simulate": "Simuler une connexion",
-      "secret": "Votre clé secrète"
+      "secret": "Votre clé secrète",
+      "body": "La 2FA, les codes de secours et l’historique des connexions sont enregistrés dans votre compte, pas dans cette démo.",
+      "openSettings": "Ouvrir la sécurité du compte"
     },
     "saved": {
       "title": "Votre liste d'envies",
@@ -1075,7 +1076,7 @@
   "securitySettings": {
     "eyebrow": "Sécurité du compte",
     "title": "Paramètres de sécurité",
-    "subtitle": "Protégez la connexion avec une application d’authentification et vérifiez votre numéro de téléphone.",
+    "subtitle": "Protégez la connexion avec une application d’authentification et consultez un historique réel.",
     "twoFactor": "Authentification à deux facteurs",
     "twoFactorBody": "Demandez un code à usage unique d’une application d’authentification lors de la connexion.",
     "enabled": "Activée",
@@ -1093,7 +1094,7 @@
     "remaining": "{count} codes restants",
     "regenerate": "Générer de nouveaux codes",
     "phone": "Vérification du téléphone",
-    "phoneBody": "Vérifiez un numéro de téléphone pour les avis de récupération du compte.",
+    "phoneBody": "La vérification par téléphone est reportée jusqu’au choix d’un fournisseur SMS.",
     "phoneLabel": "Numéro de téléphone",
     "sendCode": "Envoyer le code",
     "phoneCodeLabel": "Code de vérification",
@@ -1103,7 +1104,15 @@
     "error": "Impossible d’effectuer cette modification.",
     "done": "Terminé",
     "backToAccount": "Retour au compte",
-    "saved": "Enregistré."
+    "saved": "Enregistré.",
+    "phoneDisabled": "La vérification par téléphone n’est pas encore activée. Votre compte reste protégé par le mot de passe et la 2FA facultative.",
+    "signInHistory": "Historique des connexions",
+    "signInHistoryBody": "Chaque connexion réussie est enregistrée sur le serveur avec l’appareil, l’emplacement approximatif et la méthode.",
+    "noSignInEvents": "Aucune connexion enregistrée pour le moment.",
+    "newDevice": "Nouvel appareil",
+    "methodPassword": "Mot de passe",
+    "methodTotp": "Mot de passe + application d’authentification",
+    "methodBackup": "Mot de passe + code de secours"
   },
   "insights": {
     "eyebrow": "Intelligence d’affaires",

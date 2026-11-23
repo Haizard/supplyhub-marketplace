@@ -694,15 +694,16 @@
       "signIn": "登录"
     },
     "security": {
-      "title": "账户安全",
+      "title": "安全设置已与账户打通",
       "twoFactor": "双重验证",
       "twoFactorBody": "登录时要求输入验证码，多一重安全保障。",
       "phone": "手机号验证",
       "phoneBody": "让快递员能可靠地联系到您。",
       "verify": "验证",
       "loginAlerts": "登录提醒",
-      "simulate": "模拟登录",
-      "secret": "您的密钥"
+      "secret": "您的密钥",
+      "body": "双重验证、备用码和登录历史都保存在您的账户中，而不是这个演示区。",
+      "openSettings": "打开账户安全设置"
     },
     "saved": {
       "title": "您的心愿单",
@@ -1075,7 +1076,7 @@
   "securitySettings": {
     "eyebrow": "账户安全",
     "title": "安全设置",
-    "subtitle": "使用身份验证器保护登录，并验证您的电话号码。",
+    "subtitle": "使用验证器应用保护登录，并查看真实的登录历史。",
     "twoFactor": "双重身份验证",
     "twoFactorBody": "登录时要求输入身份验证器应用生成的一次性代码。",
     "enabled": "已启用",
@@ -1093,7 +1094,7 @@
     "remaining": "剩余 {count} 个代码",
     "regenerate": "生成新代码",
     "phone": "手机验证",
-    "phoneBody": "验证手机号以接收账户恢复通知。",
+    "phoneBody": "在选择短信服务商之前，手机验证暂不启用。",
     "phoneLabel": "手机号码",
     "sendCode": "发送代码",
     "phoneCodeLabel": "验证码",
@@ -1103,7 +1104,15 @@
     "error": "无法完成此更改。",
     "done": "完成",
     "backToAccount": "返回账户",
-    "saved": "已保存。"
+    "saved": "已保存。",
+    "phoneDisabled": "手机验证尚未启用。您的账户仍受密码和可选双重验证保护。",
+    "signInHistory": "登录历史",
+    "signInHistoryBody": "每次成功登录都会保存在服务器上，并记录设备、大致位置和登录方式。",
+    "noSignInEvents": "暂无登录记录。",
+    "newDevice": "新设备",
+    "methodPassword": "密码",
+    "methodTotp": "密码 + 验证器",
+    "methodBackup": "密码 + 备用码"
   },
   "insights": {
     "eyebrow": "商业智能",
