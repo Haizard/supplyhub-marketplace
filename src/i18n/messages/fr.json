@@ -561,7 +561,9 @@
     "posShort": "Caisse",
     "deliveriesShort": "Livraisons",
     "earningsShort": "Gains",
-    "profileShort": "Profil"
+    "profileShort": "Profil",
+    "messages": "Messages",
+    "messagesShort": "Chat"
   },
   "admin": {
     "nav": "Administration",
@@ -683,7 +685,11 @@
       "empty": "Aucune conversation pour le moment",
       "emptyBody": "Contactez un studio depuis n'importe quelle page produit.",
       "placeholder": "Message",
-      "send": "Envoyer le message"
+      "send": "Envoyer le message",
+      "body": "Les conversations sont enregistrées dans votre compte. Contactez un studio depuis une fiche produit.",
+      "signInTitle": "Connectez-vous pour voir vos messages",
+      "signInBody": "Vos échanges avec les studios sont enregistrés dans votre compte pour être repris sur tout appareil.",
+      "signIn": "Se connecter"
     },
     "security": {
       "title": "Sécurité du compte",
@@ -702,7 +708,12 @@
       "empty": "Rien d'enregistré pour le moment.",
       "emptyBody": "Touchez le cœur sur un objet pour suivre son prix et son stock.",
       "priceDrop": "Baisse de prix",
-      "backInStock": "De retour en stock"
+      "backInStock": "De retour en stock",
+      "body": "Objets enregistrés dans votre compte, avec prix et stock actualisés.",
+      "signInTitle": "Connectez-vous pour voir vos favoris",
+      "signInBody": "Vos favoris suivent votre compte : suivez les prix et le stock sur chaque appareil.",
+      "signIn": "Se connecter",
+      "remove": "Retirer des favoris"
     },
     "alerts": {
       "title": "Notifications",
@@ -929,5 +940,25 @@
       "PAID": "Payé",
       "OVERDUE": "En retard"
     }
+  },
+  "messaging": {
+    "eyebrow": "Messages directs",
+    "title": "Messages",
+    "subtitle": "Vos échanges avec les studios vérifiés restent sur SupplyHub et peuvent être relus à tout moment.",
+    "studioTitle": "Messages des acheteurs",
+    "studioSubtitle": "Répondez aux acheteurs et gardez chaque conversation sur la plateforme.",
+    "emptyTitle": "Aucune conversation",
+    "emptyBody": "Contactez un studio depuis une fiche produit ou sa page pour démarrer une vraie conversation.",
+    "browse": "Parcourir le catalogue",
+    "studios": "Studios",
+    "buyers": "Acheteurs",
+    "sayHello": "Dire bonjour",
+    "onPlatform": "Conversation sécurisée sur SupplyHub",
+    "aboutProduct": "À propos de {name}",
+    "placeholder": "Écrivez un message…",
+    "send": "Envoyer",
+    "error": "Ce message n’a pas pu être envoyé.",
+    "opening": "Ouverture…",
+    "select": "Sélectionnez une conversation à lire."
   }
 }

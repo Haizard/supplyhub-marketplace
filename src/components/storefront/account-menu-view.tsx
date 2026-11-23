@@ -7,6 +7,7 @@ import {
   Heart,
   LayoutDashboard,
   LogOut,
+  MessageSquare,
   ShieldCheck,
   Truck,
   UserRound,
@@ -76,6 +77,12 @@ export function AccountMenuView({ actor }: { actor: Actor | null }) {
           <Link href="/account/wishlist" className="w-full">
             <Heart className="size-4" aria-hidden="true" />
             {t("wishlist.title")}
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href="/messages" className="w-full">
+            <MessageSquare className="size-4" aria-hidden="true" />
+            {t("messaging.title")}
           </Link>
         </DropdownMenuItem>
         {actor.business ? (

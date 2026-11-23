@@ -52,7 +52,7 @@
 | Product variants (size/colour/SKU) | 🔴 | Single SKU per product |
 | Bulk product upload (CSV) | 🔴 | Not present |
 | Product comparison | 🔴 | Not present |
-| Wishlists | ⚠️ | NEW: client-side only in experience centre (localStorage) |
+| Wishlists | ✅ | DB-backed `WishlistItem`; `/account/wishlist` and experience centre saved panel |
 | Price watch / alerts | ⚠️ | NEW: client-side only in experience centre |
 | Product reviews / ratings | ⚠️ | NEW: client-side sandbox only in experience centre |
 
@@ -130,11 +130,11 @@
 | Feature | Status | Notes |
 |---|---|---|
 | Verified studio badge | ✅ | NEW: DB-enforced, shown on all catalog products |
-| Experience centre (`/experience`) | ⚠️ | NEW: 8-panel client-side suite (no DB reads/writes) |
+| Experience centre (`/experience`) | ⚠️ | Mixed: chat and saved objects are DB-backed; orders/protection/security remain sandbox |
 | Buyer protection explainer | ⚠️ | NEW: 12 trust features documented (UI only) |
-| Wishlist (persistent) | 🔴 | Client-side localStorage only |
+| Wishlist (persistent) | ✅ | DB-backed via `WishlistItem`, shared by catalog and experience centre |
 | Price watch notifications | 🔴 | Client-side localStorage only |
-| Buyer↔studio chat | 🔴 | Client-side simulation only |
+| Buyer↔studio chat | ✅ | DB-backed threads at `/messages` and `/vendor/messages`, with read receipts |
 | Security (2FA, phone verify) | 🔴 | Client-side simulation only |
 | Dispute resolution | 🔴 | Not present |
 | Escrow / payment holding | 🔴 | Simulated in experience centre; no real escrow |

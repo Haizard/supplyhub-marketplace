@@ -4,6 +4,7 @@ import {
   Building2,
   Calculator,
   LayoutDashboard,
+  MessageSquare,
   Package,
   ReceiptText,
   RotateCcw,
@@ -59,6 +60,13 @@ export const studioTabs = [
     labelKey: "studio.returns",
     icon: RotateCcw,
     active: (pathname: string) => pathname.startsWith("/vendor/returns"),
+  },
+  {
+    href: "/vendor/messages",
+    labelKey: "studio.messages",
+    mobileLabelKey: "studio.messagesShort",
+    icon: MessageSquare,
+    active: (pathname: string) => pathname.startsWith("/vendor/messages"),
   },
   {
     href: "/vendor/wholesale",

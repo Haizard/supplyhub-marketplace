@@ -21,14 +21,10 @@ const CHANNEL = "supplyhub-experience";
 
 interface ExperienceContextValue {
   state: ExperienceState;
-  toggleWishlist: (item: WatchSnapshot) => void;
   checkWatch: (listings: WatchSnapshot[]) => void;
   markRead: (id: string) => void;
   markAllRead: () => void;
   clearNotifications: () => void;
-  openChat: (vendorSlug: string, vendorName: string) => void;
-  sendChat: (vendorSlug: string, text: string) => void;
-  markChatRead: (vendorSlug: string) => void;
   addAddress: (address: Omit<SavedAddress, "id">) => void;
   removeAddress: (id: string) => void;
   setGuestEmail: (email: string) => void;
@@ -77,7 +73,7 @@ function readStored(): ExperienceState | null {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as ExperienceState;
-    if (!Array.isArray(parsed.wishlist) || !Array.isArray(parsed.orders)) return null;
+    if (!Array.isArray(parsed.orders)) return null;
     return { ...emptyState(), ...parsed };
   } catch {
     return null;
@@ -143,19 +139,6 @@ function notify(kind: NotificationKind, title: string, body: string, tab?: Exper
   }));
 }
 
-function toggleWishlist(item: WatchSnapshot) {
-  mutate((prev) => {
-    const has = prev.wishlist.includes(item.slug);
-    const wishlist = has
-      ? prev.wishlist.filter((s) => s !== item.slug)
-      : [...prev.wishlist, item.slug];
-    const watch = { ...prev.watch };
-    if (has) delete watch[item.slug];
-    else watch[item.slug] = item;
-    return { ...prev, wishlist, watch };
-  });
-}
-
 // Compare live catalog listings against saved snapshots and raise price-drop /
 // back-in-stock alerts. Called whenever a catalog surface renders.
 function checkWatch(listings: WatchSnapshot[]) {
@@ -204,89 +187,6 @@ function markAllRead() {
 
 function clearNotifications() {
   mutate((prev) => ({ ...prev, notifications: [] }));
-}
-
-function openChat(vendorSlug: string, vendorName: string) {
-  mutate((prev) =>
-    prev.chats[vendorSlug]
-      ? prev
-      : {
-          ...prev,
-          chats: {
-            ...prev.chats,
-            [vendorSlug]: { vendorSlug, vendorName, messages: [], unread: 0 },
-          },
-        },
-  );
-}
-
-const STUDIO_REPLIES = [
-  "Thanks for reaching out! Yes, that piece is available and ready to ship.",
-  "Good question — we can deliver across Dar es Salaam within 24 hours.",
-  "We pack every order carefully and it's covered by buyer protection.",
-  "Happy to help! Anything else you'd like to know before ordering?",
-];
-
-function sendChat(vendorSlug: string, text: string) {
-  const trimmed = text.trim();
-  if (!trimmed) return;
-  mutate((prev) => {
-    const thread = prev.chats[vendorSlug] ?? {
-      vendorSlug,
-      vendorName: vendorSlug,
-      messages: [],
-      unread: 0,
-    };
-    return {
-      ...prev,
-      chats: {
-        ...prev.chats,
-        [vendorSlug]: {
-          ...thread,
-          messages: [
-            ...thread.messages,
-            { id: uid("msg"), from: "buyer", text: trimmed, at: Date.now() },
-          ],
-        },
-      },
-    };
-  });
-  // Simulated studio reply so the inbox is demonstrable end to end.
-  window.setTimeout(() => {
-    const reply = STUDIO_REPLIES[Math.floor(Math.random() * STUDIO_REPLIES.length)]!;
-    mutate((prev) => {
-      const thread = prev.chats[vendorSlug];
-      if (!thread) return prev;
-      return {
-        ...prev,
-        chats: {
-          ...prev.chats,
-          [vendorSlug]: {
-            ...thread,
-            unread: thread.unread + 1,
-            messages: [
-              ...thread.messages,
-              { id: uid("msg"), from: "studio", text: reply, at: Date.now() },
-            ],
-          },
-        },
-      };
-    });
-    notify(
-      "chat",
-      `New message from ${snapshot.state.chats[vendorSlug]?.vendorName ?? "studio"}`,
-      reply,
-      "inbox",
-    );
-  }, 1500);
-}
-
-function markChatRead(vendorSlug: string) {
-  mutate((prev) => {
-    const thread = prev.chats[vendorSlug];
-    if (!thread) return prev;
-    return { ...prev, chats: { ...prev.chats, [vendorSlug]: { ...thread, unread: 0 } } };
-  });
 }
 
 function addAddress(address: Omit<SavedAddress, "id">) {
@@ -631,14 +531,10 @@ export function ExperienceProvider({ children }: { children: ReactNode }) {
       // Until mounted, expose the empty server snapshot so the hydration render
       // matches the server; persisted device state then arrives as an update.
       state: hydrated ? snap.state : serverSnapshot.state,
-      toggleWishlist,
       checkWatch,
       markRead,
       markAllRead,
       clearNotifications,
-      openChat,
-      sendChat,
-      markChatRead,
       addAddress,
       removeAddress,
       setGuestEmail,

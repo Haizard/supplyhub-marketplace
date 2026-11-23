@@ -163,16 +163,32 @@ Delivered as database-backed features (not a prototype):
 
 ---
 
-## Phase 6 — Growth, Intelligence, and Trust Conversion
+## Phase 6 — Growth, Intelligence, and Trust Conversion (IN PROGRESS)
 
 **Goal**: Real CRM, loyalty, chat, and AI — convert remaining prototypes.
 
-### New tables / conversions
+### Delivered: account-backed messaging and saved objects
+
+- `chats` and `chat_messages` tables, applied in migration
+  `20261121090000_phase6_messaging`, with one thread per buyer/studio pair,
+  recipient read receipts and audit events for thread creation and messages.
+- Buyer inbox at `/messages` and `/messages/[chatId]`; studio inbox at
+  `/vendor/messages` and `/vendor/messages/[chatId]`. Studio replies are guarded
+  by the new `messaging.reply` permission and business-scoped studio access.
+- Product and studio "Message studio" buttons now open a real database thread
+  instead of seeding the experience-centre localStorage simulation.
+- Experience-centre inbox and saved panels now read account-backed data. The
+  wishlist uses the existing `WishlistItem` table and `toggleWishlistAction`;
+  price-drop and restock notifications remain a device-local aid.
+- Three messaging unit tests plus a seeded demo conversation between
+  `customer@supplyhub.test` and Atelier Nord.
+
+### Remaining Phase 6 work
+
 - `customers` (vendor-scoped CRM), `loyalty_accounts`, `loyalty_transactions`
-- `chats`, `chat_messages` (replace experience centre simulation)
 - `subscription_plans`, `business_subscriptions`, `subscription_invoices`
 - `business_ai_insights`, `ai_recommendation_history`
-- Real security features (2FA via TOTP, phone OTP) — replace simulation
+- Real security features (TOTP 2FA, phone OTP) — replace simulation
 
 **Deliverable**: Real chat, real loyalty, real 2FA, AI business insights, subscription revenue.
 

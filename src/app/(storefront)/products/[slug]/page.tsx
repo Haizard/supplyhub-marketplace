@@ -212,7 +212,11 @@ async function ProductDetail({ product }: { product: ProductListing }) {
               productName={product.name}
               saved={Boolean(product.saved)}
             />
-            <StudioChatButton vendorSlug={product.vendor.slug} vendorName={product.vendor.name} />
+            <StudioChatButton
+              vendorSlug={product.vendor.slug}
+              vendorName={product.vendor.name}
+              productId={product.id}
+            />
             <Link
               href="/experience"
               className="inline-flex items-center gap-1.5 rounded-lg border border-[#0f766e]/30 bg-[#0f766e]/5 px-4 py-2.5 text-sm font-semibold text-[#0f766e] transition hover:bg-[#0f766e]/10"

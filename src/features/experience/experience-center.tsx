@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 
 import type { ProductListing } from "@/features/catalog/types";
+import type { ChatConversationView } from "@/features/messaging/types";
 import { useI18n } from "@/i18n/client";
 import { cn } from "@/lib/utils/cn";
 
@@ -43,15 +44,21 @@ const TABS: { id: ExperienceTab; labelKey: string; icon: typeof ShieldCheck }[] 
 function CenterInner({
   products,
   initialTab,
+  viewerId,
+  conversations,
+  savedProducts,
 }: {
   products: ProductListing[];
   initialTab: ExperienceTab;
+  viewerId: string | null;
+  conversations: ChatConversationView[];
+  savedProducts: ProductListing[];
 }) {
   const [tab, setTab] = useState<ExperienceTab>(initialTab);
   const { t } = useI18n();
   const { state, resetExperience } = useExperience();
   const unread = state.notifications.filter((n) => !n.read).length;
-  const chatUnread = Object.values(state.chats).reduce((sum, t) => sum + t.unread, 0);
+  const chatUnread = conversations.reduce((sum, chat) => sum + chat.unread, 0);
 
   return (
     <div className="mx-auto max-w-[1200px] px-4 py-8 sm:px-6 sm:py-10">
@@ -116,9 +123,11 @@ function CenterInner({
         {tab === "orders" ? <OrdersPanel /> : null}
         {tab === "protection" ? <ProtectionPanel /> : null}
         {tab === "reviews" ? <ReviewsPanel products={products} /> : null}
-        {tab === "inbox" ? <InboxPanel /> : null}
+        {tab === "inbox" ? <InboxPanel viewerId={viewerId} conversations={conversations} /> : null}
         {tab === "security" ? <SecurityPanel /> : null}
-        {tab === "saved" ? <SavedPanel products={products} /> : null}
+        {tab === "saved" ? (
+          <SavedPanel products={products} savedProducts={savedProducts} viewerId={viewerId} />
+        ) : null}
         {tab === "alerts" ? <AlertsPanel onNavigate={setTab} /> : null}
       </div>
 
@@ -133,13 +142,25 @@ function CenterInner({
 export function ExperienceCenter({
   products,
   initialTab = "shop",
+  viewerId,
+  conversations,
+  savedProducts,
 }: {
   products: ProductListing[];
   initialTab?: ExperienceTab;
+  viewerId: string | null;
+  conversations: ChatConversationView[];
+  savedProducts: ProductListing[];
 }) {
   return (
     <ExperienceProvider>
-      <CenterInner products={products} initialTab={initialTab} />
+      <CenterInner
+        products={products}
+        initialTab={initialTab}
+        viewerId={viewerId}
+        conversations={conversations}
+        savedProducts={savedProducts}
+      />
     </ExperienceProvider>
   );
 }

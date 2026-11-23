@@ -561,7 +561,9 @@
     "posShort": "POS",
     "deliveriesShort": "Deliveries",
     "earningsShort": "Earnings",
-    "profileShort": "Profile"
+    "profileShort": "Profile",
+    "messages": "Messages",
+    "messagesShort": "Chat"
   },
   "admin": {
     "nav": "Administration",
@@ -683,7 +685,11 @@
       "empty": "No conversations yet",
       "emptyBody": "Message a studio from any product page.",
       "placeholder": "Message",
-      "send": "Send message"
+      "send": "Send message",
+      "body": "Conversations are saved to your account. Message a studio from any product page.",
+      "signInTitle": "Sign in to see your messages",
+      "signInBody": "Your conversations with studios are saved to your account so you can continue them on any device.",
+      "signIn": "Sign in"
     },
     "security": {
       "title": "Account security",
@@ -702,7 +708,12 @@
       "empty": "Nothing saved yet.",
       "emptyBody": "Tap the heart on any object to watch its price and stock.",
       "priceDrop": "Price drop",
-      "backInStock": "Back in stock"
+      "backInStock": "Back in stock",
+      "body": "Objects saved to your account, with live catalog prices and stock.",
+      "signInTitle": "Sign in to see saved objects",
+      "signInBody": "Your saved objects follow your account, so you can watch prices and stock on every device.",
+      "signIn": "Sign in",
+      "remove": "Remove from saved objects"
     },
     "alerts": {
       "title": "Notifications",
@@ -929,5 +940,25 @@
       "PAID": "Paid",
       "OVERDUE": "Overdue"
     }
+  },
+  "messaging": {
+    "eyebrow": "Direct messages",
+    "title": "Messages",
+    "subtitle": "Your conversations with verified studios stay on SupplyHub, where you can review them any time.",
+    "studioTitle": "Buyer messages",
+    "studioSubtitle": "Reply to buyer questions and keep every conversation on the platform.",
+    "emptyTitle": "No conversations yet",
+    "emptyBody": "Message a studio from a product or studio page to start a real conversation.",
+    "browse": "Browse the catalog",
+    "studios": "Studios",
+    "buyers": "Buyers",
+    "sayHello": "Say hello",
+    "onPlatform": "Secure conversation on SupplyHub",
+    "aboutProduct": "About {name}",
+    "placeholder": "Write a message…",
+    "send": "Send message",
+    "error": "That message could not be sent.",
+    "opening": "Opening…",
+    "select": "Select a conversation to read it."
   }
 }

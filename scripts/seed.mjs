@@ -460,6 +460,7 @@ const demoStaffPermissionKeys = [
   "b2b.rfq.create",
   "b2b.purchase_order.create",
   "b2b.invoice.read",
+  "messaging.reply",
 ];
 
 function normalize(value) {
@@ -1009,6 +1010,36 @@ try {
        '50000000-0000-4000-8000-000000000040', 'Ridge carafe',
        24, 78000, 1872000, 'TZS', now())
      ON CONFLICT (id) DO NOTHING`,
+  );
+
+  // Phase 6: one real buyer ↔ studio conversation for the demo accounts.
+  const demoChatId = "60000000-0000-4000-8000-000000000001";
+  await client.query(
+    `INSERT INTO chats (
+       id, buyer_id, vendor_id, product_id, last_message_at, created_at, updated_at
+     )
+     VALUES ($1, $2, $3, '40000000-0000-4000-8000-000000000001',
+       now() - interval '3 minutes', now() - interval '1 day', now() - interval '3 minutes')
+     ON CONFLICT (id) DO NOTHING`,
+    [demoChatId, customer.id, studios[0].id],
+  );
+  await client.query(
+    `INSERT INTO chat_messages (id, chat_id, sender_id, body, read_at, created_at)
+     VALUES
+       ('60000000-0000-4000-8000-000000000011', $1, $2,
+        'Hello! Is the ridge carafe available in the speckled glaze?',
+        now() - interval '1 day', now() - interval '1 day'),
+       ('60000000-0000-4000-8000-000000000012', $1, $3,
+        'Yes — we have six in that glaze ready to ship.',
+        now() - interval '20 hours', now() - interval '20 hours'),
+       ('60000000-0000-4000-8000-000000000013', $1, $3,
+        'Absolutely — tell me your preferred glaze and I will reserve one.',
+        null, now() - interval '3 minutes')
+     ON CONFLICT (id) DO UPDATE SET
+       sender_id = EXCLUDED.sender_id,
+       body = EXCLUDED.body,
+       read_at = EXCLUDED.read_at`,
+    [demoChatId, customer.id, studios[0].ownerId],
   );
 
   // Phase 4: documented default delivery pricing (TZS).

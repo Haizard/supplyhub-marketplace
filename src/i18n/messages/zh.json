@@ -561,7 +561,9 @@
     "posShort": "收银",
     "deliveriesShort": "配送",
     "earningsShort": "收益",
-    "profileShort": "资料"
+    "profileShort": "资料",
+    "messages": "消息",
+    "messagesShort": "沟通"
   },
   "admin": {
     "nav": "管理后台",
@@ -683,7 +685,11 @@
       "empty": "暂无会话",
       "emptyBody": "在任意商品页面给工作室发消息。",
       "placeholder": "输入消息",
-      "send": "发送消息"
+      "send": "发送消息",
+      "body": "对话会保存在您的账户中。可从任意商品页联系工作室。",
+      "signInTitle": "登录查看消息",
+      "signInBody": "您与工作室的对话保存在账户中，可在任意设备继续沟通。",
+      "signIn": "登录"
     },
     "security": {
       "title": "账户安全",
@@ -702,7 +708,12 @@
       "empty": "还没有收藏任何商品。",
       "emptyBody": "点击任意商品上的爱心，即可关注其价格与库存。",
       "priceDrop": "降价",
-      "backInStock": "重新有货"
+      "backInStock": "重新有货",
+      "body": "保存在账户中的商品，价格与库存实时更新。",
+      "signInTitle": "登录查看收藏",
+      "signInBody": "收藏会跟随您的账户，方便在每台设备上关注价格和库存。",
+      "signIn": "登录",
+      "remove": "从收藏中移除"
     },
     "alerts": {
       "title": "通知",
@@ -929,5 +940,25 @@
       "PAID": "已支付",
       "OVERDUE": "已逾期"
     }
+  },
+  "messaging": {
+    "eyebrow": "直接消息",
+    "title": "消息",
+    "subtitle": "您与认证工作室的对话会保留在 SupplyHub，随时可以回看。",
+    "studioTitle": "买家消息",
+    "studioSubtitle": "回复买家咨询，让所有沟通都留在平台内。",
+    "emptyTitle": "还没有对话",
+    "emptyBody": "从商品页或工作室页面给工作室发消息，即可开始真实对话。",
+    "browse": "浏览商品",
+    "studios": "工作室",
+    "buyers": "买家",
+    "sayHello": "打个招呼",
+    "onPlatform": "SupplyHub 安全对话",
+    "aboutProduct": "关于{name}",
+    "placeholder": "写一条消息…",
+    "send": "发送消息",
+    "error": "消息发送失败。",
+    "opening": "正在打开…",
+    "select": "选择一条对话进行阅读。"
   }
 }

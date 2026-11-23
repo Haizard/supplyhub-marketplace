@@ -561,7 +561,9 @@
     "posShort": "Mauzo",
     "deliveriesShort": "Uwasilishaji",
     "earningsShort": "Mapato",
-    "profileShort": "Wasifu"
+    "profileShort": "Wasifu",
+    "messages": "Ujumbe",
+    "messagesShort": "Ongea"
   },
   "admin": {
     "nav": "Utawala",
@@ -683,7 +685,11 @@
       "empty": "Bado hakuna mazungumzo",
       "emptyBody": "Tuma ujumbe kwa studio kutoka ukurasa wowote wa bidhaa.",
       "placeholder": "Ujumbe",
-      "send": "Tuma ujumbe"
+      "send": "Tuma ujumbe",
+      "body": "Mazungumzo huhifadhiwa kwenye akaunti yako. Tuma ujumbe kwa studio kutoka ukurasa wowote wa bidhaa.",
+      "signInTitle": "Ingia ili kuona ujumbe wako",
+      "signInBody": "Mazungumzo yako na studiop huhifadhiwa kwenye akaunti yako ili uyaendeleze kwenye kifaa chochote.",
+      "signIn": "Ingia"
     },
     "security": {
       "title": "Usalama wa akaunti",
@@ -702,7 +708,12 @@
       "empty": "Bado hakuna kilichohifadhiwa.",
       "emptyBody": "Gusa moyo kwenye bidhaa yoyote ili kufuatilia bei na upatikanaji wake.",
       "priceDrop": "Bei imeshuka",
-      "backInStock": "Imerudi stokini"
+      "backInStock": "Imerudi stokini",
+      "body": "Vituo vilivyohifadhiwa kwenye akaunti yako, na bei na hisa za sasa.",
+      "signInTitle": "Ingia ili kuona vitu vilivyohifadhiwa",
+      "signInBody": "Vitu ulivyohifadhiwa hufuata akaunti yako, ili ufuatilie bei na hisa kwenye kifaa chochote.",
+      "signIn": "Ingia",
+      "remove": "Ondoa kwenye vitu vilivyohifadhiwa"
     },
     "alerts": {
       "title": "Arifa",
@@ -929,5 +940,25 @@
       "PAID": "Imeolipwa",
       "OVERDUE": "Imechelewa"
     }
+  },
+  "messaging": {
+    "eyebrow": "Ujumbe wa moja kwa moja",
+    "title": "Ujumbe",
+    "subtitle": "Mazungumzo yako na studiop zilizothibitishwa huhifadhiwa SupplyHub, unaweza kuyakagua wakati wowote.",
+    "studioTitle": "Ujumbe kutoka kwa wanunuzi",
+    "studioSubtitle": "Jibu maswali ya wanunuzi na uweke mazungumzo yote platefomuni.",
+    "emptyTitle": "Hakuna mazungumzo bado",
+    "emptyBody": "Tuma ujumbe kwa studio kutoka ukurasa wa bidhaa au studio ili kuanza mazungumzo halisi.",
+    "browse": "Vinjari orodha",
+    "studios": "Studiop",
+    "buyers": "Wanunuzi",
+    "sayHello": "Salamu",
+    "onPlatform": "Mazungumzo salama kwenye SupplyHub",
+    "aboutProduct": "Kuhusu {name}",
+    "placeholder": "Andika ujumbe…",
+    "send": "Tuma ujumbe",
+    "error": "Ujumbe hauwezi kutumwa.",
+    "opening": "Inafungua…",
+    "select": "Chagua mazungumzo kuyasoma."
   }
 }

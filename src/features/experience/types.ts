@@ -1,11 +1,10 @@
 // Client-persisted Trust & Experience suite.
 //
-// The marketplace database schema is intentionally untouched, so buyer-side
-// trust features (wishlist, alerts, inbox, addresses, security, sandbox orders,
-// escrow, returns and verified-purchase reviews) live in a per-device store that
-// syncs across tabs. Money is handled as integer cents; nothing here writes to
-// the database or reads server secrets. Sandbox payments are clearly labelled
-// and never charge a real account.
+// Chat threads and saved objects are database-backed and arrive from server
+// components. This store keeps only the device-local simulation pieces:
+// notification snapshots, addresses, security demo state, sandbox orders,
+// escrow, returns and verified-purchase reviews. Money is handled as integer
+// cents; sandbox payments are clearly labelled and never charge an account.
 
 export type NotificationKind =
   "delivery" | "price" | "stock" | "chat" | "return" | "security" | "escrow" | "order";
@@ -30,20 +29,6 @@ export interface WatchSnapshot {
   inventory: number;
   image: string;
   currency: string;
-}
-
-export interface ChatMessage {
-  id: string;
-  from: "buyer" | "studio";
-  text: string;
-  at: number;
-}
-
-export interface ChatThread {
-  vendorSlug: string;
-  vendorName: string;
-  messages: ChatMessage[];
-  unread: number;
 }
 
 export interface SavedAddress {
@@ -144,10 +129,8 @@ export interface SandboxOrder {
 }
 
 export interface ExperienceState {
-  wishlist: string[];
   watch: Record<string, WatchSnapshot>;
   notifications: ExperienceNotification[];
-  chats: Record<string, ChatThread>;
   addresses: SavedAddress[];
   security: SecurityState;
   orders: SandboxOrder[];
@@ -180,10 +163,8 @@ export function formatCents(cents: number, currency = "TZS"): string {
 
 export function emptyState(): ExperienceState {
   return {
-    wishlist: [],
     watch: {},
     notifications: [],
-    chats: {},
     addresses: [],
     security: {
       twoFactorEnabled: false,

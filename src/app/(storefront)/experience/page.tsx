@@ -4,6 +4,9 @@ import { Suspense } from "react";
 import { listProducts } from "@/features/catalog/queries";
 import { ExperienceCenter } from "@/features/experience/experience-center";
 import type { ExperienceTab } from "@/features/experience/types";
+import { listConversations } from "@/features/messaging/queries";
+import { listWishlistProducts } from "@/features/wishlist/queries";
+import { getSessionActor } from "@/server/auth/session";
 
 export const metadata: Metadata = {
   title: "Buy with confidence",
@@ -42,7 +45,20 @@ async function ExperienceContent({
   searchParams: PageProps<"/experience">["searchParams"];
 }) {
   const params = await searchParams;
-  const products = await listProducts({ limit: 48 });
+  const actor = await getSessionActor();
+  const [products, conversations, savedProducts] = await Promise.all([
+    listProducts({ limit: 48 }),
+    actor ? listConversations({ side: "buyer", viewerId: actor.id }) : Promise.resolve([]),
+    actor ? listWishlistProducts(actor.id) : Promise.resolve([]),
+  ]);
 
-  return <ExperienceCenter products={products} initialTab={parseTab(params.tab)} />;
+  return (
+    <ExperienceCenter
+      products={products}
+      initialTab={parseTab(params.tab)}
+      viewerId={actor?.id ?? null}
+      conversations={conversations}
+      savedProducts={savedProducts}
+    />
+  );
 }
