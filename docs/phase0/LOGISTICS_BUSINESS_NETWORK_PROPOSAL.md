@@ -384,4 +384,6 @@ All scenarios must assert real database state transitions, not mocked success.
 - [x] L1 implemented: migration `20261124120000_phase9_logistics_l1`, company
       identity, memberships, roles, tenant resolver, 11 permission keys, feature flag,
       `/logistics` and `/admin/logistics` pages, and unit tests.
-- [ ] L2–L12 remain to be approved and implemented one slice at a time.
+- [x] L2 implemented: profile editing, branches, settings and an audit-derived
+      activity feed, with validation unit tests.
+- [ ] L3–L12 remain to be approved and implemented one slice at a time.

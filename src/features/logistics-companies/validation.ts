@@ -70,7 +70,59 @@ export const assignRoleSchema = z.object({
   roleId: uuid,
 });
 
+export const companyUpdateSchema = companySchema.extend({
+  companyId: uuid,
+});
+
+export const branchSchema = z.object({
+  branchId: z.preprocess((v) => (v === "" ? undefined : v), uuid.optional()),
+  companyId: uuid,
+  name: z.string().trim().min(2, "Branch name is too short.").max(120),
+  branchCode: z
+    .string()
+    .trim()
+    .min(1)
+    .max(40)
+    .regex(/^[A-Z0-9-]+$/, "Use uppercase letters, numbers and dashes."),
+  address: optionalText(300),
+  city: optionalText(120),
+  latitude: z.preprocess(
+    (v) => (v === "" || v === undefined ? undefined : v),
+    z.coerce.number().min(-90).max(90).optional(),
+  ),
+  longitude: z.preprocess(
+    (v) => (v === "" || v === undefined ? undefined : v),
+    z.coerce.number().min(-180).max(180).optional(),
+  ),
+  isPrimary: z.preprocess((v) => v === "on" || v === "true" || v === true, z.boolean()),
+  isActive: z.preprocess(
+    (v) => v === undefined || v === "on" || v === "true" || v === true,
+    z.boolean(),
+  ),
+});
+
+export const settingsSchema = z.object({
+  companyId: uuid,
+  currency: z
+    .string()
+    .trim()
+    .length(3)
+    .regex(/^[A-Z]{3}$/, "Use a three-letter currency code."),
+  timezone: z.string().trim().min(1).max(64),
+  notificationEmail: z.preprocess(
+    (value) => (typeof value === "string" && value.trim() === "" ? undefined : value),
+    z.email().optional(),
+  ),
+  defaultServiceRadius: z.coerce
+    .number()
+    .min(0, "Radius cannot be negative.")
+    .max(1000, "Radius is too large."),
+});
+
 export type CompanyInput = z.infer<typeof companySchema>;
+export type CompanyUpdateInput = z.infer<typeof companyUpdateSchema>;
+export type BranchInput = z.infer<typeof branchSchema>;
+export type SettingsInput = z.infer<typeof settingsSchema>;
 export type CompanyReviewInput = z.infer<typeof companyReviewSchema>;
 export type MemberInviteInput = z.infer<typeof memberInviteSchema>;
 export type MemberStatusInput = z.infer<typeof memberStatusSchema>;

@@ -413,7 +413,10 @@ test strategy are in
   the `phase9.logisticsNetwork` flag (off by default). Pages at `/logistics` and
   `/admin/logistics` are membership-scoped from PostgreSQL; lifecycle and permission
   rules have unit tests.
-- **L2** Company dashboard, profile, branches and settings.
+- **L2 — DELIVERED** Profile editing, branches with one-primary enforcement, operating
+  preferences and a company activity feed built on the existing audit log. Company
+  navigation links Overview, Profile, Branches, Members, Roles, Settings and Activity;
+  all mutations are membership-scoped and audited.
 - **L3** Fleet, vehicles, documents, driver profiles, memberships and assignments.
 - **L4** Independent merchant clients and contacts.
 - **L5** Contracts, pricing, SLAs, versions and performance.
@@ -423,8 +426,8 @@ test strategy are in
 - **L9** Partner acquisition, attribution and reward eligibility (requires L4 + L5).
 - **L10** External e-commerce APIs. **L11** Fleet sharing and hubs. **L12** AI optimisation.
 
-All slices sit behind the `phase9.logisticsNetwork` feature flag. L1 is implemented;
-L2–L12 remain planned and should be delivered one slice at a time.
+All slices sit behind the `phase9.logisticsNetwork` feature flag. L1 and L2 are
+implemented; L3–L12 remain planned and should be delivered one slice at a time.
 
 ---
 
@@ -450,5 +453,5 @@ Phase 7 (Ecosystem)                  ← DONE — requires all earlier phases
     ↓
 Phase 8 (Trust & Operations)         ← DONE — requires Phase 7 and the payment ledger
     ↓
-Phase 9 (Logistics Business Network) ← IN PROGRESS — L1 done; L9 needs L4 + L5
+Phase 9 (Logistics Business Network) ← IN PROGRESS — L1-L2 done; L9 needs L4 + L5
 ```

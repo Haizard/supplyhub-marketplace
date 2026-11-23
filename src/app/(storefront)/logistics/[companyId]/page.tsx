@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { z } from "zod";
 
+import { CompanyNav } from "@/components/logistics/company-nav";
 import { SubmitCompanyForm } from "@/components/logistics/submit-company-form";
 import { PageShell } from "@/components/storefront/page-shell";
 import { Badge } from "@/components/ui/badge";
@@ -59,6 +60,8 @@ async function LogisticsCompanyContent({ params }: { params: Promise<{ companyId
           {COMPANY_STATUS_LABELS[company.status]}
         </Badge>
       </header>
+
+      <CompanyNav companyId={companyId} active="overview" />
 
       {company.description ? (
         <p className="max-w-2xl text-sm leading-6 text-muted-foreground">{company.description}</p>

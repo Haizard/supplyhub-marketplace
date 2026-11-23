@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
+import { Prisma } from "@/generated/prisma/client";
 import { makeDocumentNumber } from "@/features/b2b/pricing";
 import { isFeatureEnabled } from "@/features/flags/service";
 import { firstFieldErrors, formValue, type FormState } from "@/features/identity/form-state";
@@ -16,12 +17,15 @@ import { logger } from "@/lib/logging/logger";
 import { canTransitionCompany } from "./status";
 import {
   assignRoleSchema,
+  branchSchema,
   companyReviewSchema,
   companySchema,
+  companyUpdateSchema,
   LOGISTICS_PERMISSION_KEYS,
   memberInviteSchema,
   memberStatusSchema,
   roleSchema,
+  settingsSchema,
 } from "./validation";
 
 function fail(message: string): FormState {
@@ -495,4 +499,266 @@ export async function assignRoleAction(_prev: FormState, formData: FormData): Pr
 
   revalidatePath(`/logistics/${access.companyId}/members`);
   return ok("Role assigned.");
+}
+
+/** Owner/staff edit of the company profile. Status is never client-controlled. */
+export async function updateCompanyAction(
+  _prev: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const disabled = await ensureEnabled();
+  if (disabled) return disabled;
+
+  const parsed = companyUpdateSchema.safeParse({
+    companyId: formValue(formData, "companyId"),
+    name: formValue(formData, "name"),
+    slug: formValue(formData, "slug"),
+    registrationNumber: formValue(formData, "registrationNumber"),
+    description: formValue(formData, "description"),
+    contactPhone: formValue(formData, "contactPhone"),
+    contactEmail: formValue(formData, "contactEmail"),
+    address: formValue(formData, "address"),
+    city: formValue(formData, "city"),
+    countryCode: formValue(formData, "countryCode") || "TZ",
+  });
+  if (!parsed.success) return failFields(parsed.error);
+
+  const access = await requireLogisticsAccess(
+    "logistics.company.update",
+    parsed.data.companyId,
+    `/logistics/${parsed.data.companyId}/edit`,
+  );
+  const { companyId, ...data } = parsed.data;
+
+  try {
+    await getDatabase().$transaction(async (tx) => {
+      await tx.logisticsCompany.update({
+        where: { id: companyId },
+        data: {
+          name: data.name,
+          slug: data.slug,
+          registrationNumber: data.registrationNumber ?? null,
+          description: data.description ?? null,
+          contactPhone: data.contactPhone ?? null,
+          contactEmail: data.contactEmail ?? null,
+          address: data.address ?? null,
+          city: data.city ?? null,
+          countryCode: data.countryCode,
+        },
+      });
+      await recordAuditEvent(tx, {
+        actorId: access.actorId,
+        action: "LOGISTICS_COMPANY_UPDATED",
+        targetType: "LogisticsCompany",
+        targetId: companyId,
+        metadata: { companyId, name: data.name },
+      });
+      await appendOutboxEvent(tx, {
+        eventType: "logistics.company.updated",
+        aggregateType: "LogisticsCompany",
+        aggregateId: companyId,
+        payload: { name: data.name },
+      });
+    });
+  } catch {
+    return fail("The profile could not be saved.");
+  }
+
+  revalidatePath(`/logistics/${companyId}`);
+  revalidatePath(`/logistics/${companyId}/edit`);
+  return ok("Profile saved.");
+}
+
+/** Creates or edits a branch. Only one primary branch is kept per company. */
+export async function saveBranchAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const disabled = await ensureEnabled();
+  if (disabled) return disabled;
+
+  const parsed = branchSchema.safeParse({
+    branchId: formValue(formData, "branchId"),
+    companyId: formValue(formData, "companyId"),
+    name: formValue(formData, "name"),
+    branchCode: formValue(formData, "branchCode"),
+    address: formValue(formData, "address"),
+    city: formValue(formData, "city"),
+    latitude: formValue(formData, "latitude"),
+    longitude: formValue(formData, "longitude"),
+    isPrimary: formValue(formData, "isPrimary") || "off",
+    isActive: formValue(formData, "isActive") || "on",
+  });
+  if (!parsed.success) return failFields(parsed.error);
+
+  const access = await requireLogisticsAccess(
+    "logistics.company.update",
+    parsed.data.companyId,
+    `/logistics/${parsed.data.companyId}/branches`,
+  );
+  // Both coordinates are optional, but a half-filled pair is rejected.
+  if ((parsed.data.latitude === undefined) !== (parsed.data.longitude === undefined)) {
+    return fail("Provide both latitude and longitude, or neither.");
+  }
+
+  const database = getDatabase();
+  if (parsed.data.branchId) {
+    const existing = await database.logisticsBranch.findFirst({
+      where: { id: parsed.data.branchId, companyId: access.companyId },
+      select: { id: true },
+    });
+    if (!existing) return fail("That branch could not be found.");
+  }
+
+  const isEdit = Boolean(parsed.data.branchId);
+  let branchId = parsed.data.branchId ?? "";
+
+  try {
+    await database.$transaction(async (tx) => {
+      if (parsed.data.isPrimary) {
+        await tx.logisticsBranch.updateMany({
+          where: { companyId: access.companyId, isPrimary: true },
+          data: { isPrimary: false },
+        });
+      }
+      const values = {
+        name: parsed.data.name,
+        branchCode: parsed.data.branchCode,
+        address: parsed.data.address ?? null,
+        city: parsed.data.city ?? null,
+        latitude: parsed.data.latitude ?? null,
+        longitude: parsed.data.longitude ?? null,
+        isPrimary: parsed.data.isPrimary,
+        isActive: parsed.data.isActive,
+      };
+      if (isEdit) {
+        await tx.logisticsBranch.update({ where: { id: branchId }, data: values });
+      } else {
+        const created = await tx.logisticsBranch.create({
+          data: { companyId: access.companyId, ...values },
+          select: { id: true },
+        });
+        branchId = created.id;
+      }
+
+      await recordAuditEvent(tx, {
+        actorId: access.actorId,
+        action: isEdit ? "LOGISTICS_BRANCH_UPDATED" : "LOGISTICS_BRANCH_CREATED",
+        targetType: "LogisticsBranch",
+        targetId: branchId,
+        metadata: { companyId: access.companyId, name: parsed.data.name },
+      });
+      await appendOutboxEvent(tx, {
+        eventType: isEdit ? "logistics.branch.updated" : "logistics.branch.created",
+        aggregateType: "LogisticsBranch",
+        aggregateId: branchId,
+        payload: { companyId: access.companyId, branchCode: parsed.data.branchCode },
+      });
+    });
+  } catch {
+    return fail("The branch could not be saved.");
+  }
+
+  revalidatePath(`/logistics/${access.companyId}/branches`);
+  return ok(isEdit ? "Branch updated." : "Branch created.");
+}
+
+export async function toggleBranchStatusAction(
+  _prev: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const disabled = await ensureEnabled();
+  if (disabled) return disabled;
+
+  const parsed = z.object({ companyId: z.uuid(), branchId: z.uuid() }).safeParse({
+    companyId: formValue(formData, "companyId"),
+    branchId: formValue(formData, "branchId"),
+  });
+  if (!parsed.success) return failFields(parsed.error);
+
+  const access = await requireLogisticsAccess(
+    "logistics.company.update",
+    parsed.data.companyId,
+    `/logistics/${parsed.data.companyId}/branches`,
+  );
+  const database = getDatabase();
+  const result = await database.$transaction(async (tx) => {
+    const branch = await tx.logisticsBranch.findFirst({
+      where: { id: parsed.data.branchId, companyId: access.companyId },
+      select: { id: true, isActive: true, isPrimary: true },
+    });
+    if (!branch) return "not-found" as const;
+    if (branch.isActive && branch.isPrimary) return "primary" as const;
+
+    await tx.logisticsBranch.update({
+      where: { id: branch.id },
+      data: { isActive: !branch.isActive },
+    });
+    await recordAuditEvent(tx, {
+      actorId: access.actorId,
+      action: "LOGISTICS_BRANCH_UPDATED",
+      targetType: "LogisticsBranch",
+      targetId: branch.id,
+      metadata: { companyId: access.companyId, isActive: !branch.isActive },
+    });
+    return "ok" as const;
+  });
+
+  revalidatePath(`/logistics/${access.companyId}/branches`);
+  if (result === "not-found") return fail("That branch could not be found.");
+  if (result === "primary")
+    return fail("Set another branch as primary before deactivating this one.");
+  return ok("Branch status updated.");
+}
+
+export async function saveSettingsAction(_prev: FormState, formData: FormData): Promise<FormState> {
+  const disabled = await ensureEnabled();
+  if (disabled) return disabled;
+
+  const parsed = settingsSchema.safeParse({
+    companyId: formValue(formData, "companyId"),
+    currency: formValue(formData, "currency"),
+    timezone: formValue(formData, "timezone"),
+    notificationEmail: formValue(formData, "notificationEmail"),
+    defaultServiceRadius: formValue(formData, "defaultServiceRadius"),
+  });
+  if (!parsed.success) return failFields(parsed.error);
+
+  const access = await requireLogisticsAccess(
+    "logistics.company.update",
+    parsed.data.companyId,
+    `/logistics/${parsed.data.companyId}/settings`,
+  );
+
+  await getDatabase().$transaction(async (tx) => {
+    await tx.logisticsCompanySettings.upsert({
+      where: { companyId: access.companyId },
+      create: {
+        companyId: access.companyId,
+        currency: parsed.data.currency,
+        timezone: parsed.data.timezone,
+        notificationEmail: parsed.data.notificationEmail ?? null,
+        defaultServiceRadius: new Prisma.Decimal(parsed.data.defaultServiceRadius),
+      },
+      update: {
+        currency: parsed.data.currency,
+        timezone: parsed.data.timezone,
+        notificationEmail: parsed.data.notificationEmail ?? null,
+        defaultServiceRadius: new Prisma.Decimal(parsed.data.defaultServiceRadius),
+      },
+    });
+    await recordAuditEvent(tx, {
+      actorId: access.actorId,
+      action: "LOGISTICS_SETTINGS_UPDATED",
+      targetType: "LogisticsCompanySettings",
+      targetId: access.companyId,
+      metadata: { companyId: access.companyId, currency: parsed.data.currency },
+    });
+    await appendOutboxEvent(tx, {
+      eventType: "logistics.company.settings_updated",
+      aggregateType: "LogisticsCompany",
+      aggregateId: access.companyId,
+      payload: { currency: parsed.data.currency },
+    });
+  });
+
+  revalidatePath(`/logistics/${access.companyId}/settings`);
+  return ok("Settings saved.");
 }

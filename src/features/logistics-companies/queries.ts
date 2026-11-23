@@ -153,6 +153,98 @@ export async function listCompanyRoles(companyId: string): Promise<CompanyRoleVi
   }));
 }
 
+export interface CompanyBranchView {
+  id: string;
+  name: string;
+  branchCode: string;
+  address: string;
+  city: string;
+  isPrimary: boolean;
+  isActive: boolean;
+  latitude: string | null;
+  longitude: string | null;
+}
+
+export interface CompanySettingsView {
+  currency: string;
+  timezone: string;
+  notificationEmail: string | null;
+  defaultServiceRadius: string;
+}
+
+export interface CompanyActivityView {
+  id: string;
+  action: string;
+  targetType: string;
+  targetId: string | null;
+  createdAt: string;
+}
+
+export async function listCompanyBranches(companyId: string): Promise<CompanyBranchView[]> {
+  const rows = await getDatabase().logisticsBranch.findMany({
+    where: { companyId },
+    orderBy: [{ isPrimary: "desc" }, { name: "asc" }],
+  });
+  return rows.map((row) => ({
+    id: row.id,
+    name: row.name,
+    branchCode: row.branchCode,
+    address: row.address ?? "",
+    city: row.city ?? "",
+    isPrimary: row.isPrimary,
+    isActive: row.isActive,
+    latitude: row.latitude?.toString() ?? null,
+    longitude: row.longitude?.toString() ?? null,
+  }));
+}
+
+export async function getCompanySettings(companyId: string): Promise<CompanySettingsView> {
+  const row = await getDatabase().logisticsCompanySettings.findUnique({ where: { companyId } });
+  return {
+    currency: row?.currency ?? "TZS",
+    timezone: row?.timezone ?? "Africa/Dar_es_Salaam",
+    notificationEmail: row?.notificationEmail ?? null,
+    defaultServiceRadius: row?.defaultServiceRadius.toString() ?? "15.000",
+  };
+}
+
+/** Activity is derived from the existing append-only audit log, not a second journal. */
+export async function listCompanyActivity(
+  companyId: string,
+  limit = 40,
+): Promise<CompanyActivityView[]> {
+  const rows = await getDatabase().auditLog.findMany({
+    where: {
+      OR: [
+        { targetType: "LogisticsCompany", targetId: companyId },
+        {
+          targetType: "LogisticsCompanyMember",
+          metadata: { path: ["companyId"], equals: companyId },
+        },
+        {
+          targetType: "LogisticsCompanyRole",
+          metadata: { path: ["companyId"], equals: companyId },
+        },
+        { targetType: "LogisticsBranch", metadata: { path: ["companyId"], equals: companyId } },
+        {
+          targetType: "LogisticsCompanySettings",
+          metadata: { path: ["companyId"], equals: companyId },
+        },
+      ],
+    },
+    orderBy: { createdAt: "desc" },
+    take: limit,
+    select: { id: true, action: true, targetType: true, targetId: true, createdAt: true },
+  });
+  return rows.map((row) => ({
+    id: row.id,
+    action: row.action,
+    targetType: row.targetType,
+    targetId: row.targetId,
+    createdAt: row.createdAt.toISOString(),
+  }));
+}
+
 export async function listPendingLogisticsCompanies(): Promise<LogisticsCompanyView[]> {
   const rows = await getDatabase().logisticsCompany.findMany({
     where: { status: "PENDING", submittedAt: { not: null } },

@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { z } from "zod";
 
+import { CompanyNav } from "@/components/logistics/company-nav";
 import { RoleForm } from "@/components/logistics/role-form";
 import { PageShell } from "@/components/storefront/page-shell";
 import { Badge } from "@/components/ui/badge";
@@ -57,6 +58,8 @@ async function CompanyRolesContent({ params }: { params: Promise<{ companyId: st
           Roles use the platform permission keys, scoped to this company.
         </p>
       </header>
+
+      <CompanyNav companyId={companyId} active="roles" />
 
       <ul className="space-y-3">
         {roles.map((role) => (

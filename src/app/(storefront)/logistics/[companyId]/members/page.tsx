@@ -5,6 +5,7 @@ import { Suspense } from "react";
 import { z } from "zod";
 
 import { AssignRoleForm } from "@/components/logistics/assign-role-form";
+import { CompanyNav } from "@/components/logistics/company-nav";
 import { MemberInviteForm } from "@/components/logistics/member-invite-form";
 import { MemberStatusForm } from "@/components/logistics/member-status-form";
 import { PageShell } from "@/components/storefront/page-shell";
@@ -64,6 +65,8 @@ async function CompanyMembersContent({ params }: { params: Promise<{ companyId: 
           Company membership is separate from marketplace roles.
         </p>
       </header>
+
+      <CompanyNav companyId={companyId} active="members" />
 
       <ul className="space-y-3">
         {members.map((member) => (
