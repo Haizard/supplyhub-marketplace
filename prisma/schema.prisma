@@ -373,6 +373,31 @@ enum AuditAction {
   AI_RECOMMENDATIONS_GENERATED
   AI_RECOMMENDATION_DISMISSED
   SIGN_IN_SUCCEEDED
+  FEATURE_FLAG_CREATED
+  FEATURE_FLAG_UPDATED
+  OUTBOX_EVENT_DISPATCHED
+  OUTBOX_EVENT_FAILED
+  SERVICE_LISTING_CREATED
+  SERVICE_LISTING_UPDATED
+  SERVICE_LISTING_ARCHIVED
+  SERVICE_BOOKING_REQUESTED
+  SERVICE_BOOKING_CONFIRMED
+  SERVICE_BOOKING_IN_PROGRESS
+  SERVICE_BOOKING_NO_SHOW
+  SERVICE_BOOKING_CANCELLED
+  SERVICE_BOOKING_COMPLETED
+  GROUP_BUY_CAMPAIGN_CREATED
+  GROUP_BUY_CAMPAIGN_UPDATED
+  GROUP_BUY_CAMPAIGN_CANCELLED
+  GROUP_BUY_JOINED
+  GROUP_BUY_LEFT
+  GROUP_BUY_CAMPAIGN_FUNDED
+  GROUP_BUY_CAMPAIGN_COMPLETED
+  GROUP_BUY_CAMPAIGN_EXPIRED
+  REGIONAL_CORRIDOR_CREATED
+  REGIONAL_CORRIDOR_UPDATED
+  REGIONAL_CORRIDOR_ACTIVATED
+  REGIONAL_CORRIDOR_DEACTIVATED
 }
 
 model User {
@@ -426,6 +451,8 @@ model User {
   phoneVerifications        PhoneVerification[]
   aiRecommendations         AiRecommendationHistory[]
   signInEvents              SignInEvent[]
+  serviceBookings           ServiceBooking[]       @relation("ServiceBookingBuyer")
+  groupBuyParticipations    GroupBuyParticipation[] @relation("GroupBuyParticipations")
   createdAt                 DateTime                @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt                 DateTime                @updatedAt @map("updated_at") @db.Timestamptz(6)
 
@@ -476,6 +503,8 @@ model Business {
   invoices           BusinessInvoice[]
   subscriptions      BusinessSubscription[]
   aiInsights         BusinessAiInsight[]
+  serviceListings    ServiceListing[]
+  groupBuyCampaigns  GroupBuyCampaign[]      @relation("GroupBuyCampaigns")
   createdAt          DateTime                @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt          DateTime                @updatedAt @map("updated_at") @db.Timestamptz(6)
 
@@ -494,6 +523,9 @@ model BusinessBranch {
   latitude   Decimal? @db.Decimal(10, 7)
   longitude  Decimal? @db.Decimal(10, 7)
   isPrimary  Boolean  @default(false) @map("is_primary")
+  corridorOrigins    RegionalCorridor[] @relation("CorridorOrigin")
+  corridorDestinations RegionalCorridor[] @relation("CorridorDestination")
+  corridorStops      CorridorStop[]      @relation("CorridorStops")
   createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
@@ -641,6 +673,9 @@ model Vendor {
   invoices           BusinessInvoice[]
   chats              Chat[]                  @relation("VendorChats")
   customers          Customer[]
+  serviceListings    ServiceListing[]
+  serviceBookings    ServiceBooking[]       @relation("ServiceBookings")
+  groupBuyCampaigns  GroupBuyCampaign[]     @relation("GroupBuyCampaigns")
   createdAt          DateTime                @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt          DateTime                @updatedAt @map("updated_at") @db.Timestamptz(6)
 
@@ -664,6 +699,7 @@ model Category {
   products    Product[]
   promotions  Promotion[]
   vendors     VendorDepartment[]
+  serviceListings ServiceListing[]
   createdAt   DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt   DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
 
@@ -727,6 +763,7 @@ model Product {
   wholesaleListings  WholesaleListing[]
   chats              Chat[]
   aiRecommendations  AiRecommendationHistory[]
+  groupBuyCampaigns  GroupBuyCampaign[]
   createdAt          DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt          DateTime            @updatedAt @map("updated_at") @db.Timestamptz(6)
 
@@ -2256,4 +2293,245 @@ model AiRecommendationHistory {
   @@index([userId, createdAt])
   @@index([productId])
   @@map("ai_recommendation_history")
+}
+
+/// Phase 7 rollout switch. Keys are stable identifiers; mutations write an
+/// outbox event so downstream consumers can react to flag changes.
+model FeatureFlag {
+  id          String   @id @default(uuid()) @db.Uuid
+  key         String   @unique @db.VarChar(120)
+  name        String   @db.VarChar(160)
+  description String   @db.VarChar(600)
+  enabled     Boolean  @default(false)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([enabled, key])
+  @@map("feature_flags")
+}
+
+enum OutboxEventStatus {
+  PENDING
+  PROCESSING
+  PUBLISHED
+  FAILED
+}
+
+/// Transactional outbox entry. Producers insert this in the same transaction as
+/// their domain write; the dispatcher publishes it to in-process handlers.
+model OutboxEvent {
+  id            String            @id @default(uuid()) @db.Uuid
+  eventType     String            @map("event_type") @db.VarChar(120)
+  aggregateType String            @map("aggregate_type") @db.VarChar(80)
+  aggregateId   String?           @map("aggregate_id") @db.VarChar(120)
+  payload       Json              @default("{}")
+  status        OutboxEventStatus @default(PENDING)
+  attempts      Int               @default(0)
+  availableAt   DateTime          @default(now()) @map("available_at") @db.Timestamptz(6)
+  publishedAt   DateTime?         @map("published_at") @db.Timestamptz(6)
+  lastError     String?           @map("last_error")
+  createdAt     DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([status, availableAt])
+  @@index([eventType, createdAt])
+  @@map("outbox_events")
+}
+
+// ── Phase 7: Services marketplace ──────────────────────────────────────────
+
+enum ServiceListingStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  ARCHIVED
+}
+
+enum ServiceBookingStatus {
+  REQUESTED
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+/// A bookable service offered by a verified vendor (haircut, repair, consultation, etc.).
+model ServiceListing {
+  id             String               @id @default(uuid()) @db.Uuid
+  listingNumber  String               @unique @map("listing_number")
+  vendorId       String               @map("vendor_id") @db.Uuid
+  vendor         Vendor               @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  businessId     String?              @map("business_id") @db.Uuid
+  business       Business?            @relation(fields: [businessId], references: [id], onDelete: SetNull)
+  title          String
+  description    String               @default("")
+  categoryId     String?              @map("category_id") @db.Uuid
+  category       Category?            @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  currency       String               @default("TZS") @db.VarChar(3)
+  unitPrice      Decimal              @map("unit_price") @db.Decimal(12, 2)
+  durationMinutes Int                 @map("duration_minutes")
+  location       String               @default("")
+  status         ServiceListingStatus @default(DRAFT)
+  publishedAt    DateTime?            @map("published_at") @db.Timestamptz(6)
+  createdAt      DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime             @updatedAt @map("updated_at") @db.Timestamptz(6)
+  bookings       ServiceBooking[]
+
+  @@index([vendorId, status])
+  @@index([status, publishedAt])
+  @@map("service_listings")
+}
+
+/// A booking for a service listing, created by a buyer.
+model ServiceBooking {
+  id             String              @id @default(uuid()) @db.Uuid
+  bookingNumber   String             @unique @map("booking_number")
+  serviceId       String              @map("service_id") @db.Uuid
+  service         ServiceListing      @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  buyerId         String              @map("buyer_id") @db.Uuid
+  buyer           User                @relation("ServiceBookingBuyer", fields: [buyerId], references: [id], onDelete: Cascade)
+  vendorId        String              @map("vendor_id") @db.Uuid
+  vendor          Vendor              @relation("ServiceBookings", fields: [vendorId], references: [id], onDelete: Cascade)
+  currency        String              @default("TZS") @db.VarChar(3)
+  unitPrice       Decimal             @map("unit_price") @db.Decimal(12, 2)
+  scheduledAt     DateTime            @map("scheduled_at") @db.Timestamptz(6)
+  status          ServiceBookingStatus @default(REQUESTED)
+  note            String?             @db.Text
+  confirmedAt     DateTime?           @map("confirmed_at") @db.Timestamptz(6)
+  completedAt     DateTime?           @map("completed_at") @db.Timestamptz(6)
+  cancelledAt     DateTime?           @map("cancelled_at") @db.Timestamptz(6)
+  createdAt       DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime            @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([serviceId, status])
+  @@index([buyerId, createdAt])
+  @@index([vendorId, status])
+  @@map("service_bookings")
+}
+
+// ── Phase 7: Group / community buying ──────────────────────────────────────
+
+enum GroupBuyStatus {
+  DRAFT
+  ACTIVE
+  FUNDED
+  COMPLETED
+  EXPIRED
+  CANCELLED
+}
+
+/// A community buying campaign that offers progressive discounts as more buyers join.
+model GroupBuyCampaign {
+  id              String        @id @default(uuid()) @db.Uuid
+  campaignNumber  String        @unique @map("campaign_number")
+  vendorId        String        @map("vendor_id") @db.Uuid
+  vendor          Vendor        @relation("GroupBuyCampaigns", fields: [vendorId], references: [id], onDelete: Cascade)
+  businessId      String?       @map("business_id") @db.Uuid
+  business        Business?     @relation("GroupBuyCampaigns", fields: [businessId], references: [id], onDelete: SetNull)
+  productId       String?       @map("product_id") @db.Uuid
+  product         Product?      @relation(fields: [productId], references: [id], onDelete: SetNull)
+  title           String
+  description     String        @default("")
+  currency        String        @default("TZS") @db.VarChar(3)
+  basePrice       Decimal       @map("base_price") @db.Decimal(12, 2)
+  targetQuantity  Int           @map("target_quantity")
+  maxQuantity     Int?          @map("max_quantity")
+  status          GroupBuyStatus @default(DRAFT)
+  startsAt        DateTime      @map("starts_at") @db.Timestamptz(6)
+  endsAt          DateTime      @map("ends_at") @db.Timestamptz(6)
+  fundedAt        DateTime?     @map("funded_at") @db.Timestamptz(6)
+  completedAt     DateTime?     @map("completed_at") @db.Timestamptz(6)
+  cancelledAt     DateTime?     @map("cancelled_at") @db.Timestamptz(6)
+  createdAt       DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
+  tiers           GroupBuyTier[]
+  participations  GroupBuyParticipation[]
+
+  @@index([vendorId, status])
+  @@index([status, endsAt])
+  @@map("group_buy_campaigns")
+}
+
+/// Volume-based discount tier within a campaign. Applied when cumulative
+/// participation reaches the tier threshold.
+model GroupBuyTier {
+  id            String   @id @default(uuid()) @db.Uuid
+  campaignId    String   @map("campaign_id") @db.Uuid
+  campaign      GroupBuyCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  minQuantity   Int      @map("min_quantity")
+  maxQuantity   Int?     @map("max_quantity")
+  unitPrice     Decimal  @map("unit_price") @db.Decimal(12, 2)
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([campaignId, minQuantity])
+  @@map("group_buy_tiers")
+}
+
+/// A buyer's participation in a group buy campaign. Quantity and commitment are immutable after the campaign funds.
+model GroupBuyParticipation {
+  id            String   @id @default(uuid()) @db.Uuid
+  campaignId    String   @map("campaign_id") @db.Uuid
+  campaign      GroupBuyCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  buyerId       String   @map("buyer_id") @db.Uuid
+  buyer         User     @relation("GroupBuyParticipations", fields: [buyerId], references: [id], onDelete: Cascade)
+  quantity      Int
+  currency      String   @default("TZS") @db.VarChar(3)
+  reservedPrice Decimal  @map("reserved_price") @db.Decimal(12, 2)
+  status        String   @default("JOINED") @db.VarChar(20)
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@unique([campaignId, buyerId])
+  @@index([campaignId, createdAt])
+  @@index([buyerId, createdAt])
+  @@map("group_buy_participations")
+}
+
+// ── Phase 7: Regional logistics network ────────────────────────────────────
+
+enum CorridorStatus {
+  DRAFT
+  ACTIVE
+  INACTIVE
+}
+
+/// A regional delivery corridor connecting two or more business branches or hubs.
+model RegionalCorridor {
+  id              String         @id @default(uuid()) @db.Uuid
+  corridorCode    String         @unique @map("corridor_code")
+  name            String
+  description     String         @default("")
+  originBranchId  String         @map("origin_branch_id") @db.Uuid
+  originBranch    BusinessBranch @relation("CorridorOrigin", fields: [originBranchId], references: [id], onDelete: Cascade)
+  destBranchId    String         @map("dest_branch_id") @db.Uuid
+  destBranch      BusinessBranch @relation("CorridorDestination", fields: [destBranchId], references: [id], onDelete: Cascade)
+  currency        String         @default("TZS") @db.VarChar(3)
+  baseFee         Decimal        @map("base_fee") @db.Decimal(12, 2)
+  perKmFee        Decimal        @map("per_km_fee") @db.Decimal(12, 2)
+  estimatedKm     Int            @map("estimated_km")
+  estimatedHours  Int            @map("estimated_hours")
+  status          CorridorStatus @default(DRAFT)
+  activatedAt     DateTime?      @map("activated_at") @db.Timestamptz(6)
+  createdAt       DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime       @updatedAt @map("updated_at") @db.Timestamptz(6)
+  stops           CorridorStop[]
+
+  @@index([status, originBranchId])
+  @@index([status, destBranchId])
+  @@map("regional_corridors")
+}
+
+/// An intermediate stop along a regional corridor.
+model CorridorStop {
+  id            String   @id @default(uuid()) @db.Uuid
+  corridorId    String   @map("corridor_id") @db.Uuid
+  corridor      RegionalCorridor @relation(fields: [corridorId], references: [id], onDelete: Cascade)
+  branchId      String   @map("branch_id") @db.Uuid
+  branch        BusinessBranch @relation("CorridorStops", fields: [branchId], references: [id], onDelete: Cascade)
+  stopOrder     Int      @map("stop_order")
+  label         String   @default("")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([corridorId, stopOrder])
+  @@map("corridor_stops")
 }

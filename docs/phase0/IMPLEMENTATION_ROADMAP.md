@@ -1,6 +1,6 @@
 # Implementation Roadmap
 
-> Phase 0 audit — updated for persisted sign-in events, retired delivery simulation, and the Gemini provider decision.
+> Phase 0 audit — Phase 7 ecosystem expansion delivered: services marketplace, group buying, and regional logistics behind feature flags.
 
 ## What is Already Done (confirmed after full re-inspection)
 
@@ -260,13 +260,95 @@ delivery tracking entry points, AI business insights, and subscription revenue.
 
 ---
 
-## Phase 7 — Ecosystem Expansion
+## Phase 7 — Ecosystem Expansion (IMPLEMENTED)
 
-- Services marketplace (bookings)
-- Group / community buying
-- Outbox-based domain event publishing
-- Feature flags
-- Regional logistics network
+**Goal**: Add ecosystem capabilities on explicit rollout switches and publish domain
+events through a durable outbox rather than ad-hoc side effects.
+
+### Delivered: foundations
+
+- Migration `20261123143000_phase7_foundations` adds `feature_flags`, `outbox_events`,
+  the `OutboxEventStatus` enum, and audit actions for flag and outbox changes.
+- `/admin/feature-flags` creates and toggles stable keys. `isFeatureEnabled(key)`
+  is server-only and defaults to false for unknown keys, so incomplete features
+  stay hidden.
+- Flag mutations append an outbox event and an audit event in the same database
+  transaction, so a flag change cannot be recorded without its event.
+- `/admin/outbox` lists recent events and exposes a dispatcher. The dispatcher
+  claims `PENDING` rows, calls registered in-process handlers, marks successes
+  `PUBLISHED`, and retries failures with capped exponential backoff until
+  `MAX_OUTBOX_ATTEMPTS` is reached. It also has an admin-only POST endpoint at
+  `/api/admin/outbox/dispatch` for a future scheduler.
+- Seed data creates disabled flags for `phase7.servicesMarketplace`,
+  `phase7.groupBuying`, and `phase7.regionalLogistics`.
+
+### Delivered: services marketplace (behind `phase7.servicesMarketplace`)
+
+- Migration `20261123160000_phase7_ecosystem` adds `service_listings` and
+  `service_bookings` tables with `ServiceListingStatus` and
+  `ServiceBookingStatus` enums.
+- Vendors can create, edit, and archive service listings at `/vendor/services`
+  with title, description, category, price, duration, and location. Listings
+  publish as ACTIVE immediately (consistent with product behaviour).
+- Buyers can browse active service listings at `/services` and book a service
+  at `/services/[listingId]` with a date/time selection. The service price is
+  snapshotted at booking time.
+- Vendors manage bookings at `/vendor/services/bookings` with forward-only
+  status transitions: REQUESTED → CONFIRMED → IN_PROGRESS → COMPLETED (or
+  CANCELLED / NO_SHOW at appropriate points).
+- All mutations are guarded by `requireStudioAccess("services.manage")`,
+  validated with Zod, recorded as audit events, and published via the outbox.
+
+### Delivered: group / community buying (behind `phase7.groupBuying`)
+
+- `group_buy_campaigns`, `group_buy_tiers`, and `group_buy_participations`
+  tables with the `GroupBuyStatus` enum.
+- Vendors create campaigns at `/vendor/group-buy` with base price, target
+  quantity, start/end dates, and progressive discount tiers. Campaigns
+  transition DRAFT → ACTIVE → FUNDED → COMPLETED (or EXPIRED / CANCELLED).
+- Buyers browse active campaigns at `/group-buy` and join at
+  `/group-buy/[campaignId]`. The reserved price is resolved from the tier
+  matching cumulative participation. Unique constraint prevents double-join.
+- When total participation reaches the target quantity, the campaign
+  auto-transitions to FUNDED with an audit event and outbox event.
+- All mutations are guarded by `requireStudioAccess("groupbuy.manage")` or
+  `requireActor`, validated with Zod, and published via the outbox.
+
+### Delivered: regional logistics network (behind `phase7.regionalLogistics`)
+
+- `regional_corridors` and `corridor_stops` tables with the `CorridorStatus`
+  enum, connecting business branches with base/per-km fees and estimated
+  distance/time.
+- Admins manage corridors at `/admin/corridors` with origin/destination branch
+  selection, intermediate stops, and pricing. Corridors transition
+  DRAFT → ACTIVE ↔ INACTIVE.
+- Buyers can browse active corridors at `/corridors` with origin → destination,
+  stops, estimated distance/time, and base fee.
+- All mutations are guarded by `requireAdmin()`, validated with Zod, and
+  published via the outbox.
+
+### Delivered: outbox domain handlers
+
+- Registered handlers for all Phase 7 event types:
+  `service_listing.created`, `service_booking.requested/confirmed/cancelled/completed`,
+  `group_buy.campaign_created/updated/joined/left/funded`,
+  `regional_corridor.created/updated/activated/deactivated`.
+- Each handler logs structured information via the platform logger. Richer
+  domain consumers can replace these as needed.
+
+### Seed data
+
+- All three feature flags are enabled in the seed script for demo exploration.
+- Demo service listings (tailoring consultation, furniture restoration) and a
+  demo booking.
+- Demo group buy campaign (Linen Shirt Community Buy) with three discount tiers
+  and a demo participation.
+- Demo regional corridor (Dar es Salaam ↔ Arusha) connecting business branches.
+
+### Unit tests
+
+- `tests/unit/phase7-ecosystem.test.ts` covers all three state machines:
+  booking transitions, campaign transitions, and corridor transitions.
 
 ---
 
@@ -288,5 +370,5 @@ Phase 5 (B2B)                        ← Requires Phase 1 + Phase 4
     ↓
 Phase 6 (Growth + AI + Trust)        ← Requires Phase 1, 2, 3; CRM can start earlier
     ↓
-Phase 7 (Ecosystem)                  ← Requires all earlier phases
+Phase 7 (Ecosystem)                  ← DONE — requires all earlier phases
 ```

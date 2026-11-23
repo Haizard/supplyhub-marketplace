@@ -333,6 +333,8 @@ const demoBusinesses = [
           "pos.register.close",
           "subscription.manage",
           "insights.read",
+          "groupbuy.manage",
+          "services.manage",
         ],
       },
       {
@@ -467,6 +469,8 @@ const demoStaffPermissionKeys = [
   "crm.manage",
   "subscription.manage",
   "insights.read",
+  "groupbuy.manage",
+  "services.manage",
 ];
 
 function normalize(value) {
@@ -1221,6 +1225,197 @@ try {
      VALUES (gen_random_uuid(), 'TZS default', 'TZS', 5000, 2000, 5000, 50000, true, now(), now())
      ON CONFLICT DO NOTHING`,
   );
+
+  // Phase 7: ecosystem rollout switches. All are off until their slices ship.
+  const phase7Flags = [
+    {
+      key: "phase7.servicesMarketplace",
+      name: "Services marketplace",
+      description: "Bookings and service listings for verified providers.",
+    },
+    {
+      key: "phase7.groupBuying",
+      name: "Group buying",
+      description: "Community buying campaigns and pooled orders.",
+    },
+    {
+      key: "phase7.regionalLogistics",
+      name: "Regional logistics",
+      description: "Regional delivery corridors and cross-branch routing.",
+    },
+  ];
+  for (const flag of phase7Flags) {
+    await client.query(
+      `INSERT INTO feature_flags (id, key, name, description, enabled, created_at, updated_at)
+       VALUES (gen_random_uuid(), $1, $2, $3, false, now(), now())
+       ON CONFLICT (key) DO NOTHING`,
+      [flag.key, flag.name, flag.description],
+    );
+  }
+
+  // ── Phase 7: Ecosystem demo data ──────────────────────────────────────
+  // Services marketplace
+  const atelierVendorId = studios[0].id;
+  const kilimahutuVendorId = studios[1].id;
+  const atelierBusinessId = await businessIdBySlug("atelier-nord-studio");
+  const kilimahutuBusinessId = await businessIdBySlug("kilima-hut-studio");
+
+  // Enable the feature flags for demo exploration.
+  await client.query(`UPDATE feature_flags SET enabled = true, updated_at = now() WHERE key = $1`, [
+    "phase7.servicesMarketplace",
+  ]);
+  await client.query(`UPDATE feature_flags SET enabled = true, updated_at = now() WHERE key = $1`, [
+    "phase7.groupBuying",
+  ]);
+  await client.query(`UPDATE feature_flags SET enabled = true, updated_at = now() WHERE key = $1`, [
+    "phase7.regionalLogistics",
+  ]);
+
+  // Service listings
+  const serviceListings = [
+    {
+      vendorId: atelierVendorId,
+      businessId: atelierBusinessId,
+      listingNumber: "SL-DEMO01",
+      title: "Custom Tailoring Consultation",
+      description: "One-hour fitting and design consultation at our studio.",
+      currency: "TZS",
+      unitPrice: "25000.00",
+      durationMinutes: 60,
+      location: "Atelier Nord Studio, Dar es Salaam",
+    },
+    {
+      vendorId: kilimahutuVendorId,
+      businessId: kilimahutuBusinessId,
+      listingNumber: "SL-DEMO02",
+      title: "Furniture Restoration Assessment",
+      description: "On-site assessment of furniture restoration needs.",
+      currency: "TZS",
+      unitPrice: "15000.00",
+      durationMinutes: 45,
+      location: "Kilima Hut Studio, Arusha",
+    },
+  ];
+  for (const svc of serviceListings) {
+    await client.query(
+      `INSERT INTO service_listings (id, listing_number, vendor_id, business_id, title, description, currency, unit_price, duration_minutes, location, status, published_at, created_at, updated_at)
+       VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $9, 'ACTIVE', now(), now(), now())
+       ON CONFLICT (listing_number) DO NOTHING`,
+      [
+        svc.listingNumber,
+        svc.vendorId,
+        svc.businessId,
+        svc.title,
+        svc.description,
+        svc.currency,
+        svc.unitPrice,
+        svc.durationMinutes,
+        svc.location,
+      ],
+    );
+  }
+
+  // Service booking (demo)
+  const demoServiceId = await client
+    .query(`SELECT id FROM service_listings WHERE listing_number = 'SL-DEMO01'`)
+    .then((r) => r.rows[0]?.id);
+  if (demoServiceId) {
+    await client.query(
+      `INSERT INTO service_bookings (id, booking_number, service_id, buyer_id, vendor_id, currency, unit_price, scheduled_at, status, created_at, updated_at)
+       VALUES (gen_random_uuid(), 'SB-DEMO01', $1, $2, $3, 'TZS', '25000.00', now() + interval '2 days', 'REQUESTED', now(), now())
+       ON CONFLICT DO NOTHING`,
+      [demoServiceId, customer.id, atelierVendorId],
+    );
+  }
+
+  // Group buy campaigns
+  const demoProductId = await client
+    .query(`SELECT id FROM products WHERE slug = 'atelier-nord-linen-shirt'`)
+    .then((r) => r.rows[0]?.id);
+  const campaigns = [
+    {
+      vendorId: atelierVendorId,
+      businessId: atelierBusinessId,
+      productId: demoProductId ?? null,
+      campaignNumber: "GB-DEMO01",
+      title: "Linen Shirt Community Buy",
+      description: "Group buy for premium linen shirts. Target 50 units unlocks 20% discount.",
+      currency: "TZS",
+      basePrice: "45000.00",
+      targetQuantity: 50,
+      maxQuantity: 100,
+      startsAt: "now()",
+      endsAt: "now() + interval '14 days'",
+    },
+  ];
+  for (const camp of campaigns) {
+    await client.query(
+      `INSERT INTO group_buy_campaigns (id, campaign_number, vendor_id, business_id, product_id, title, description, currency, base_price, target_quantity, max_quantity, status, starts_at, ends_at, created_at, updated_at)
+       VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'ACTIVE', ${camp.startsAt}, ${camp.endsAt}, now(), now())
+       ON CONFLICT (campaign_number) DO NOTHING`,
+      [
+        camp.campaignNumber,
+        camp.vendorId,
+        camp.businessId,
+        camp.productId,
+        camp.title,
+        camp.description,
+        camp.currency,
+        camp.basePrice,
+        camp.targetQuantity,
+        camp.maxQuantity,
+      ],
+    );
+  }
+
+  // Group buy tiers
+  const demoCampaignId = await client
+    .query(`SELECT id FROM group_buy_campaigns WHERE campaign_number = 'GB-DEMO01'`)
+    .then((r) => r.rows[0]?.id);
+  if (demoCampaignId) {
+    const tiers = [
+      { minQty: 10, maxQty: 24, unitPrice: "40000.00" },
+      { minQty: 25, maxQty: 49, unitPrice: "38000.00" },
+      { minQty: 50, maxQty: null, unitPrice: "36000.00" },
+    ];
+    for (const tier of tiers) {
+      await client.query(
+        `INSERT INTO group_buy_tiers (id, campaign_id, min_quantity, max_quantity, unit_price, created_at)
+         VALUES (gen_random_uuid(), $1, $2, $3, $4, now())
+         ON CONFLICT DO NOTHING`,
+        [demoCampaignId, tier.minQty, tier.maxQty, tier.unitPrice],
+      );
+    }
+    // Demo participation
+    await client.query(
+      `INSERT INTO group_buy_participations (id, campaign_id, buyer_id, quantity, currency, reserved_price, status, created_at, updated_at)
+       VALUES (gen_random_uuid(), $1, $2, 5, 'TZS', '45000.00', 'JOINED', now(), now())
+       ON CONFLICT (campaign_id, buyer_id) DO NOTHING`,
+      [demoCampaignId, customer.id],
+    );
+  }
+
+  // Regional corridors
+  const originBranchId = await client
+    .query(
+      `SELECT id FROM business_branches WHERE business_id = $1 AND branch_code = 'MAIN' LIMIT 1`,
+      [atelierBusinessId],
+    )
+    .then((r) => r.rows[0]?.id);
+  const destBranchId = await client
+    .query(
+      `SELECT id FROM business_branches WHERE business_id = $1 AND branch_code = 'MAIN' LIMIT 1`,
+      [kilimahutuBusinessId],
+    )
+    .then((r) => r.rows[0]?.id);
+  if (originBranchId && destBranchId) {
+    await client.query(
+      `INSERT INTO regional_corridors (id, corridor_code, name, description, origin_branch_id, dest_branch_id, currency, base_fee, per_km_fee, estimated_km, estimated_hours, status, activated_at, created_at, updated_at)
+       VALUES (gen_random_uuid(), 'RC-DEMO01', 'Dar es Salaam ↔ Arusha Corridor', 'Primary north-south logistics corridor connecting Dar es Salaam and Arusha branches.', $1, $2, 'TZS', '15000.00', '350.00', 640, 10, 'ACTIVE', now(), now(), now())
+       ON CONFLICT (corridor_code) DO NOTHING`,
+      [originBranchId, destBranchId],
+    );
+  }
 
   await client.query("COMMIT");
 

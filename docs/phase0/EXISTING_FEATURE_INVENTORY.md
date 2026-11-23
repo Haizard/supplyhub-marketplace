@@ -14,8 +14,8 @@
 | Session invalidation | ✅ | `sessionVersion` on users table |
 | Rate limiting on auth | ✅ | In-memory sliding window |
 | JWT session | ✅ | 7-day maxAge, 24h refresh |
-| Multi-business / multi-role per user | 🔴 | Single global role only |
-| Business membership model | 🔴 | No `businesses` or `business_members` |
+| Multi-business / multi-role per user | ✅ | Businesses, roles and permission sets resolved per request |
+| Business membership model | ✅ | `businesses`, `business_members`, branches and role permissions |
 
 ## Vendor (Business) Management
 
@@ -29,12 +29,12 @@
 | Vendor storefront (public page) | ✅ | `/vendors/[slug]` |
 | Verified studio badge | ✅ | NEW: `VerifiedStudioBadge` — reflects DB-enforced APPROVED status |
 | Multi-branch vendor | 🔴 | Single location per vendor |
-| Multiple employees per vendor | 🔴 | 1:1 user↔vendor |
-| Staff roles and permissions | 🔴 | No sub-vendor role system |
-| POS (point of sale) | 🔴 | Not present |
-| Vendor business analytics | 🔴 | No analytics beyond order list |
+| Multiple employees per vendor | ✅ | Business members seeded; studio access resolves the active business |
+| Staff roles and permissions | ✅ | `business_roles` / `role_permissions` with server-side `hasPermission` checks |
+| POS (point of sale) | ✅ | Registers, sessions, sales and receipts under `/vendor/pos` |
+| Vendor business analytics | ✅ | Deterministic insights at `/business/[id]/insights` and POS reports |
 | Vendor CRM | ✅ | Database-backed `/vendor/customers` with notes, segments and order aggregates |
-| Supplier / procurement management | 🔴 | Not present |
+| Supplier / procurement management | ✅ | Wholesale, RFQ, quotation, purchase order and invoice workspaces |
 
 ## Catalog & Products
 
@@ -79,7 +79,7 @@
 | Stock reservation at checkout | ✅ | Atomic conditional decrement |
 | Reservation expiry + stock release | ✅ | Background sweep |
 | Coupon / discount codes | 🔴 | Not present |
-| Group buying | 🔴 | Not present |
+| Group buying | ✅ | Community campaigns with progressive tiers at `/group-buy`; see Phase 7 ecosystem |
 | Scheduled delivery | 🔴 | Not present |
 
 ## Payments
@@ -196,3 +196,13 @@
 | AI shopping assistant | 🔴 | Not present — rule-based insights are not a chat assistant |
 | Personalized recommendations | ✅ | Database-backed suggestions at `/recommendations` using orders, wishlists, catalog popularity, and stock |
 | Vendor business intelligence | ✅ | Deterministic business insights at `/business/[id]/insights` from sales, orders, inventory, and CRM data |
+
+## Phase 7 Ecosystem Foundations
+
+| Feature | Status | Notes |
+|---|---|---|
+| Feature flags | ✅ | Admin CRUD at `/admin/feature-flags`; server-only `isFeatureEnabled(key)` defaults to false |
+| Transactional outbox | ✅ | `outbox_events` written in producer transactions; admin dispatcher at `/admin/outbox` and `/api/admin/outbox/dispatch` |
+| Services marketplace (bookings) | ✅ | Listings at `/services` and `/vendor/services`, buyer booking and forward-only vendor status machine, guarded by `phase7.servicesMarketplace` |
+| Group / community buying | ✅ | Campaigns at `/group-buy` and `/vendor/group-buy`, progressive tiers, FUNDED auto-transition, guarded by `phase7.groupBuying` |
+| Regional logistics network | ✅ | Corridor CRUD at `/admin/corridors`, public browse at `/corridors`, guarded by `phase7.regionalLogistics` |

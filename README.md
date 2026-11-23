@@ -17,6 +17,15 @@ home page surfaces new arrivals by day / week / month, the studio has its own si
 seller-only navigation, and the whole interface ships in five languages (see
 [Seller experience and localization](#seller-experience-and-localization)).
 
+Phase 7 adds an ecosystem layer on explicit rollout switches. `feature_flags` and a transactional
+`outbox_events` queue live behind `/admin/feature-flags` and `/admin/outbox`; an admin-only dispatch
+endpoint lets a scheduler drain published domain events. Three flagged slices ship with it: a
+services marketplace (`/services`, `/vendor/services`), group buying (`/group-buy`,
+`/vendor/group-buy`), and regional logistics (`/corridors`, `/admin/corridors`). Every slice has a
+forward-only state machine, server-side guards, audit events, and outbox events written in the same
+transaction. The detailed phase ledger is in
+[docs/phase0/IMPLEMENTATION_ROADMAP.md](docs/phase0/IMPLEMENTATION_ROADMAP.md).
+
 The Phase 3 gate is covered by unit tests that prove customers, vendors, and administrators cannot
 read or mutate another user's or studio's private resources, including suspended accounts,
 pending or rejected applications, and order access across vendors. The Phase 4 gate adds tests for
@@ -177,6 +186,17 @@ rawBody))` before parsing, enforces the timestamp tolerance, accepts the previou
 - Both surfaces are access-controlled: business insights require the
   `insights.read` business permission, and recommendations are account-scoped.
   Generation and dismissal write audit events.
+
+## Phase 7 foundations
+
+- `/admin/feature-flags` manages stable rollout keys. Server-only
+  `isFeatureEnabled(key)` defaults to false for unknown flags, so unfinished
+  ecosystem features stay hidden.
+- `/admin/outbox` and `/api/admin/outbox/dispatch` drain `outbox_events`. Domain
+  writes append events in the same transaction, and the dispatcher retries
+  failed handlers with capped exponential backoff.
+- Seed data creates disabled flags for the services marketplace, group buying,
+  and regional logistics slices.
 
 ## Storefront (Phase 2, now database-backed)
 

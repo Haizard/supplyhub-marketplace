@@ -4,7 +4,9 @@ import {
   Banknote,
   ClipboardList,
   CreditCard,
+  Flag,
   FolderTree,
+  Inbox,
   ShieldCheck,
   Percent,
   Tag,
@@ -33,6 +35,8 @@ const links = [
   { href: "/admin/coupons", labelKey: "admin.discountCodes", icon: Tag },
   { href: "/admin/subscriptions", labelKey: "subscriptions.navLabel", icon: CreditCard },
   { href: "/admin/delivery", labelKey: "admin.delivery", icon: Truck },
+  { href: "/admin/feature-flags", labelKey: "admin.featureFlags", icon: Flag },
+  { href: "/admin/outbox", labelKey: "admin.outbox", icon: Inbox },
 ];
 
 export function AdminNav() {
