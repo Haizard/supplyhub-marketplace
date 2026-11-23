@@ -416,6 +416,17 @@ enum AuditAction {
   LOGISTICS_BRANCH_CREATED
   LOGISTICS_BRANCH_UPDATED
   LOGISTICS_SETTINGS_UPDATED
+  LOGISTICS_FLEET_CREATED
+  LOGISTICS_VEHICLE_CREATED
+  LOGISTICS_VEHICLE_UPDATED
+  LOGISTICS_VEHICLE_DOCUMENT_REVIEWED
+  LOGISTICS_VEHICLE_MAINTENANCE_RECORDED
+  LOGISTICS_DRIVER_PROFILE_CREATED
+  LOGISTICS_DRIVER_MEMBERSHIP_CHANGED
+  LOGISTICS_DRIVER_EMPLOYMENT_SAVED
+  LOGISTICS_DRIVER_SCHEDULE_SAVED
+  LOGISTICS_DRIVER_VEHICLE_ASSIGNED
+  LOGISTICS_DRIVER_VEHICLE_RELEASED
 }
 
 model User {
@@ -2733,6 +2744,9 @@ model LogisticsCompany {
   roles              LogisticsCompanyRole[]
   branches           LogisticsBranch[]
   settings           LogisticsCompanySettings?
+  fleets             LogisticsFleet[]
+  vehicles           LogisticsVehicle[]
+  driverMemberships  DriverCompanyMembership[]
 
   @@index([status, createdAt])
   @@map("logistics_companies")
@@ -2827,4 +2841,218 @@ model LogisticsCompanySettings {
   updatedAt            DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   @@map("logistics_company_settings")
+}
+
+// ── Phase 9 L3: fleet, vehicles and driver operations ───────────────────────
+
+enum LogisticsVehicleType {
+  BICYCLE
+  MOTORCYCLE
+  CAR
+  VAN
+  TRUCK
+}
+
+enum VehicleOwnership {
+  OWNED
+  LEASED
+  RENTED
+}
+
+enum VehicleStatus {
+  ACTIVE
+  MAINTENANCE
+  INACTIVE
+  RETIRED
+}
+
+enum VehicleDocumentType {
+  REGISTRATION
+  INSURANCE
+  INSPECTION
+  OTHER
+}
+
+enum DriverProfileStatus {
+  ACTIVE
+  SUSPENDED
+  INACTIVE
+}
+
+enum DriverMembershipStatus {
+  ACTIVE
+  SUSPENDED
+  ENDED
+}
+
+enum EmploymentType {
+  EMPLOYEE
+  CONTRACTOR
+}
+
+enum AssignmentStatus {
+  ACTIVE
+  ENDED
+}
+
+model LogisticsFleet {
+  id        String            @id @default(uuid()) @db.Uuid
+  companyId String            @map("company_id") @db.Uuid
+  company   LogisticsCompany  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  branchId  String?           @map("branch_id") @db.Uuid
+  name      String
+  createdAt DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
+  vehicles  LogisticsVehicle[]
+
+  @@unique([companyId, name])
+  @@map("logistics_fleets")
+}
+
+model LogisticsVehicle {
+  id                String              @id @default(uuid()) @db.Uuid
+  companyId         String              @map("company_id") @db.Uuid
+  company           LogisticsCompany    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  fleetId           String?             @map("fleet_id") @db.Uuid
+  fleet             LogisticsFleet?     @relation(fields: [fleetId], references: [id], onDelete: SetNull)
+  plate             String              @db.VarChar(40)
+  type              LogisticsVehicleType
+  make              String?             @db.VarChar(80)
+  model             String?             @db.VarChar(80)
+  capacityKg        Decimal?            @map("capacity_kg") @db.Decimal(10, 2)
+  ownership         VehicleOwnership    @default(OWNED)
+  leaseProvider     String?             @map("lease_provider") @db.VarChar(160)
+  status            VehicleStatus       @default(ACTIVE)
+  insuranceExpiresAt DateTime?          @map("insurance_expires_at") @db.Timestamptz(6)
+  inspectionExpiresAt DateTime?         @map("inspection_expires_at") @db.Timestamptz(6)
+  acquiredAt        DateTime?           @map("acquired_at") @db.Timestamptz(6)
+  createdAt         DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime            @updatedAt @map("updated_at") @db.Timestamptz(6)
+  documents         VehicleDocument[]
+  maintenance       VehicleMaintenance[]
+  assignments       DriverVehicleAssignment[]
+
+  @@unique([companyId, plate])
+  @@index([companyId, status])
+  @@map("logistics_vehicles")
+}
+
+model VehicleDocument {
+  id           String               @id @default(uuid()) @db.Uuid
+  vehicleId    String               @map("vehicle_id") @db.Uuid
+  vehicle      LogisticsVehicle     @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  type         VehicleDocumentType
+  reference    String?              @db.VarChar(160)
+  storageKey   String               @map("storage_key") @db.VarChar(255)
+  expiresAt    DateTime?            @map("expires_at") @db.Timestamptz(6)
+  status       VerificationState    @default(PENDING)
+  reviewedById String?              @map("reviewed_by_id") @db.Uuid
+  reviewedAt   DateTime?            @map("reviewed_at") @db.Timestamptz(6)
+  createdAt    DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([vehicleId, type])
+  @@map("vehicle_documents")
+}
+
+model VehicleMaintenance {
+  id          String           @id @default(uuid()) @db.Uuid
+  vehicleId   String           @map("vehicle_id") @db.Uuid
+  vehicle     LogisticsVehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  performedAt DateTime         @map("performed_at") @db.Timestamptz(6)
+  odometerKm  Int?             @map("odometer_km")
+  cost        Decimal          @db.Decimal(12, 2)
+  currency    String           @default("TZS") @db.VarChar(3)
+  description String           @db.VarChar(500)
+  createdAt   DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([vehicleId, performedAt])
+  @@map("vehicle_maintenance")
+}
+
+/// Driver identity is independent of company ownership. A platform user may have
+/// one profile; a legacy DeliveryAgent may be linked for migration.
+model DriverProfile {
+  id             String                  @id @default(uuid()) @db.Uuid
+  userId         String?                 @unique @map("user_id") @db.Uuid
+  deliveryAgentId String?                @unique @map("delivery_agent_id") @db.Uuid
+  fullName       String                  @map("full_name")
+  phone          String?                 @db.VarChar(40)
+  licenseNumber  String?                 @map("license_number") @db.VarChar(80)
+  licenseExpiresAt DateTime?             @map("license_expires_at") @db.Timestamptz(6)
+  status         DriverProfileStatus     @default(ACTIVE)
+  rating         Decimal                 @default(5) @db.Decimal(3, 2)
+  createdAt      DateTime                @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime                @updatedAt @map("updated_at") @db.Timestamptz(6)
+  memberships    DriverCompanyMembership[]
+
+  @@index([status])
+  @@map("driver_profiles")
+}
+
+/// The only company ownership relation for a driver.
+model DriverCompanyMembership {
+  id            String                  @id @default(uuid()) @db.Uuid
+  companyId     String                  @map("company_id") @db.Uuid
+  company       LogisticsCompany        @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  driverId      String                  @map("driver_id") @db.Uuid
+  driver        DriverProfile           @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  status        DriverMembershipStatus  @default(ACTIVE)
+  joinedAt      DateTime                @default(now()) @map("joined_at") @db.Timestamptz(6)
+  endedAt       DateTime?               @map("ended_at") @db.Timestamptz(6)
+  createdAt     DateTime                @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime                @updatedAt @map("updated_at") @db.Timestamptz(6)
+  employment    DriverEmploymentRecord?
+  schedules     DriverSchedule[]
+  assignments   DriverVehicleAssignment[]
+
+  @@unique([companyId, driverId])
+  @@index([companyId, status])
+  @@map("driver_company_memberships")
+}
+
+model DriverEmploymentRecord {
+  id           String                  @id @default(uuid()) @db.Uuid
+  membershipId String                  @unique @map("membership_id") @db.Uuid
+  membership   DriverCompanyMembership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+  type         EmploymentType
+  startDate    DateTime                @map("start_date") @db.Timestamptz(6)
+  endDate      DateTime?               @map("end_date") @db.Timestamptz(6)
+  mode         String                  @db.VarChar(40)
+  amount       Decimal?                @db.Decimal(12, 2)
+  rateBps      Int?                    @map("rate_bps")
+  notes        String?                 @db.Text
+  createdAt    DateTime                @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime                @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("driver_employment_records")
+}
+
+model DriverSchedule {
+  id          String                  @id @default(uuid()) @db.Uuid
+  membershipId String                 @map("membership_id") @db.Uuid
+  membership  DriverCompanyMembership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+  dayOfWeek   Int                     @map("day_of_week")
+  startTime   String                  @map("start_time") @db.VarChar(5)
+  endTime     String                  @map("end_time") @db.VarChar(5)
+  isAvailable Boolean                 @default(true) @map("is_available")
+  createdAt   DateTime                @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([membershipId, dayOfWeek])
+  @@map("driver_schedules")
+}
+
+model DriverVehicleAssignment {
+  id           String                  @id @default(uuid()) @db.Uuid
+  membershipId String                  @map("membership_id") @db.Uuid
+  membership   DriverCompanyMembership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+  vehicleId    String                  @map("vehicle_id") @db.Uuid
+  vehicle      LogisticsVehicle        @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  status       AssignmentStatus        @default(ACTIVE)
+  assignedAt   DateTime                @default(now()) @map("assigned_at") @db.Timestamptz(6)
+  endedAt      DateTime?               @map("ended_at") @db.Timestamptz(6)
+  createdAt    DateTime                @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([membershipId, status])
+  @@index([vehicleId, status])
+  @@map("driver_vehicle_assignments")
 }

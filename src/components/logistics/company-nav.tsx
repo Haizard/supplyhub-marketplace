@@ -6,6 +6,8 @@ const links = [
   { key: "overview", label: "Overview", suffix: "" },
   { key: "profile", label: "Profile", suffix: "/edit" },
   { key: "branches", label: "Branches", suffix: "/branches" },
+  { key: "fleet", label: "Fleet", suffix: "/fleet" },
+  { key: "drivers", label: "Drivers", suffix: "/drivers" },
   { key: "members", label: "Members", suffix: "/members" },
   { key: "roles", label: "Roles", suffix: "/roles" },
   { key: "settings", label: "Settings", suffix: "/settings" },

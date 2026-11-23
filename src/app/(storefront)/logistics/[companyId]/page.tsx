@@ -76,6 +76,20 @@ async function LogisticsCompanyContent({ params }: { params: Promise<{ companyId
           <p className="mt-1 text-xs text-muted-foreground">{company.memberCount} member(s)</p>
         </Link>
         <Link
+          href={`/logistics/${company.id}/fleet`}
+          className="rounded-xl border border-border bg-surface p-5 hover:border-border-strong"
+        >
+          <p className="font-display text-lg font-medium">Fleet</p>
+          <p className="mt-1 text-xs text-muted-foreground">Vehicles and documents</p>
+        </Link>
+        <Link
+          href={`/logistics/${company.id}/drivers`}
+          className="rounded-xl border border-border bg-surface p-5 hover:border-border-strong"
+        >
+          <p className="font-display text-lg font-medium">Drivers</p>
+          <p className="mt-1 text-xs text-muted-foreground">Profiles and memberships</p>
+        </Link>
+        <Link
           href={`/logistics/${company.id}/roles`}
           className="rounded-xl border border-border bg-surface p-5 hover:border-border-strong"
         >

@@ -386,4 +386,6 @@ All scenarios must assert real database state transitions, not mocked success.
       `/logistics` and `/admin/logistics` pages, and unit tests.
 - [x] L2 implemented: profile editing, branches, settings and an audit-derived
       activity feed, with validation unit tests.
-- [ ] L3–L12 remain to be approved and implemented one slice at a time.
+- [x] L3 implemented: fleets, vehicles, documents/maintenance and company-independent
+      driver memberships with schedules and vehicle assignments.
+- [ ] L4–L12 remain to be approved and implemented one slice at a time.

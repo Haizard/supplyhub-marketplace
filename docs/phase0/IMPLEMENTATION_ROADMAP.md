@@ -417,7 +417,10 @@ test strategy are in
   preferences and a company activity feed built on the existing audit log. Company
   navigation links Overview, Profile, Branches, Members, Roles, Settings and Activity;
   all mutations are membership-scoped and audited.
-- **L3** Fleet, vehicles, documents, driver profiles, memberships and assignments.
+- **L3 — DELIVERED** Fleets, vehicles (including trucks), documents/maintenance,
+  company-independent driver profiles with `driver_company_memberships`, compensation
+  agreements, shifts and vehicle assignments with reassignment. A driver can belong to
+  several companies; no exclusive company ID is stored on the identity.
 - **L4** Independent merchant clients and contacts.
 - **L5** Contracts, pricing, SLAs, versions and performance.
 - **L6** Company dispatch and delivery management on the existing job state machine.
@@ -426,8 +429,8 @@ test strategy are in
 - **L9** Partner acquisition, attribution and reward eligibility (requires L4 + L5).
 - **L10** External e-commerce APIs. **L11** Fleet sharing and hubs. **L12** AI optimisation.
 
-All slices sit behind the `phase9.logisticsNetwork` feature flag. L1 and L2 are
-implemented; L3–L12 remain planned and should be delivered one slice at a time.
+All slices sit behind the `phase9.logisticsNetwork` feature flag. L1–L3 are
+implemented; L4–L12 remain planned and should be delivered one slice at a time.
 
 ---
 
@@ -453,5 +456,5 @@ Phase 7 (Ecosystem)                  ← DONE — requires all earlier phases
     ↓
 Phase 8 (Trust & Operations)         ← DONE — requires Phase 7 and the payment ledger
     ↓
-Phase 9 (Logistics Business Network) ← IN PROGRESS — L1-L2 done; L9 needs L4 + L5
+Phase 9 (Logistics Business Network) ← IN PROGRESS — L1-L3 done; L9 needs L4 + L5
 ```
