@@ -130,6 +130,16 @@ async function BusinessContent({ params }: Props) {
           </Link>
         ) : null}
 
+        {hasPermission(context, "installments.manage") ? (
+          <Link
+            href={`/business/${id}/installments`}
+            className="group flex items-center gap-3 rounded-lg border border-border bg-surface p-4 transition-colors hover:bg-surface-muted"
+          >
+            <CreditCard className="size-5 text-muted-foreground group-hover:text-foreground" />
+            <span className="text-sm font-medium">{t("installments.navLabel")}</span>
+          </Link>
+        ) : null}
+
         <div className="flex items-center gap-3 rounded-lg border border-border bg-surface p-4">
           <GitBranch className="size-5 text-muted-foreground" />
           <div>

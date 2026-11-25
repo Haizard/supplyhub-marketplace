@@ -4,6 +4,9 @@
     "choose": "选择语言",
     "current": "当前语言"
   },
+  "installments": {
+    "navLabel": "分期付款"
+  },
   "common": {
     "addToCart": "加入购物车",
     "buyNow": "立即购买",

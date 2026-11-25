@@ -4,6 +4,9 @@
     "choose": "اختر اللغة",
     "current": "اللغة الحالية"
   },
+  "installments": {
+    "navLabel": "الدفع بالتقسيط"
+  },
   "common": {
     "addToCart": "أضف إلى السلة",
     "buyNow": "اشترِ الآن",

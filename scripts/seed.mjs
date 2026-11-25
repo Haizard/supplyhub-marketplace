@@ -1266,6 +1266,18 @@ try {
     ],
   );
 
+  // Phase 10: seller-funded installments stay off until an administrator enables them.
+  await client.query(
+    `INSERT INTO feature_flags (id, key, name, description, enabled, created_at, updated_at)
+     VALUES (gen_random_uuid(), $1, $2, $3, false, now(), now())
+     ON CONFLICT (key) DO NOTHING`,
+    [
+      "phase10.installmentSales",
+      "Installment sales",
+      "Seller-funded installment agreements, schedules and collections.",
+    ],
+  );
+
   // ── Phase 7: Ecosystem demo data ──────────────────────────────────────
   // Services marketplace
   const atelierVendorId = studios[0].id;

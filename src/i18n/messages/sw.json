@@ -4,6 +4,9 @@
     "choose": "Chagua lugha",
     "current": "Lugha ya sasa"
   },
+  "installments": {
+    "navLabel": "Malipo kwa awamu"
+  },
   "common": {
     "addToCart": "Ongeza kwenye kikapu",
     "buyNow": "Nunua sasa",

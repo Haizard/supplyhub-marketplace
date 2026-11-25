@@ -464,6 +464,18 @@ All slices sit behind the `phase9.logisticsNetwork` feature flag. **All twelve
 slices (L1–L12) are implemented**; live AI remains opt-in via the existing
 `AI_INSIGHTS_PROVIDER=gemini` + `GEMINI_API_KEY` configuration.
 
+## Phase 10 — Installment Sales (PROPOSAL: `docs/phase0/INSTALLMENT_SALES_PROPOSAL.md`)
+
+Seller-funded installment agreements shared by marketplace and Business OS
+sales. Behind `phase10.installmentSales` (seeded disabled).
+
+- **I1 — DELIVERED** Seller settings, agreement creation with immutable price/terms
+  snapshot, deterministic schedule generation, buyer acceptance and
+  pre-activation cancellation. No payment is recorded in this slice.
+- **I2** Verified deposit, payment allocation, partial/early/over payments.
+  **I3** Receipts, reminders, overdue management. **I4** POS + inventory rules.
+  **I5** Analytics, disputes, reconciliation. Remaining phases are planned.
+
 ---
 
 ## Dependency Graph
@@ -489,4 +501,6 @@ Phase 7 (Ecosystem)                  ← DONE — requires all earlier phases
 Phase 8 (Trust & Operations)         ← DONE — requires Phase 7 and the payment ledger
     ↓
 Phase 9 (Logistics Business Network) ← DELIVERED — L1-L12 done
+    ↓
+Phase 10 (Installment Sales)         ← IN PROGRESS — I1 done, flag off
 ```

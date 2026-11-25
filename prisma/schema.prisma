@@ -470,6 +470,10 @@ enum AuditAction {
   PARCEL_HANDOVER_RECORDED
   LOGISTICS_OPTIMIZATION_SUGGESTED
   LOGISTICS_OPTIMIZATION_DECIDED
+  INSTALLMENT_SETTINGS_SAVED
+  INSTALLMENT_AGREEMENT_CREATED
+  INSTALLMENT_AGREEMENT_ACCEPTED
+  INSTALLMENT_AGREEMENT_CANCELLED
 }
 
 model User {
@@ -525,6 +529,7 @@ model User {
   signInEvents              SignInEvent[]
   serviceBookings           ServiceBooking[]       @relation("ServiceBookingBuyer")
   groupBuyParticipations    GroupBuyParticipation[] @relation("GroupBuyParticipations")
+  installmentAgreements     InstallmentAgreement[] @relation("InstallmentBuyer")
   createdAt                 DateTime                @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt                 DateTime                @updatedAt @map("updated_at") @db.Timestamptz(6)
 
@@ -574,6 +579,8 @@ model Business {
   purchaseOrders     BusinessPurchaseOrder[]
   invoices           BusinessInvoice[]
   subscriptions      BusinessSubscription[]
+  installmentSettings InstallmentSetting?
+  installmentAgreements InstallmentAgreement[]
   aiInsights         BusinessAiInsight[]
   serviceListings    ServiceListing[]
   groupBuyCampaigns  GroupBuyCampaign[]      @relation("GroupBuyCampaigns")
@@ -1023,6 +1030,7 @@ model Order {
   paidAt               DateTime?            @map("paid_at") @db.Timestamptz(6)
   cancelledAt          DateTime?            @map("cancelled_at") @db.Timestamptz(6)
   vendorOrders         VendorOrder[]
+  installmentAgreements InstallmentAgreement[]
   items                OrderItem[]
   payments             Payment[]
   refunds              Refund[]
@@ -4014,4 +4022,171 @@ model LogisticsOptimizationSuggestion {
 
   @@index([companyId, createdAt])
   @@map("logistics_optimization_suggestions")
+}
+
+// ── Phase 10 I1: seller-funded installment sales ─────────────────────────────
+
+enum InstallmentFrequency {
+  WEEKLY
+  BIWEEKLY
+  MONTHLY
+}
+
+enum InstallmentDepositMode {
+  FIXED
+  PERCENTAGE
+}
+
+enum InstallmentPossession {
+  IMMEDIATE
+  AFTER_FULL_PAYMENT
+}
+
+enum InstallmentSource {
+  MARKETPLACE
+  OFFLINE
+}
+
+enum InstallmentAgreementStatus {
+  DRAFT
+  PENDING_CUSTOMER_ACCEPTANCE
+  PENDING_DEPOSIT
+  ACTIVE
+  OVERDUE
+  COMPLETED
+  DEFAULTED
+  CANCELLED
+  DISPUTED
+}
+
+enum InstallmentScheduleStatus {
+  PENDING
+  PAID
+  OVERDUE
+  WAIVED
+}
+
+/// Seller-controlled defaults. Every monetary/legal term is a configurable default
+/// and is disabled until the seller explicitly enables and reviews it.
+model InstallmentSetting {
+  id                    String                 @id @default(uuid()) @db.Uuid
+  businessId            String                 @unique @map("business_id") @db.Uuid
+  business              Business               @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  enabled               Boolean                @default(false)
+  currency              String                 @default("TZS") @db.VarChar(3)
+  defaultDepositMode    InstallmentDepositMode @default(PERCENTAGE) @map("default_deposit_mode")
+  defaultDepositValue   Decimal                @default(20) @map("default_deposit_value") @db.Decimal(12, 2)
+  defaultFrequency      InstallmentFrequency   @default(MONTHLY) @map("default_frequency")
+  defaultInstallmentCount Int                   @default(6) @map("default_installment_count")
+  defaultPossession     InstallmentPossession  @default(AFTER_FULL_PAYMENT) @map("default_possession")
+  gracePeriodDays       Int                    @default(0) @map("grace_period_days")
+  allowInterest         Boolean                @default(false) @map("allow_interest")
+  interestRateBps       Int                    @default(0) @map("interest_rate_bps")
+  allowLateFees         Boolean                @default(false) @map("allow_late_fees")
+  lateFeeBps            Int                    @default(0) @map("late_fee_bps")
+  allowAdvancePayments  Boolean                @default(false) @map("allow_advance_payments")
+  maxInstallments       Int                    @default(24) @map("max_installments")
+  termsSummary          String?                @map("terms_summary") @db.Text
+  createdAt             DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime               @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("installment_settings")
+}
+
+/// One buyer-seller contract. Prices, seller identity and terms are snapshotted at
+/// creation so later catalogue or settings changes never rewrite an agreement.
+model InstallmentAgreement {
+  id                    String                     @id @default(uuid()) @db.Uuid
+  agreementNumber       String                     @unique @map("agreement_number") @db.VarChar(40)
+  businessId            String                     @map("business_id") @db.Uuid
+  business              Business                   @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  buyerUserId           String                     @map("buyer_user_id") @db.Uuid
+  buyer                 User                       @relation("InstallmentBuyer", fields: [buyerUserId], references: [id], onDelete: Restrict)
+  source                InstallmentSource
+  orderId               String?                    @map("order_id") @db.Uuid
+  order                 Order?                     @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  currency              String                     @db.VarChar(3)
+  cashPrice             Decimal                    @map("cash_price") @db.Decimal(14, 2)
+  depositAmount         Decimal                    @map("deposit_amount") @db.Decimal(14, 2)
+  interestAmount        Decimal                    @default(0) @map("interest_amount") @db.Decimal(14, 2)
+  extraCharges          Decimal                    @default(0) @map("extra_charges") @db.Decimal(14, 2)
+  totalPayable          Decimal                    @map("total_payable") @db.Decimal(14, 2)
+  outstandingBalance    Decimal                    @map("outstanding_balance") @db.Decimal(14, 2)
+  depositMode           InstallmentDepositMode     @map("deposit_mode")
+  frequency             InstallmentFrequency
+  installmentCount      Int                        @map("installment_count")
+  installmentAmount     Decimal                    @map("installment_amount") @db.Decimal(14, 2)
+  possessionModel       InstallmentPossession      @map("possession_model")
+  gracePeriodDays       Int                        @default(0) @map("grace_period_days")
+  interestPolicy        String?                    @map("interest_policy") @db.VarChar(300)
+  latePaymentPolicy     String?                    @map("late_payment_policy") @db.VarChar(500)
+  notes                 String?                    @db.Text
+  status                InstallmentAgreementStatus @default(DRAFT)
+  /// Immutable contract snapshot: seller identity, items, prices, terms and schedule.
+  termsSnapshot         Json                       @map("terms_snapshot")
+  sellerAcceptedAt      DateTime?                  @map("seller_accepted_at") @db.Timestamptz(6)
+  sellerAcceptedById    String?                    @map("seller_accepted_by_id") @db.Uuid
+  buyerAcceptedAt       DateTime?                  @map("buyer_accepted_at") @db.Timestamptz(6)
+  buyerAcceptanceMethod String?                    @map("buyer_acceptance_method") @db.VarChar(60)
+  activatedAt           DateTime?                  @map("activated_at") @db.Timestamptz(6)
+  completedAt           DateTime?                  @map("completed_at") @db.Timestamptz(6)
+  cancelledAt           DateTime?                  @map("cancelled_at") @db.Timestamptz(6)
+  cancellationReason    String?                    @map("cancellation_reason") @db.VarChar(500)
+  createdById           String                     @map("created_by_id") @db.Uuid
+  createdAt             DateTime                   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime                   @updatedAt @map("updated_at") @db.Timestamptz(6)
+  items                 InstallmentAgreementItem[]
+  schedule              InstallmentSchedule[]
+  events                InstallmentAgreementEvent[]
+
+  @@index([businessId, status])
+  @@index([buyerUserId, status])
+  @@map("installment_agreements")
+}
+
+model InstallmentAgreementItem {
+  id           String                @id @default(uuid()) @db.Uuid
+  agreementId  String                @map("agreement_id") @db.Uuid
+  agreement    InstallmentAgreement  @relation(fields: [agreementId], references: [id], onDelete: Cascade)
+  productId    String?               @map("product_id") @db.Uuid
+  productName  String                @map("product_name") @db.VarChar(200)
+  sku          String?               @db.VarChar(80)
+  quantity     Int
+  unitPrice    Decimal               @map("unit_price") @db.Decimal(14, 2)
+  lineTotal    Decimal               @map("line_total") @db.Decimal(14, 2)
+
+  @@index([agreementId])
+  @@map("installment_agreement_items")
+}
+
+model InstallmentSchedule {
+  id          String                  @id @default(uuid()) @db.Uuid
+  agreementId String                  @map("agreement_id") @db.Uuid
+  agreement   InstallmentAgreement    @relation(fields: [agreementId], references: [id], onDelete: Cascade)
+  sequence    Int
+  dueDate     DateTime                @map("due_date") @db.Timestamptz(6)
+  amount      Decimal                 @db.Decimal(14, 2)
+  currency    String                  @db.VarChar(3)
+  status      InstallmentScheduleStatus @default(PENDING)
+  paidAmount  Decimal                 @default(0) @map("paid_amount") @db.Decimal(14, 2)
+  paidAt      DateTime?               @map("paid_at") @db.Timestamptz(6)
+
+  @@unique([agreementId, sequence])
+  @@index([dueDate, status])
+  @@map("installment_schedules")
+}
+
+model InstallmentAgreementEvent {
+  id         String               @id @default(uuid()) @db.Uuid
+  agreementId String              @map("agreement_id") @db.Uuid
+  agreement  InstallmentAgreement @relation(fields: [agreementId], references: [id], onDelete: Cascade)
+  type       String               @db.VarChar(60)
+  fromStatus String?              @map("from_status") @db.VarChar(40)
+  toStatus   String?              @map("to_status") @db.VarChar(40)
+  actorId    String?              @map("actor_id") @db.Uuid
+  metadata   Json?
+  createdAt  DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([agreementId, createdAt])
+  @@map("installment_agreement_events")
 }

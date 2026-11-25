@@ -4,6 +4,9 @@
     "choose": "Choisir la langue",
     "current": "Langue actuelle"
   },
+  "installments": {
+    "navLabel": "Paiement échelonné"
+  },
   "common": {
     "addToCart": "Ajouter au panier",
     "buyNow": "Acheter maintenant",

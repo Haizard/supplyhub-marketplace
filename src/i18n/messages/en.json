@@ -4,6 +4,9 @@
     "choose": "Choose language",
     "current": "Current language"
   },
+  "installments": {
+    "navLabel": "Installments"
+  },
   "common": {
     "addToCart": "Add to cart",
     "buyNow": "Buy now",
