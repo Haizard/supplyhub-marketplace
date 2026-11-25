@@ -472,8 +472,10 @@ sales. Behind `phase10.installmentSales` (seeded disabled).
 - **I1 — DELIVERED** Seller settings, agreement creation with immutable price/terms
   snapshot, deterministic schedule generation, buyer acceptance and
   pre-activation cancellation. No payment is recorded in this slice.
-- **I2** Verified deposit, payment allocation, partial/early/over payments.
-  **I3** Receipts, reminders, overdue management. **I4** POS + inventory rules.
+- **I2 — DELIVERED** Verified LynxPay callbacks, idempotent payment events,
+  immutable allocation records, partial/early/over payments, seller-attested cash
+  payments and audited refunds. No payment succeeds on checkout return.
+- **I3** Receipts, reminders, overdue management. **I4** POS + inventory rules.
   **I5** Analytics, disputes, reconciliation. Remaining phases are planned.
 
 ---
@@ -502,5 +504,5 @@ Phase 8 (Trust & Operations)         ← DONE — requires Phase 7 and the payme
     ↓
 Phase 9 (Logistics Business Network) ← DELIVERED — L1-L12 done
     ↓
-Phase 10 (Installment Sales)         ← IN PROGRESS — I1 done, flag off
+Phase 10 (Installment Sales)         ← IN PROGRESS — I1-I2 done, flag off
 ```

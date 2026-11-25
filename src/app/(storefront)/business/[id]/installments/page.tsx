@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { z } from "zod";
@@ -123,6 +124,12 @@ async function InstallmentsContent({ params }: { params: Promise<{ id: string }>
             {["PENDING_CUSTOMER_ACCEPTANCE", "PENDING_DEPOSIT"].includes(agreement.status) ? (
               <CancelInstallmentForm businessId={id} agreementId={agreement.id} />
             ) : null}
+            <Link
+              href={`/business/${id}/installments/${agreement.id}`}
+              className="text-xs text-accent underline"
+            >
+              View payments
+            </Link>
           </article>
         ))}
       </section>

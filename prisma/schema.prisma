@@ -474,6 +474,10 @@ enum AuditAction {
   INSTALLMENT_AGREEMENT_CREATED
   INSTALLMENT_AGREEMENT_ACCEPTED
   INSTALLMENT_AGREEMENT_CANCELLED
+  INSTALLMENT_PAYMENT_STARTED
+  INSTALLMENT_PAYMENT_VERIFIED
+  INSTALLMENT_PAYMENT_REFUNDED
+  INSTALLMENT_PAYMENT_MISMATCH
 }
 
 model User {
@@ -4112,6 +4116,7 @@ model InstallmentAgreement {
   extraCharges          Decimal                    @default(0) @map("extra_charges") @db.Decimal(14, 2)
   totalPayable          Decimal                    @map("total_payable") @db.Decimal(14, 2)
   outstandingBalance    Decimal                    @map("outstanding_balance") @db.Decimal(14, 2)
+  advanceCreditAmount   Decimal                    @default(0) @map("advance_credit_amount") @db.Decimal(14, 2)
   depositMode           InstallmentDepositMode     @map("deposit_mode")
   frequency             InstallmentFrequency
   installmentCount      Int                        @map("installment_count")
@@ -4138,6 +4143,7 @@ model InstallmentAgreement {
   items                 InstallmentAgreementItem[]
   schedule              InstallmentSchedule[]
   events                InstallmentAgreementEvent[]
+  payments              InstallmentPayment[]
 
   @@index([businessId, status])
   @@index([buyerUserId, status])
@@ -4170,6 +4176,7 @@ model InstallmentSchedule {
   status      InstallmentScheduleStatus @default(PENDING)
   paidAmount  Decimal                 @default(0) @map("paid_amount") @db.Decimal(14, 2)
   paidAt      DateTime?               @map("paid_at") @db.Timestamptz(6)
+  allocations InstallmentPaymentAllocation[]
 
   @@unique([agreementId, sequence])
   @@index([dueDate, status])
@@ -4189,4 +4196,98 @@ model InstallmentAgreementEvent {
 
   @@index([agreementId, createdAt])
   @@map("installment_agreement_events")
+}
+
+// ── Phase 10 I2: verified installment payments ───────────────────────────────
+
+enum InstallmentPaymentMethod {
+  MPESA
+  TIGOPESA
+  AIRTEL
+  HALOPESA
+  CARD
+  BANK
+  CASH
+}
+
+enum InstallmentPaymentStatus {
+  PENDING
+  VERIFIED
+  FAILED
+  REFUNDED
+}
+
+enum InstallmentPaymentEventOutcome {
+  APPLIED
+  DUPLICATE
+  MISMATCH
+  IGNORED
+  ERROR
+}
+
+/// A single attempted payment. `reference` is our idempotency key and is sent to
+/// the provider as external_id; provider callbacks are the only verification source.
+model InstallmentPayment {
+  id                String                  @id @default(uuid()) @db.Uuid
+  reference         String                  @unique @db.VarChar(80)
+  agreementId       String                  @map("agreement_id") @db.Uuid
+  agreement         InstallmentAgreement    @relation(fields: [agreementId], references: [id], onDelete: Cascade)
+  buyerUserId       String                  @map("buyer_user_id") @db.Uuid
+  amount            Decimal                 @db.Decimal(14, 2)
+  currency          String                  @db.VarChar(3)
+  method            InstallmentPaymentMethod
+  status            InstallmentPaymentStatus @default(PENDING)
+  provider          String?                 @db.VarChar(40)
+  providerPaymentId String?                 @unique @map("provider_payment_id") @db.VarChar(120)
+  providerReference String?                 @map("provider_reference") @db.VarChar(160)
+  checkoutUrl       String?                 @map("checkout_url") @db.VarChar(500)
+  paidAt            DateTime?               @map("paid_at") @db.Timestamptz(6)
+  verifiedAt        DateTime?               @map("verified_at") @db.Timestamptz(6)
+  verifiedById      String?                 @map("verified_by_id") @db.Uuid
+  failureReason     String?                 @map("failure_reason") @db.VarChar(500)
+  createdById       String?                 @map("created_by_id") @db.Uuid
+  createdAt         DateTime                @default(now()) @map("created_at") @db.Timestamptz(6)
+  allocations       InstallmentPaymentAllocation[]
+  events            InstallmentPaymentEvent[]
+
+  @@index([agreementId, status])
+  @@index([buyerUserId, createdAt])
+  @@map("installment_payments")
+}
+
+/// Immutable allocation rows: how a verified payment was applied to instalments.
+model InstallmentPaymentAllocation {
+  id         String             @id @default(uuid()) @db.Uuid
+  paymentId  String             @map("payment_id") @db.Uuid
+  payment    InstallmentPayment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  scheduleId String             @map("schedule_id") @db.Uuid
+  schedule   InstallmentSchedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  amount     Decimal            @db.Decimal(14, 2)
+  createdAt  DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@unique([paymentId, scheduleId])
+  @@index([scheduleId])
+  @@map("installment_payment_allocations")
+}
+
+/// Raw provider delivery log with a unique delivery key; duplicate webhooks are recorded
+/// but never apply a second financial mutation.
+model InstallmentPaymentEvent {
+  id          String                        @id @default(uuid()) @db.Uuid
+  provider    String                        @db.VarChar(40)
+  deliveryId  String                        @map("delivery_id") @db.VarChar(128)
+  eventType   String                        @map("event_type") @db.VarChar(64)
+  paymentId   String?                       @map("payment_id") @db.Uuid
+  payment     InstallmentPayment?           @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+  agreementId String?                       @map("agreement_id") @db.Uuid
+  outcome     InstallmentPaymentEventOutcome
+  status      String?                       @db.VarChar(40)
+  payload     Json
+  errorMessage String?                      @map("error_message") @db.VarChar(500)
+  processedAt DateTime?                     @map("processed_at") @db.Timestamptz(6)
+  createdAt   DateTime                      @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@unique([provider, deliveryId])
+  @@index([paymentId, createdAt])
+  @@map("installment_payment_events")
 }

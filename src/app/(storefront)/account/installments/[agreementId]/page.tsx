@@ -4,7 +4,9 @@ import { z } from "zod";
 
 import { PageShell } from "@/components/storefront/page-shell";
 import { Badge } from "@/components/ui/badge";
+import { StartInstallmentPaymentForm } from "@/components/installments/payment-forms";
 import { getBuyerAgreementDetail } from "@/features/installments/queries";
+import { listAgreementPayments } from "@/features/installments/payment-queries";
 import { requireActor } from "@/server/auth/guards";
 
 const uuidSchema = z.uuid();
@@ -24,6 +26,10 @@ export default async function BuyerInstallmentDetailPage({
   const actor = await requireActor(`/account/installments/${agreementId}`);
   const agreement = await getBuyerAgreementDetail(actor.id, agreementId);
   if (!agreement) notFound();
+  const payments = await listAgreementPayments(agreementId, { buyerUserId: actor.id });
+  const nextAmount =
+    agreement.schedule.find((entry) => entry.status === "PENDING")?.amount ??
+    agreement.installmentAmount;
 
   return (
     <PageShell className="space-y-6 py-8">
@@ -113,6 +119,45 @@ export default async function BuyerInstallmentDetailPage({
             ))}
           </tbody>
         </table>
+      </section>
+
+      {["PENDING_DEPOSIT", "ACTIVE", "OVERDUE"].includes(agreement.status) ? (
+        <section className="rounded-xl border border-border bg-surface p-6 text-sm">
+          <h2 className="font-display text-lg font-medium">Make a payment</h2>
+          <div className="mt-4">
+            <StartInstallmentPaymentForm agreementId={agreement.id} suggestedAmount={nextAmount} />
+          </div>
+        </section>
+      ) : null}
+
+      <section className="rounded-xl border border-border bg-surface p-6 text-sm">
+        <h2 className="font-display text-lg font-medium">Payment history</h2>
+        <ul className="mt-3 space-y-2">
+          {payments.map((payment) => (
+            <li key={payment.id} className="rounded-md border border-border/50 p-3 text-xs">
+              <p>
+                {payment.reference} · {payment.amount} {payment.currency} · {payment.method} ·{" "}
+                <span className="font-medium">{payment.status}</span>
+              </p>
+              <p className="text-muted-foreground">
+                {payment.verifiedAt
+                  ? `Verified ${new Date(payment.verifiedAt).toLocaleString()}`
+                  : "Awaiting provider verification"}
+                {payment.allocations.length > 0
+                  ? ` · allocated to #${payment.allocations.map((a) => a.sequence).join(", #")}`
+                  : ""}
+              </p>
+              {payment.checkoutUrl && payment.status === "PENDING" ? (
+                <a href={payment.checkoutUrl} className="text-accent underline">
+                  Continue at provider
+                </a>
+              ) : null}
+            </li>
+          ))}
+          {payments.length === 0 ? (
+            <li className="text-muted-foreground">No payments recorded.</li>
+          ) : null}
+        </ul>
       </section>
 
       <section className="rounded-xl border border-border bg-surface p-6 text-sm">

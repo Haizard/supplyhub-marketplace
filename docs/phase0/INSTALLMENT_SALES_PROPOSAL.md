@@ -1,6 +1,6 @@
 # Installment Sales — Seller-Funded Phase 10 Proposal
 
-**Status: IN PROGRESS — slice I1 implemented behind `phase10.installmentSales`
+**Status: IN PROGRESS — slices I1–I2 implemented behind `phase10.installmentSales`
 (seeded disabled).**
 
 This document records the repository-first decisions for the Installment Sales /
@@ -53,7 +53,7 @@ code was written:
 | Slice | Deliverable | Gate |
 |---|---|---|
 | **I1** (done) | Seller settings, agreement creation with frozen snapshot, generated schedule, buyer acceptance, pre-activation cancellation, seller/buyer views | No client-supplied price/total; schedule sums exactly to outstanding; buyer accepts only from own session; flag disabled by default |
-| **I2** | Verified deposit + payment allocation, overpayment, early settlement, partial payments, immutable transaction history | No success without verified callback; duplicate webhooks idempotent; overpay only when seller permits |
+| **I2** (done) | Verified deposit + payment allocation, overpayment, early settlement, partial payments, immutable transaction history | No success without verified callback; duplicate webhooks idempotent; overpay only when seller permits |
 | **I3** | Buyer dashboard enhancements, receipts, reminders, overdue management | Reminders are notifications only; grace/late fees stay configurable |
 | **I4** | POS/offline sales, inventory reserve-vs-deduct by possession model | Immediate possession deducts stock; deferred possession reserves without marking delivered |
 | **I5** | Seller analytics, customer history, disputes and reconciliation | Ledger separation; refunds reverse the correct entries |
@@ -67,3 +67,23 @@ code was written:
 - Agreement statuses used in I1: `PENDING_CUSTOMER_ACCEPTANCE`, `PENDING_DEPOSIT`, `CANCELLED`.
 - Buyer acceptance records timestamp + method (`ACCOUNT_SESSION`); sellers cannot accept for buyers.
 - Migration `20261125000000_phase10_installments_i1`.
+
+### I2 acceptance
+
+- `POST /api/webhooks/installments/lynxpay` verifies LynxPay HMAC signatures, caps
+  the body, parses with the shared provider schema, and matches our payment
+  reference (`external_id`), amount and currency before applying anything.
+- Duplicate deliveries are rejected by the unique `(provider, deliveryId)` event
+  key; duplicate provider payment IDs cannot allocate twice. Failed/mismatched
+  callbacks are recorded as events and never create allocations.
+- `InstallmentPayment` + immutable `InstallmentPaymentAllocation` rows record
+  reference, method, amount, currency, timestamps, verification status and
+  per-instalment application. No provider secret or phone number is stored in
+  event payloads.
+- Allocation is pure and tested: partial payments, partial instalments, early
+  settlement, overpayment gating, and refund reversal in reverse order.
+- Agreement moves `PENDING_DEPOSIT → ACTIVE` once verified payments cover the
+  deposit, and `→ COMPLETED` only when the schedule is fully paid. Refunds reverse
+  allocations and restore the outstanding balance.
+- Seller-attested cash/bank payments are audited with the actor ID; provider
+  payments are verified only by callbacks. Migration `20261125100000_phase10_installments_i2`.

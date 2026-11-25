@@ -9,14 +9,10 @@ import { isFeatureEnabled } from "@/features/flags/service";
 import { firstFieldErrors, formValue, type FormState } from "@/features/identity/form-state";
 import { recordAuditEvent } from "@/server/audit/audit-log";
 import { requireActor } from "@/server/auth/guards";
-import {
-  BusinessAccessError,
-  hasPermission,
-  resolveBusinessContext,
-} from "@/server/business/context";
 import { getDatabase } from "@/server/db/client";
 
 import { calculateInstallmentTerms, InstallmentTermsError, type ScheduleEntry } from "./rules";
+import { authorizeInstallmentSeller } from "./access";
 import {
   acceptInstallmentSchema,
   cancelInstallmentSchema,
@@ -46,19 +42,8 @@ async function ensureEnabled(): Promise<FormState | null> {
 async function authorizeSeller(
   businessId: string,
 ): Promise<{ actorId: string } | { error: string }> {
-  const actor = await requireActor(sellerPath(businessId));
-  try {
-    const context = await resolveBusinessContext(actor, businessId);
-    if (!hasPermission(context, "installments.manage")) {
-      return { error: "Your business role does not include installment management." };
-    }
-    return { actorId: actor.id };
-  } catch (error) {
-    if (error instanceof BusinessAccessError) {
-      return { error: "You cannot manage installments for this business." };
-    }
-    throw error;
-  }
+  const access = await authorizeInstallmentSeller(businessId, sellerPath(businessId));
+  return "error" in access ? access : { actorId: access.actor.id };
 }
 
 /** Seller-controlled defaults. Legally sensitive levers stay recorded but unused. */

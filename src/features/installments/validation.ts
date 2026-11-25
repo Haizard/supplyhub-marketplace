@@ -61,3 +61,30 @@ export const cancelInstallmentSchema = z.object({
   agreementId: uuid,
   reason: z.string().trim().min(5).max(500),
 });
+
+export const startInstallmentPaymentSchema = z.object({
+  agreementId: uuid,
+  amount: z.coerce.number().positive().max(99_999_999),
+  method: z.enum(["MPESA", "TIGOPESA", "AIRTEL", "HALOPESA", "CARD"]),
+  phone: z.preprocess(
+    (value) => (typeof value === "string" && value.trim() === "" ? undefined : value),
+    z.string().trim().max(40).optional(),
+  ),
+});
+
+export const recordInstallmentCashSchema = z.object({
+  businessId: uuid,
+  agreementId: uuid,
+  amount: z.coerce.number().positive().max(99_999_999),
+  method: z.enum(["CASH", "BANK"]),
+  note: z.preprocess(
+    (value) => (typeof value === "string" && value.trim() === "" ? undefined : value),
+    z.string().trim().max(500).optional(),
+  ),
+});
+
+export const refundInstallmentSchema = z.object({
+  businessId: uuid,
+  paymentId: uuid,
+  reason: z.string().trim().min(5).max(500),
+});
