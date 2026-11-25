@@ -391,4 +391,5 @@ All scenarios must assert real database state transitions, not mocked success.
 - [x] L4 implemented: independent merchant clients, company relationships and contacts.
 - [x] L5 implemented: contracts, pricing, SLAs, versions, performance and invoices.
 - [x] L6 implemented: company dispatch, reassignment and shared-lifecycle job management.
-- [ ] L7–L12 remain to be approved and implemented one slice at a time.
+- [x] L7 implemented: compensation rules, earnings, payouts, expenses and settlements.
+- [ ] L8–L12 remain to be approved and implemented one slice at a time.

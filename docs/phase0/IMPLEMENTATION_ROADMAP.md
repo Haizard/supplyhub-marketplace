@@ -434,13 +434,16 @@ test strategy are in
   branch coverage, assignment/reassignment through `DeliveryAssignment.releasedAt`,
   the unchanged `JOB_TRANSITIONS` lifecycle, OTP verification and contract-linked
   completion. No parallel delivery engine was created.
-- **L7** Company financials, driver compensation, earnings and settlements.
+- **L7 — DELIVERED** Configurable driver compensation rules (fixed, per-delivery,
+  percentage, daily, hybrid), earnings with approval, payouts that cannot be marked paid
+  without payment evidence, company expenses and period settlements reconciled from
+  paid invoices, platform-fee expenses and paid driver payouts.
 - **L8** Platform dispatch marketplace and company eligibility.
 - **L9** Partner acquisition, attribution and reward eligibility (requires L4 + L5).
 - **L10** External e-commerce APIs. **L11** Fleet sharing and hubs. **L12** AI optimisation.
 
-All slices sit behind the `phase9.logisticsNetwork` feature flag. L1–L6 are
-implemented; L7–L12 remain planned and should be delivered one slice at a time.
+All slices sit behind the `phase9.logisticsNetwork` feature flag. L1–L7 are
+implemented; L8–L12 remain planned and should be delivered one slice at a time.
 
 ---
 
@@ -466,5 +469,5 @@ Phase 7 (Ecosystem)                  ← DONE — requires all earlier phases
     ↓
 Phase 8 (Trust & Operations)         ← DONE — requires Phase 7 and the payment ledger
     ↓
-Phase 9 (Logistics Business Network) ← IN PROGRESS — L1-L6 done; L9 unblocked
+Phase 9 (Logistics Business Network) ← IN PROGRESS — L1-L7 done; L9 unblocked
 ```

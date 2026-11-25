@@ -441,6 +441,14 @@ enum AuditAction {
   LOGISTICS_COMPANY_JOB_ASSIGNED
   LOGISTICS_COMPANY_JOB_REASSIGNED
   LOGISTICS_COMPANY_JOB_STATUS_CHANGED
+  LOGISTICS_DRIVER_COMPENSATION_SAVED
+  LOGISTICS_DRIVER_EARNING_CREATED
+  LOGISTICS_DRIVER_EARNING_STATUS_CHANGED
+  LOGISTICS_DRIVER_PAYOUT_CREATED
+  LOGISTICS_DRIVER_PAYOUT_STATUS_CHANGED
+  LOGISTICS_EXPENSE_RECORDED
+  LOGISTICS_SETTLEMENT_CREATED
+  LOGISTICS_SETTLEMENT_RECONCILED
 }
 
 model User {
@@ -2778,6 +2786,10 @@ model LogisticsCompany {
   clientRelationships CompanyClientRelationship[]
   contracts          LogisticsContract[]
   invoices           LogisticsInvoice[]
+  earnings           DriverEarning[]
+  payouts            DriverPayout[]
+  expenses           LogisticsExpense[]
+  settlements        LogisticsSettlement[]
 
   @@index([status, createdAt])
   @@map("logistics_companies")
@@ -3036,6 +3048,9 @@ model DriverCompanyMembership {
   schedules     DriverSchedule[]
   assignments   DriverVehicleAssignment[]
   jobs          DeliveryJob[]
+  compensationRules DriverCompensationRule[]
+  earnings      DriverEarning[]
+  payouts       DriverPayout[]
 
   @@unique([companyId, driverId])
   @@index([companyId, status])
@@ -3337,4 +3352,154 @@ model LogisticsInvoiceItem {
 
   @@index([invoiceId])
   @@map("logistics_invoice_items")
+}
+
+// ── Phase 9 L7: company financials and driver compensation ──────────────────
+
+enum DriverCompensationMode {
+  FIXED_MONTHLY
+  PER_DELIVERY
+  PERCENTAGE
+  DAILY
+  HYBRID
+}
+
+enum DriverEarningStatus {
+  PENDING
+  APPROVED
+  PAID
+}
+
+enum DriverPayoutStatus {
+  DRAFT
+  APPROVED
+  PAID
+  FAILED
+}
+
+enum LogisticsExpenseCategory {
+  FUEL
+  MAINTENANCE
+  INSURANCE
+  SALARY
+  RENT
+  UTILITIES
+  PLATFORM_FEE
+  OTHER
+}
+
+enum LogisticsSettlementStatus {
+  DRAFT
+  RECONCILED
+  DISPUTED
+}
+
+model DriverCompensationRule {
+  id            String                  @id @default(uuid()) @db.Uuid
+  membershipId  String                  @unique @map("membership_id") @db.Uuid
+  membership    DriverCompanyMembership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+  mode          DriverCompensationMode
+  currency      String                  @default("TZS") @db.VarChar(3)
+  fixedAmount   Decimal?                @map("fixed_amount") @db.Decimal(12, 2)
+  perDelivery   Decimal?                @map("per_delivery") @db.Decimal(12, 2)
+  rateBps       Int?                    @map("rate_bps")
+  dailyAmount   Decimal?                @map("daily_amount") @db.Decimal(12, 2)
+  effectiveFrom DateTime                @map("effective_from") @db.Timestamptz(6)
+  notes         String?                 @db.Text
+  createdAt     DateTime                @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime                @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("driver_compensation_rules")
+}
+
+model DriverEarning {
+  id            String              @id @default(uuid()) @db.Uuid
+  companyId     String              @map("company_id") @db.Uuid
+  company       LogisticsCompany    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  membershipId  String              @map("membership_id") @db.Uuid
+  membership    DriverCompanyMembership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+  jobId         String?             @unique @map("job_id") @db.Uuid
+  basis         String              @db.VarChar(40)
+  amount        Decimal             @db.Decimal(12, 2)
+  currency      String              @default("TZS") @db.VarChar(3)
+  status        DriverEarningStatus @default(PENDING)
+  ruleVersion   String?             @map("rule_version") @db.VarChar(40)
+  note          String?             @db.Text
+  approvedById  String?             @map("approved_by_id") @db.Uuid
+  approvedAt    DateTime?           @map("approved_at") @db.Timestamptz(6)
+  createdAt     DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([companyId, status])
+  @@index([membershipId, status])
+  @@map("driver_earnings")
+}
+
+model DriverPayout {
+  id             String              @id @default(uuid()) @db.Uuid
+  payoutNumber   String              @unique @map("payout_number")
+  companyId      String              @map("company_id") @db.Uuid
+  company        LogisticsCompany    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  membershipId   String              @map("membership_id") @db.Uuid
+  membership     DriverCompanyMembership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+  status         DriverPayoutStatus  @default(DRAFT)
+  amount         Decimal             @db.Decimal(12, 2)
+  currency       String              @default("TZS") @db.VarChar(3)
+  periodStart    DateTime            @map("period_start") @db.Timestamptz(6)
+  periodEnd      DateTime            @map("period_end") @db.Timestamptz(6)
+  reference      String?             @unique @db.VarChar(120)
+  paymentProof   String?             @map("payment_proof") @db.VarChar(255)
+  note           String?             @db.Text
+  createdById    String?             @map("created_by_id") @db.Uuid
+  approvedById   String?             @map("approved_by_id") @db.Uuid
+  approvedAt     DateTime?           @map("approved_at") @db.Timestamptz(6)
+  paidAt         DateTime?           @map("paid_at") @db.Timestamptz(6)
+  failedReason   String?             @map("failed_reason") @db.Text
+  createdAt      DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime            @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([companyId, status])
+  @@index([membershipId, status])
+  @@map("driver_payouts")
+}
+
+model LogisticsExpense {
+  id          String                  @id @default(uuid()) @db.Uuid
+  companyId   String                  @map("company_id") @db.Uuid
+  company     LogisticsCompany        @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  vehicleId   String?                 @map("vehicle_id") @db.Uuid
+  category    LogisticsExpenseCategory
+  amount      Decimal                 @db.Decimal(12, 2)
+  currency    String                  @default("TZS") @db.VarChar(3)
+  occurredAt  DateTime                @map("occurred_at") @db.Timestamptz(6)
+  reference   String?                 @db.VarChar(120)
+  note        String?                 @db.Text
+  createdById String?                 @map("created_by_id") @db.Uuid
+  createdAt   DateTime                @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([companyId, occurredAt])
+  @@index([companyId, category])
+  @@map("logistics_expenses")
+}
+
+model LogisticsSettlement {
+  id            String                  @id @default(uuid()) @db.Uuid
+  settlementNumber String                @unique @map("settlement_number")
+  companyId     String                  @map("company_id") @db.Uuid
+  company       LogisticsCompany        @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  status        LogisticsSettlementStatus @default(DRAFT)
+  currency      String                  @default("TZS") @db.VarChar(3)
+  revenue       Decimal                 @db.Decimal(12, 2)
+  platformFees  Decimal                 @map("platform_fees") @db.Decimal(12, 2)
+  driverCosts   Decimal                 @map("driver_costs") @db.Decimal(12, 2)
+  expenses      Decimal                 @db.Decimal(12, 2)
+  net           Decimal                 @db.Decimal(12, 2)
+  periodStart   DateTime                @map("period_start") @db.Timestamptz(6)
+  periodEnd     DateTime                @map("period_end") @db.Timestamptz(6)
+  note          String?                 @db.Text
+  reconciledById String?                @map("reconciled_by_id") @db.Uuid
+  reconciledAt  DateTime?               @map("reconciled_at") @db.Timestamptz(6)
+  createdAt     DateTime                @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([companyId, createdAt])
+  @@map("logistics_settlements")
 }
