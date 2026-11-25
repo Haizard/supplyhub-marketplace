@@ -12,6 +12,7 @@ const links = [
   { key: "contracts", label: "Contracts", suffix: "/contracts" },
   { key: "invoices", label: "Invoices", suffix: "/invoices" },
   { key: "dispatch", label: "Dispatch", suffix: "/dispatch" },
+  { key: "optimize", label: "Optimise", suffix: "/optimize" },
   { key: "jobs", label: "Jobs", suffix: "/jobs" },
   { key: "opportunities", label: "Opportunities", suffix: "/opportunities" },
   { key: "referrals", label: "Partner growth", suffix: "/referrals" },

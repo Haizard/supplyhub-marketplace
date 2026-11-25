@@ -1,6 +1,8 @@
 # Logistics Business Network — Technical Implementation Proposal
 
-**Status: PROPOSED — not started. No code has been changed for this domain.**
+**Status: IMPLEMENTED — all L1–L12 slices delivered behind the
+`phase9.logisticsNetwork` feature flag. The original proposal text below is kept
+for traceability.**
 
 This document is the repository-first technical proposal requested for the Logistics
 Business Network (LBN). It grounds the strategy in the code that already exists,
@@ -400,4 +402,6 @@ All scenarios must assert real database state transitions, not mocked success.
       a single accountable company per shared delivery, no double-promised vehicles,
       and capacity-limited parcel hubs with a pickup-code custody chain. Rules are
       in `docs/phase0/LOGISTICS_SHARING.md`.
-- [ ] L12 is marked "Later" in this proposal and remains unstarted.
+- [x] L12 implemented: advisory AI ranking with validated output, deterministic
+      baseline fallback and no automatic job assignment. Rules are in
+      `docs/phase0/LOGISTICS_OPTIMIZATION.md`.

@@ -468,6 +468,8 @@ enum AuditAction {
   FLEET_SHARE_VEHICLE_CHANGED
   PARCEL_HUB_SAVED
   PARCEL_HANDOVER_RECORDED
+  LOGISTICS_OPTIMIZATION_SUGGESTED
+  LOGISTICS_OPTIMIZATION_DECIDED
 }
 
 model User {
@@ -1739,6 +1741,7 @@ model DeliveryRequest {
   jobs             DeliveryJob[]
   opportunities    DeliveryOpportunity[]
   externalOrders   LogisticsExternalOrder[]
+  optimizationSuggestions LogisticsOptimizationSuggestion[]
   createdAt        DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt        DateTime              @updatedAt @map("updated_at") @db.Timestamptz(6)
 
@@ -2823,6 +2826,7 @@ model LogisticsCompany {
   fleetShareOffers   FleetShareAgreement[] @relation("FleetShareOwner")
   fleetShareAgreements FleetShareAgreement[] @relation("FleetSharePartner")
   parcelHubs         ParcelHub[]
+  optimizationSuggestions LogisticsOptimizationSuggestion[]
 
   @@index([status, createdAt])
   @@map("logistics_companies")
@@ -3971,4 +3975,43 @@ model ParcelHubHandover {
   @@index([companyId, status])
   @@index([trackingRef])
   @@map("parcel_hub_handovers")
+}
+
+// ── Phase 9 L12: advisory logistics optimisation ─────────────────────────────
+
+enum OptimizationSource {
+  BASELINE
+  AI
+}
+
+enum OptimizationStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  BASELINE_USED
+}
+
+/// An advisory ranking. Nothing here assigns a job; the existing dispatch action
+/// remains the only state transition. The deterministic baseline is always stored.
+model LogisticsOptimizationSuggestion {
+  id               String               @id @default(uuid()) @db.Uuid
+  suggestionNumber String               @unique @map("suggestion_number") @db.VarChar(40)
+  companyId        String               @map("company_id") @db.Uuid
+  company          LogisticsCompany     @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  requestId        String               @map("request_id") @db.Uuid
+  request          DeliveryRequest      @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  createdById      String               @map("created_by_id") @db.Uuid
+  source           OptimizationSource
+  status           OptimizationStatus   @default(PENDING)
+  model            String?              @db.VarChar(80)
+  inputHash        String               @map("input_hash") @db.VarChar(64)
+  baselineRanking  Json                 @map("baseline_ranking")
+  ranking          Json
+  note             String?              @db.VarChar(500)
+  decidedAt        DateTime?            @map("decided_at") @db.Timestamptz(6)
+  decidedById      String?              @map("decided_by_id") @db.Uuid
+  createdAt        DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([companyId, createdAt])
+  @@map("logistics_optimization_suggestions")
 }

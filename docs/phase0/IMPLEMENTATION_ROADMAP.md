@@ -455,10 +455,14 @@ test strategy are in
   double-promised vehicles, plus capacity-limited parcel hubs with a verified
   pickup-code custody chain. Rules are documented in
   `docs/phase0/LOGISTICS_SHARING.md`.
-- **L12** AI optimisation.
+- **L12 — DELIVERED** Advisory driver-ordering optimisation with the existing
+  deterministic scorer as the always-available baseline, strict AI output
+  validation, opt-in provider use and no automatic job assignment. Rules are
+  documented in `docs/phase0/LOGISTICS_OPTIMIZATION.md`.
 
-All slices sit behind the `phase9.logisticsNetwork` feature flag. L1–L11 are
-implemented; L12 is explicitly "Later" in the proposal and remains planned.
+All slices sit behind the `phase9.logisticsNetwork` feature flag. **All twelve
+slices (L1–L12) are implemented**; live AI remains opt-in via the existing
+`AI_INSIGHTS_PROVIDER=gemini` + `GEMINI_API_KEY` configuration.
 
 ---
 
@@ -484,5 +488,5 @@ Phase 7 (Ecosystem)                  ← DONE — requires all earlier phases
     ↓
 Phase 8 (Trust & Operations)         ← DONE — requires Phase 7 and the payment ledger
     ↓
-Phase 9 (Logistics Business Network) ← IN PROGRESS — L1-L11 done; L12 later
+Phase 9 (Logistics Business Network) ← DELIVERED — L1-L12 done
 ```
