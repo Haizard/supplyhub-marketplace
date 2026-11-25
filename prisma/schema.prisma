@@ -486,6 +486,9 @@ enum AuditAction {
   INSTALLMENT_STOCK_RESERVED
   INSTALLMENT_STOCK_SOLD
   INSTALLMENT_STOCK_RELEASED
+  INSTALLMENT_DISPUTE_OPENED
+  INSTALLMENT_DISPUTE_RESOLVED
+  INSTALLMENT_RECONCILIATION_COMPLETED
 }
 
 model User {
@@ -542,6 +545,7 @@ model User {
   serviceBookings           ServiceBooking[]       @relation("ServiceBookingBuyer")
   groupBuyParticipations    GroupBuyParticipation[] @relation("GroupBuyParticipations")
   installmentAgreements     InstallmentAgreement[] @relation("InstallmentBuyer")
+  installmentDisputes       InstallmentDispute[] @relation("InstallmentDisputeOpener")
   createdAt                 DateTime                @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt                 DateTime                @updatedAt @map("updated_at") @db.Timestamptz(6)
 
@@ -593,6 +597,7 @@ model Business {
   subscriptions      BusinessSubscription[]
   installmentSettings InstallmentSetting?
   installmentAgreements InstallmentAgreement[]
+  installmentReconciliationRuns InstallmentReconciliationRun[]
   aiInsights         BusinessAiInsight[]
   serviceListings    ServiceListing[]
   groupBuyCampaigns  GroupBuyCampaign[]      @relation("GroupBuyCampaigns")
@@ -4157,6 +4162,7 @@ model InstallmentAgreement {
   receipts              InstallmentReceipt[]
   reminders             InstallmentReminder[]
   stockReservation      InstallmentStockReservation?
+  disputes              InstallmentDispute[]
 
   @@index([businessId, status])
   @@index([buyerUserId, status])
@@ -4263,6 +4269,8 @@ model InstallmentPayment {
   allocations       InstallmentPaymentAllocation[]
   events            InstallmentPaymentEvent[]
   receipt           InstallmentReceipt?
+  disputes          InstallmentDispute[]
+  reconciliationFindings InstallmentReconciliationFinding[]
 
   @@index([agreementId, status])
   @@index([buyerUserId, createdAt])
@@ -4381,4 +4389,74 @@ model InstallmentStockReservation {
 
   @@index([productId, status])
   @@map("installment_stock_reservations")
+}
+
+// ── Phase 10 I5: installment disputes and reconciliation ─────────────────────
+
+enum InstallmentDisputeStatus {
+  OPEN
+  UNDER_REVIEW
+  RESOLVED
+  REJECTED
+}
+
+enum InstallmentReconciliationStatus {
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+model InstallmentDispute {
+  id            String                  @id @default(uuid()) @db.Uuid
+  disputeNumber String                  @unique @map("dispute_number") @db.VarChar(40)
+  agreementId   String                  @map("agreement_id") @db.Uuid
+  agreement     InstallmentAgreement    @relation(fields: [agreementId], references: [id], onDelete: Cascade)
+  paymentId     String?                 @map("payment_id") @db.Uuid
+  payment       InstallmentPayment?     @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+  openedById    String                  @map("opened_by_id") @db.Uuid
+  openedBy      User                    @relation("InstallmentDisputeOpener", fields: [openedById], references: [id], onDelete: Restrict)
+  openedByRole  String                  @map("opened_by_role") @db.VarChar(20)
+  reason        String                  @db.Text
+  status        InstallmentDisputeStatus @default(OPEN)
+  resolution    String?                 @db.Text
+  resolvedById  String?                 @map("resolved_by_id") @db.Uuid
+  resolvedAt    DateTime?               @map("resolved_at") @db.Timestamptz(6)
+  createdAt     DateTime                @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([agreementId, status])
+  @@map("installment_disputes")
+}
+
+model InstallmentReconciliationRun {
+  id             String                        @id @default(uuid()) @db.Uuid
+  runNumber      String                        @unique @map("run_number") @db.VarChar(40)
+  businessId     String                        @map("business_id") @db.Uuid
+  business       Business                      @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  status         InstallmentReconciliationStatus @default(RUNNING)
+  checkedCount   Int                           @default(0) @map("checked_count")
+  findingCount   Int                           @default(0) @map("finding_count")
+  initiatedById  String?                       @map("initiated_by_id") @db.Uuid
+  finishedAt     DateTime?                     @map("finished_at") @db.Timestamptz(6)
+  createdAt      DateTime                      @default(now()) @map("created_at") @db.Timestamptz(6)
+  findings       InstallmentReconciliationFinding[]
+
+  @@index([businessId, createdAt])
+  @@map("installment_reconciliation_runs")
+}
+
+model InstallmentReconciliationFinding {
+  id                   String                       @id @default(uuid()) @db.Uuid
+  runId                String                       @map("run_id") @db.Uuid
+  run                  InstallmentReconciliationRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+  installmentPaymentId String?                      @map("installment_payment_id") @db.Uuid
+  installmentPayment  InstallmentPayment?           @relation(fields: [installmentPaymentId], references: [id], onDelete: SetNull)
+  severity             FindingSeverity
+  code                 String                       @db.VarChar(80)
+  message              String                       @db.Text
+  expected             String?                      @db.VarChar(80)
+  actual               String?                      @db.VarChar(80)
+  createdAt            DateTime                     @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([runId, severity])
+  @@map("installment_reconciliation_findings")
 }

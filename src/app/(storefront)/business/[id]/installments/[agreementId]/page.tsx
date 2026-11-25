@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { z } from "zod";
 
 import { RecordCashPaymentForm, RefundPaymentForm } from "@/components/installments/payment-forms";
+import { OpenInstallmentDisputeForm } from "@/components/installments/report-forms";
 import { PageShell } from "@/components/storefront/page-shell";
 import { Badge } from "@/components/ui/badge";
 import { authorizeInstallmentSeller } from "@/features/installments/access";
@@ -90,6 +91,13 @@ export default async function SellerInstallmentDetailPage({
             <li className="text-muted-foreground">No payments recorded.</li>
           ) : null}
         </ul>
+      </section>
+
+      <section className="rounded-xl border border-border bg-surface p-6 text-sm">
+        <h2 className="font-display text-lg font-medium">Open a dispute</h2>
+        <div className="mt-4 max-w-lg">
+          <OpenInstallmentDisputeForm businessId={id} agreementId={agreementId} compact />
+        </div>
       </section>
     </PageShell>
   );

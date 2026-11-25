@@ -67,9 +67,15 @@ async function InstallmentsContent({ params }: { params: Promise<{ id: string }>
       <header>
         <h1 className="font-display text-3xl tracking-tight">Installment sales</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Seller-funded contracts with a fixed price snapshot and a generated payment schedule.
-          Payments are not collected in this slice — the buyer must accept the terms first.
+          Seller-funded contracts with a fixed price snapshot, a generated payment schedule and
+          verified payment tracking. Buyers must accept terms before any deposit is collected.
         </p>
+        <Link
+          href={`/business/${id}/installments/reports`}
+          className="text-xs text-accent underline"
+        >
+          View reports, disputes and reconciliation
+        </Link>
       </header>
 
       {!enabled ? (

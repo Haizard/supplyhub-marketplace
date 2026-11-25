@@ -89,3 +89,17 @@ export const refundInstallmentSchema = z.object({
   paymentId: uuid,
   reason: z.string().trim().min(5).max(500),
 });
+
+export const openInstallmentDisputeSchema = z.object({
+  businessId: z.preprocess((value) => (value === "" ? undefined : value), uuid.optional()),
+  agreementId: uuid,
+  paymentId: z.preprocess((value) => (value === "" ? undefined : value), uuid.optional()),
+  reason: z.string().trim().min(10).max(2000),
+});
+
+export const resolveInstallmentDisputeSchema = z.object({
+  businessId: uuid,
+  disputeId: uuid,
+  decision: z.enum(["RESOLVE", "REJECT"]),
+  resolution: z.string().trim().min(10).max(2000),
+});

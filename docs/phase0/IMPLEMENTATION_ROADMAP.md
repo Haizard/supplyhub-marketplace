@@ -480,7 +480,10 @@ sales. Behind `phase10.installmentSales` (seeded disabled).
   no late charges or collection action.
 - **I4 — DELIVERED** POS/offline agreements with catalogue-authoritative prices,
   stock held on creation, and possession-based conversion to sale or release.
-- **I5** Analytics, disputes, reconciliation. Remaining phases are planned.
+- **I5 — DELIVERED** Seller receivables/collections reporting, customer history,
+  two-sided disputes and business-scoped reconciliation findings.
+- **I6–I9** (digital signatures, advanced contracts, financing partners) remain
+  unapproved and unstarted.
   **I5** Analytics, disputes, reconciliation. Remaining phases are planned.
 
 ---
@@ -509,5 +512,5 @@ Phase 8 (Trust & Operations)         ← DONE — requires Phase 7 and the payme
     ↓
 Phase 9 (Logistics Business Network) ← DELIVERED — L1-L12 done
     ↓
-Phase 10 (Installment Sales)         ← IN PROGRESS — I1-I4 done, flag off
+Phase 10 (Installment Sales)         ← DELIVERED — I1-I5 done, flag off
 ```

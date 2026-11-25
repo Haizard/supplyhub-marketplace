@@ -5,6 +5,7 @@ import { z } from "zod";
 import { PageShell } from "@/components/storefront/page-shell";
 import { Badge } from "@/components/ui/badge";
 import { StartInstallmentPaymentForm } from "@/components/installments/payment-forms";
+import { OpenInstallmentDisputeForm } from "@/components/installments/report-forms";
 import { getBuyerAgreementDetail } from "@/features/installments/queries";
 import { listAgreementPayments } from "@/features/installments/payment-queries";
 import { requireActor } from "@/server/auth/guards";
@@ -166,6 +167,13 @@ export default async function BuyerInstallmentDetailPage({
             <li className="text-muted-foreground">No payments recorded.</li>
           ) : null}
         </ul>
+      </section>
+
+      <section className="rounded-xl border border-border bg-surface p-6 text-sm">
+        <h2 className="font-display text-lg font-medium">Open a dispute</h2>
+        <div className="mt-4 max-w-lg">
+          <OpenInstallmentDisputeForm agreementId={agreement.id} compact />
+        </div>
       </section>
 
       <section className="rounded-xl border border-border bg-surface p-6 text-sm">

@@ -1,7 +1,7 @@
 # Installment Sales — Seller-Funded Phase 10 Proposal
 
-**Status: IN PROGRESS — slices I1–I4 implemented behind `phase10.installmentSales`
-(seeded disabled).**
+**Status: IMPLEMENTED — slices I1–I5 delivered behind `phase10.installmentSales`
+(seeded disabled). Remaining phases are out of scope until approved.**
 
 This document records the repository-first decisions for the Installment Sales /
 BNPL / layaway capability requested in the product brief. The platform implements
@@ -56,7 +56,7 @@ code was written:
 | **I2** (done) | Verified deposit + payment allocation, overpayment, early settlement, partial payments, immutable transaction history | No success without verified callback; duplicate webhooks idempotent; overpay only when seller permits |
 | **I3** (done) | Buyer dashboard enhancements, receipts, reminders, overdue management | Reminders are notifications only; grace/late fees stay configurable |
 | **I4** (done) | POS/offline sales, inventory reserve-vs-deduct by possession model | Immediate possession deducts stock; deferred possession reserves without marking delivered |
-| **I5** | Seller analytics, customer history, disputes and reconciliation | Ledger separation; refunds reverse the correct entries |
+| **I5** (done) | Seller analytics, customer history, disputes and reconciliation | Ledger separation; refunds reverse the correct entries |
 | **I6–I9** | Digital signatures/contract management, advanced reporting, and (much later) financing partners | Regulated credit requires separate approval |
 
 ## 4. I1 acceptance
@@ -119,3 +119,19 @@ code was written:
 - Refunds reverse money and allocations only; any physical stock return goes
   through the existing returns process. Migration
   `20261125300000_phase10_installments_i4`.
+
+### I5 acceptance
+
+- Seller report at `/business/[id]/installments/reports` derives totals from
+  stored agreements and verified payments: sales, deposits collected,
+  outstanding balance, monthly collections, upcoming/overdue counts, completed
+  and defaulted agreements, and monthly revenue. All money math is in integer
+  minor units and unit-tested.
+- Customer history searches only agreements of the authorized business.
+- Buyers and sellers can open disputes on their own agreements; opening one sets
+  the agreement to `DISPUTED`. Only sellers close disputes, with a recorded
+  resolution and audit trail. No money moves in a dispute action.
+- Reconciliation runs are business-scoped and append-only. Findings cover missing
+  receipts, allocation/currency mismatches and missing provider references. No
+  finding mutates a payment; refunds remain the only reversal path.
+- Migration `20261125400000_phase10_installments_i5`.
