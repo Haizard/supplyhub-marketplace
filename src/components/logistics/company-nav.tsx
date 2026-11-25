@@ -11,6 +11,8 @@ const links = [
   { key: "clients", label: "Clients", suffix: "/clients" },
   { key: "contracts", label: "Contracts", suffix: "/contracts" },
   { key: "invoices", label: "Invoices", suffix: "/invoices" },
+  { key: "dispatch", label: "Dispatch", suffix: "/dispatch" },
+  { key: "jobs", label: "Jobs", suffix: "/jobs" },
   { key: "members", label: "Members", suffix: "/members" },
   { key: "roles", label: "Roles", suffix: "/roles" },
   { key: "settings", label: "Settings", suffix: "/settings" },
