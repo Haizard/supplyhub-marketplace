@@ -1,6 +1,6 @@
 # Installment Sales — Seller-Funded Phase 10 Proposal
 
-**Status: IN PROGRESS — slices I1–I2 implemented behind `phase10.installmentSales`
+**Status: IN PROGRESS — slices I1–I3 implemented behind `phase10.installmentSales`
 (seeded disabled).**
 
 This document records the repository-first decisions for the Installment Sales /
@@ -54,7 +54,7 @@ code was written:
 |---|---|---|
 | **I1** (done) | Seller settings, agreement creation with frozen snapshot, generated schedule, buyer acceptance, pre-activation cancellation, seller/buyer views | No client-supplied price/total; schedule sums exactly to outstanding; buyer accepts only from own session; flag disabled by default |
 | **I2** (done) | Verified deposit + payment allocation, overpayment, early settlement, partial payments, immutable transaction history | No success without verified callback; duplicate webhooks idempotent; overpay only when seller permits |
-| **I3** | Buyer dashboard enhancements, receipts, reminders, overdue management | Reminders are notifications only; grace/late fees stay configurable |
+| **I3** (done) | Buyer dashboard enhancements, receipts, reminders, overdue management | Reminders are notifications only; grace/late fees stay configurable |
 | **I4** | POS/offline sales, inventory reserve-vs-deduct by possession model | Immediate possession deducts stock; deferred possession reserves without marking delivered |
 | **I5** | Seller analytics, customer history, disputes and reconciliation | Ledger separation; refunds reverse the correct entries |
 | **I6–I9** | Digital signatures/contract management, advanced reporting, and (much later) financing partners | Regulated credit requires separate approval |
@@ -87,3 +87,18 @@ code was written:
   allocations and restore the outstanding balance.
 - Seller-attested cash/bank payments are audited with the actor ID; provider
   payments are verified only by callbacks. Migration `20261125100000_phase10_installments_i2`.
+
+### I3 acceptance
+
+- One `InstallmentReceipt` per verified payment, issued inside the verification
+  transaction. `GET /api/installments/receipts/[receiptId]` is buyer-scoped,
+  `no-store`, and streams a plain-text attachment built from the frozen snapshot.
+- `POST /api/admin/installments/reminders` requires an administrator session and
+  supports `SWEEP`, `DISPATCH` or `BOTH`. The sweep marks unpaid instalments
+  `OVERDUE` only after the seller's configured grace period and queues at most one
+  reminder per `(agreement, instalment, type)`; the dispatcher skips reminders
+  whose instalment was already paid and records send/failure audit entries.
+- Reminders use the shared SMTP configuration and never contain credentials,
+  payment references beyond the agreement number, or provider payloads.
+- No late charges, penalties or collection action are applied. Migration
+  `20261125200000_phase10_installments_i3`.

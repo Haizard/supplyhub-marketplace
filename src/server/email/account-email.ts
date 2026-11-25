@@ -76,7 +76,7 @@ function buildEmail(input: AccountEmail, env: ServerEnv): { subject: string; bod
   };
 }
 
-function smtpTransport(env: ServerEnv): Transporter | null {
+export function smtpTransport(env: ServerEnv): Transporter | null {
   if (!env.SMTP_HOST || !env.SMTP_USER || !env.SMTP_PASSWORD) {
     return null;
   }

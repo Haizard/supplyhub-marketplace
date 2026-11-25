@@ -478,6 +478,10 @@ enum AuditAction {
   INSTALLMENT_PAYMENT_VERIFIED
   INSTALLMENT_PAYMENT_REFUNDED
   INSTALLMENT_PAYMENT_MISMATCH
+  INSTALLMENT_RECEIPT_ISSUED
+  INSTALLMENT_REMINDER_QUEUED
+  INSTALLMENT_REMINDER_SENT
+  INSTALLMENT_OVERDUE_MARKED
 }
 
 model User {
@@ -4144,6 +4148,8 @@ model InstallmentAgreement {
   schedule              InstallmentSchedule[]
   events                InstallmentAgreementEvent[]
   payments              InstallmentPayment[]
+  receipts              InstallmentReceipt[]
+  reminders             InstallmentReminder[]
 
   @@index([businessId, status])
   @@index([buyerUserId, status])
@@ -4249,6 +4255,7 @@ model InstallmentPayment {
   createdAt         DateTime                @default(now()) @map("created_at") @db.Timestamptz(6)
   allocations       InstallmentPaymentAllocation[]
   events            InstallmentPaymentEvent[]
+  receipt           InstallmentReceipt?
 
   @@index([agreementId, status])
   @@index([buyerUserId, createdAt])
@@ -4290,4 +4297,53 @@ model InstallmentPaymentEvent {
   @@unique([provider, deliveryId])
   @@index([paymentId, createdAt])
   @@map("installment_payment_events")
+}
+
+// ── Phase 10 I3: receipts, reminders and overdue management ──────────────────
+
+enum InstallmentReminderType {
+  UPCOMING
+  OVERDUE
+}
+
+enum InstallmentReminderStatus {
+  PENDING
+  SENT
+  FAILED
+  SKIPPED
+}
+
+/// Issued exactly once per verified payment. The receipt text is derived from the
+/// frozen agreement snapshot, never from current catalogue or seller settings.
+model InstallmentReceipt {
+  id             String               @id @default(uuid()) @db.Uuid
+  receiptNumber  String               @unique @map("receipt_number") @db.VarChar(40)
+  paymentId      String               @unique @map("payment_id") @db.Uuid
+  payment        InstallmentPayment   @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  agreementId    String               @map("agreement_id") @db.Uuid
+  agreement      InstallmentAgreement @relation(fields: [agreementId], references: [id], onDelete: Cascade)
+  buyerUserId    String               @map("buyer_user_id") @db.Uuid
+  issuedAt       DateTime             @default(now()) @map("issued_at") @db.Timestamptz(6)
+
+  @@index([buyerUserId, issuedAt])
+  @@map("installment_receipts")
+}
+
+model InstallmentReminder {
+  id           String                    @id @default(uuid()) @db.Uuid
+  agreementId  String                    @map("agreement_id") @db.Uuid
+  agreement    InstallmentAgreement      @relation(fields: [agreementId], references: [id], onDelete: Cascade)
+  /// Schedule ID or "agreement" for a contract-level reminder.
+  scopeKey     String                    @map("scope_key") @db.VarChar(80)
+  reminderType InstallmentReminderType   @map("reminder_type")
+  status       InstallmentReminderStatus @default(PENDING)
+  dueAt        DateTime                  @map("due_at") @db.Timestamptz(6)
+  attempts     Int                       @default(0)
+  sentAt       DateTime?                 @map("sent_at") @db.Timestamptz(6)
+  lastError    String?                   @map("last_error") @db.VarChar(500)
+  createdAt    DateTime                  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@unique([agreementId, scopeKey, reminderType])
+  @@index([status, dueAt])
+  @@map("installment_reminders")
 }

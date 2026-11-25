@@ -6,6 +6,7 @@ import { recordAuditEvent } from "@/server/audit/audit-log";
 import { getDatabase } from "@/server/db/client";
 
 import { toMajor, toMinor, planPaymentAllocation, planRefund } from "./payment-rules";
+import { issueInstallmentReceipt } from "./receipt-service";
 
 export type VerificationResult = "APPLIED" | "DUPLICATE" | "MISMATCH" | "NOT_FOUND";
 
@@ -41,6 +42,7 @@ export async function applyVerifiedInstallmentPayment(input: {
       select: {
         id: true,
         businessId: true,
+        buyerUserId: true,
         status: true,
         depositAmount: true,
         schedule: {
@@ -169,6 +171,12 @@ export async function applyVerifiedInstallmentPayment(input: {
           advanceMinor: plan.remainingMinor,
         },
       },
+    });
+    await issueInstallmentReceipt(tx, {
+      paymentId: payment.id,
+      agreementId: agreement.id,
+      buyerUserId: agreement.buyerUserId,
+      actorId: input.verifiedById ?? null,
     });
     await recordAuditEvent(tx, {
       actorId: input.verifiedById ?? null,

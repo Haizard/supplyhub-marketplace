@@ -152,6 +152,14 @@ export default async function BuyerInstallmentDetailPage({
                   Continue at provider
                 </a>
               ) : null}
+              {payment.receipt ? (
+                <a
+                  href={`/api/installments/receipts/${payment.receipt.id}`}
+                  className="ml-3 text-accent underline"
+                >
+                  Download receipt ({payment.receipt.receiptNumber})
+                </a>
+              ) : null}
             </li>
           ))}
           {payments.length === 0 ? (

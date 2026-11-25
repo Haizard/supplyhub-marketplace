@@ -475,7 +475,10 @@ sales. Behind `phase10.installmentSales` (seeded disabled).
 - **I2 — DELIVERED** Verified LynxPay callbacks, idempotent payment events,
   immutable allocation records, partial/early/over payments, seller-attested cash
   payments and audited refunds. No payment succeeds on checkout return.
-- **I3** Receipts, reminders, overdue management. **I4** POS + inventory rules.
+- **I3 — DELIVERED** Buyer-facing receipts, admin sweep/dispatch for upcoming and
+  overdue reminders, grace-period-aware overdue marking. Notifications only;
+  no late charges or collection action.
+- **I4** POS + inventory rules. **I5** Analytics, disputes, reconciliation.
   **I5** Analytics, disputes, reconciliation. Remaining phases are planned.
 
 ---
@@ -504,5 +507,5 @@ Phase 8 (Trust & Operations)         ← DONE — requires Phase 7 and the payme
     ↓
 Phase 9 (Logistics Business Network) ← DELIVERED — L1-L12 done
     ↓
-Phase 10 (Installment Sales)         ← IN PROGRESS — I1-I2 done, flag off
+Phase 10 (Installment Sales)         ← IN PROGRESS — I1-I3 done, flag off
 ```

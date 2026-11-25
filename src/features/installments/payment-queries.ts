@@ -13,6 +13,7 @@ export interface InstallmentPaymentView {
   verifiedAt: string | null;
   failureReason: string | null;
   checkoutUrl: string | null;
+  receipt: { id: string; receiptNumber: string; issuedAt: string } | null;
   allocations: { sequence: number; amount: string }[];
 }
 
@@ -39,6 +40,7 @@ export async function listAgreementPayments(
       verifiedAt: true,
       failureReason: true,
       checkoutUrl: true,
+      receipt: { select: { id: true, receiptNumber: true, issuedAt: true } },
       allocations: {
         select: { amount: true, schedule: { select: { sequence: true } } },
         orderBy: { schedule: { sequence: "asc" } },
@@ -56,6 +58,13 @@ export async function listAgreementPayments(
     verifiedAt: row.verifiedAt?.toISOString() ?? null,
     failureReason: row.failureReason,
     checkoutUrl: row.checkoutUrl,
+    receipt: row.receipt
+      ? {
+          id: row.receipt.id,
+          receiptNumber: row.receipt.receiptNumber,
+          issuedAt: row.receipt.issuedAt.toISOString(),
+        }
+      : null,
     allocations: row.allocations.map((allocation) => ({
       sequence: allocation.schedule.sequence,
       amount: allocation.amount.toString(),

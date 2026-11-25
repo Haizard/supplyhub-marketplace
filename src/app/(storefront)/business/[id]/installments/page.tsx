@@ -15,6 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { getBusinessById } from "@/features/business/queries";
 import { isFeatureEnabled } from "@/features/flags/service";
 import { getInstallmentSettings, listSellerInstallments } from "@/features/installments/queries";
+import { listBusinessInstallmentReminders } from "@/features/installments/reminder-queries";
 import { requireActor } from "@/server/auth/guards";
 import {
   BusinessAccessError,
@@ -53,9 +54,10 @@ async function InstallmentsContent({ params }: { params: Promise<{ id: string }>
   }
 
   const enabled = await isFeatureEnabled("phase10.installmentSales");
-  const [settings, agreements] = await Promise.all([
+  const [settings, agreements, reminders] = await Promise.all([
     getInstallmentSettings(id),
     listSellerInstallments(id),
+    listBusinessInstallmentReminders(id),
   ]);
 
   return (
@@ -132,6 +134,23 @@ async function InstallmentsContent({ params }: { params: Promise<{ id: string }>
             </Link>
           </article>
         ))}
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="font-display text-lg font-medium">Reminders</h2>
+        {reminders.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No reminders queued yet.</p>
+        ) : (
+          <ul className="space-y-1 text-xs text-muted-foreground">
+            {reminders.map((reminder) => (
+              <li key={reminder.id}>
+                {reminder.agreementNumber} · {reminder.reminderType} · {reminder.status} · due{" "}
+                {new Date(reminder.dueAt).toLocaleString()}
+                {reminder.sentAt ? ` · sent ${new Date(reminder.sentAt).toLocaleString()}` : ""}
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
     </PageShell>
   );
