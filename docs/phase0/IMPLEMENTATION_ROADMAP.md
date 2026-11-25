@@ -442,11 +442,14 @@ test strategy are in
   coverage, capacity, vehicle match, reliability and price. Only verified, eligible
   companies receive offers; companies accept or decline, acceptance creates the job,
   and expired offers are swept by an audited admin action.
-- **L9** Partner acquisition, attribution and reward eligibility (requires L4 + L5).
+- **L9 — DELIVERED** Referral links/codes, merchant attribution with self-referral and
+  duplicate checks, and eligibility that requires a verified merchant, active
+  relationship, completed deliveries and genuine payments before any reward is created.
+  Eligibility points are recorded separately from delivery earnings.
 - **L10** External e-commerce APIs. **L11** Fleet sharing and hubs. **L12** AI optimisation.
 
-All slices sit behind the `phase9.logisticsNetwork` feature flag. L1–L8 are
-implemented; L9–L12 remain planned and should be delivered one slice at a time.
+All slices sit behind the `phase9.logisticsNetwork` feature flag. L1–L9 are
+implemented; L10–L12 remain planned and should be delivered one slice at a time.
 
 ---
 
@@ -472,5 +475,5 @@ Phase 7 (Ecosystem)                  ← DONE — requires all earlier phases
     ↓
 Phase 8 (Trust & Operations)         ← DONE — requires Phase 7 and the payment ledger
     ↓
-Phase 9 (Logistics Business Network) ← IN PROGRESS — L1-L8 done; L9 next
+Phase 9 (Logistics Business Network) ← IN PROGRESS — L1-L9 done; L10 next
 ```
