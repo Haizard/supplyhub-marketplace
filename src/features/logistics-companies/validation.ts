@@ -133,6 +133,7 @@ export const LOGISTICS_PERMISSION_KEYS = [
   "logistics.company.read",
   "logistics.company.update",
   "logistics.fleet.manage",
+  "logistics.fleet.share",
   "logistics.driver.manage",
   "logistics.driver.view",
   "logistics.dispatch.manage",

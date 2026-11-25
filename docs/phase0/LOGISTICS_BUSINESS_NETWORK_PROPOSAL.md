@@ -396,4 +396,8 @@ All scenarios must assert real database state transitions, not mocked success.
 - [x] L9 implemented: referral attribution, fraud checks and reward eligibility.
 - [x] L10 implemented: versioned external APIs, API keys, idempotency and signed
       webhooks with API documentation in `docs/phase0/LOGISTICS_API.md`.
-- [ ] L11–L12 are marked "Later" in this proposal and remain unstarted.
+- [x] L11 implemented: consent-based fleet sharing with insurance verification,
+      a single accountable company per shared delivery, no double-promised vehicles,
+      and capacity-limited parcel hubs with a pickup-code custody chain. Rules are
+      in `docs/phase0/LOGISTICS_SHARING.md`.
+- [ ] L12 is marked "Later" in this proposal and remains unstarted.

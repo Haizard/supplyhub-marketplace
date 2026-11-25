@@ -15,6 +15,7 @@ const links = [
   { key: "jobs", label: "Jobs", suffix: "/jobs" },
   { key: "opportunities", label: "Opportunities", suffix: "/opportunities" },
   { key: "referrals", label: "Partner growth", suffix: "/referrals" },
+  { key: "sharing", label: "Sharing", suffix: "/sharing" },
   { key: "integrations", label: "Integrations", suffix: "/integrations" },
   { key: "finance", label: "Finance", suffix: "/finance" },
   { key: "members", label: "Members", suffix: "/members" },

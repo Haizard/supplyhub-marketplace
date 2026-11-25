@@ -463,6 +463,11 @@ enum AuditAction {
   LOGISTICS_WEBHOOK_ENDPOINT_SAVED
   LOGISTICS_EXTERNAL_STORE_SAVED
   LOGISTICS_WEBHOOK_DELIVERED
+  FLEET_SHARE_CREATED
+  FLEET_SHARE_STATUS_CHANGED
+  FLEET_SHARE_VEHICLE_CHANGED
+  PARCEL_HUB_SAVED
+  PARCEL_HANDOVER_RECORDED
 }
 
 model User {
@@ -1773,6 +1778,8 @@ model DeliveryJob {
   proofs        DeliveryProof[]
   earning       AgentEarning?
   commission    DeliveryCommission?
+  shareUsages   FleetShareUsage[]
+  hubHandovers  ParcelHubHandover[]
   createdAt     DateTime                @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt     DateTime                @updatedAt @map("updated_at") @db.Timestamptz(6)
 
@@ -2813,6 +2820,9 @@ model LogisticsCompany {
   apiKeys            LogisticsApiKey[]
   webhookEndpoints   LogisticsWebhookEndpoint[]
   externalStores     LogisticsExternalStore[]
+  fleetShareOffers   FleetShareAgreement[] @relation("FleetShareOwner")
+  fleetShareAgreements FleetShareAgreement[] @relation("FleetSharePartner")
+  parcelHubs         ParcelHub[]
 
   @@index([status, createdAt])
   @@map("logistics_companies")
@@ -2997,6 +3007,8 @@ model LogisticsVehicle {
   documents         VehicleDocument[]
   maintenance       VehicleMaintenance[]
   assignments       DriverVehicleAssignment[]
+  shareLinks        FleetShareVehicle[]
+  shareUsages       FleetShareUsage[]
 
   @@unique([companyId, plate])
   @@index([companyId, status])
@@ -3790,4 +3802,173 @@ model LogisticsExternalOrder {
 
   @@unique([storeId, externalOrderId])
   @@map("logistics_external_orders")
+}
+
+// ── Phase 9 L11: fleet sharing and parcel hubs ──────────────────────────────
+
+enum FleetShareType {
+  VEHICLE_LENDING
+  SUBCONTRACT_DELIVERY
+}
+
+enum FleetShareStatus {
+  DRAFT
+  PENDING_PARTNER
+  ACTIVE
+  SUSPENDED
+  DECLINED
+  TERMINATED
+}
+
+enum FleetShareUsageStatus {
+  RESERVED
+  IN_USE
+  RELEASED
+  CANCELLED
+}
+
+enum ParcelHubStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum ParcelHandoverDirection {
+  INTAKE
+  COLLECTION
+}
+
+enum ParcelHandoverStatus {
+  RECEIVED
+  STORED
+  RELEASED
+  RETURNED
+}
+
+/// Two logistics companies agreeing to share capacity. Consent is explicit on both
+/// sides, insurance is recorded, and exactly one company is accountable per delivery.
+model FleetShareAgreement {
+  id                   String            @id @default(uuid()) @db.Uuid
+  agreementNumber      String            @unique @map("agreement_number") @db.VarChar(40)
+  ownerCompanyId       String            @map("owner_company_id") @db.Uuid
+  ownerCompany         LogisticsCompany  @relation("FleetShareOwner", fields: [ownerCompanyId], references: [id], onDelete: Cascade)
+  partnerCompanyId     String            @map("partner_company_id") @db.Uuid
+  partnerCompany       LogisticsCompany  @relation("FleetSharePartner", fields: [partnerCompanyId], references: [id], onDelete: Cascade)
+  type                 FleetShareType
+  status               FleetShareStatus  @default(PENDING_PARTNER)
+  /// Configurable commercial terms. The platform does not move money for these.
+  rateAmount           Decimal?          @map("rate_amount") @db.Decimal(12, 2)
+  rateCurrency         String?           @map("rate_currency") @db.VarChar(3)
+  liabilityTerms       String?           @map("liability_terms") @db.VarChar(1000)
+  insurancePolicyRef   String?           @map("insurance_policy_ref") @db.VarChar(160)
+  insuranceExpiresAt   DateTime?         @map("insurance_expires_at") @db.Timestamptz(6)
+  /// Exactly one accountable company per shared delivery; must be owner or partner.
+  accountableCompanyId String            @map("accountable_company_id") @db.Uuid
+  ownerConsentedAt     DateTime?         @map("owner_consented_at") @db.Timestamptz(6)
+  ownerConsentedById   String?           @map("owner_consented_by_id") @db.Uuid
+  partnerConsentedAt   DateTime?         @map("partner_consented_at") @db.Timestamptz(6)
+  partnerConsentedById String?           @map("partner_consented_by_id") @db.Uuid
+  effectiveFrom        DateTime          @map("effective_from") @db.Timestamptz(6)
+  effectiveTo          DateTime?         @map("effective_to") @db.Timestamptz(6)
+  suspendedAt          DateTime?         @map("suspended_at") @db.Timestamptz(6)
+  terminatedAt         DateTime?         @map("terminated_at") @db.Timestamptz(6)
+  terminationReason    String?           @map("termination_reason") @db.VarChar(500)
+  createdById          String            @map("created_by_id") @db.Uuid
+  createdAt            DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
+  vehicles             FleetShareVehicle[]
+  usages               FleetShareUsage[]
+
+  @@index([ownerCompanyId, status])
+  @@index([partnerCompanyId, status])
+  @@map("fleet_share_agreements")
+}
+
+/// A vehicle the owner has offered under an agreement.
+model FleetShareVehicle {
+  id          String              @id @default(uuid()) @db.Uuid
+  agreementId String              @map("agreement_id") @db.Uuid
+  agreement   FleetShareAgreement @relation(fields: [agreementId], references: [id], onDelete: Cascade)
+  vehicleId   String              @map("vehicle_id") @db.Uuid
+  vehicle     LogisticsVehicle    @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  active      Boolean             @default(true)
+  addedAt     DateTime            @default(now()) @map("added_at") @db.Timestamptz(6)
+
+  @@unique([agreementId, vehicleId])
+  @@index([vehicleId, active])
+  @@map("fleet_share_vehicles")
+}
+
+/// Accountability record for a specific shared-capacity use. Written before a job is
+/// dispatched on a borrowed vehicle so the responsible company is never ambiguous.
+model FleetShareUsage {
+  id                   String               @id @default(uuid()) @db.Uuid
+  agreementId          String               @map("agreement_id") @db.Uuid
+  agreement            FleetShareAgreement @relation(fields: [agreementId], references: [id], onDelete: Cascade)
+  vehicleId            String               @map("vehicle_id") @db.Uuid
+  vehicle              LogisticsVehicle     @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  usingCompanyId       String               @map("using_company_id") @db.Uuid
+  accountableCompanyId String               @map("accountable_company_id") @db.Uuid
+  jobId                String?              @map("job_id") @db.Uuid
+  job                  DeliveryJob?         @relation(fields: [jobId], references: [id], onDelete: SetNull)
+  status               FleetShareUsageStatus @default(RESERVED)
+  startedAt            DateTime             @default(now()) @map("started_at") @db.Timestamptz(6)
+  endedAt              DateTime?            @map("ended_at") @db.Timestamptz(6)
+
+  @@index([agreementId, status])
+  @@index([vehicleId, status])
+  @@map("fleet_share_usages")
+}
+
+/// A physical parcel hub where custody of a parcel changes hands. Capacity is
+/// enforced so a hub cannot be over-promised.
+model ParcelHub {
+  id             String             @id @default(uuid()) @db.Uuid
+  companyId      String             @map("company_id") @db.Uuid
+  company        LogisticsCompany   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  hubCode        String             @map("hub_code") @db.VarChar(40)
+  name           String             @db.VarChar(160)
+  address        String             @db.VarChar(300)
+  city           String?            @db.VarChar(120)
+  latitude       Decimal?           @db.Decimal(10, 7)
+  longitude      Decimal?           @db.Decimal(10, 7)
+  capacity       Int                @default(50)
+  status         ParcelHubStatus    @default(ACTIVE)
+  operatingHours Json?              @map("operating_hours")
+  createdById    String             @map("created_by_id") @db.Uuid
+  createdAt      DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime           @updatedAt @map("updated_at") @db.Timestamptz(6)
+  handovers      ParcelHubHandover[]
+
+  @@unique([companyId, hubCode])
+  @@index([companyId, status])
+  @@map("parcel_hubs")
+}
+
+/// Custody chain entry. The pickup code is revealed once at intake and required at
+/// release, so a parcel cannot be handed to the wrong person silently.
+model ParcelHubHandover {
+  id                  String                 @id @default(uuid()) @db.Uuid
+  hubId               String                 @map("hub_id") @db.Uuid
+  hub                 ParcelHub              @relation(fields: [hubId], references: [id], onDelete: Cascade)
+  companyId           String                 @map("company_id") @db.Uuid
+  trackingRef         String                 @map("tracking_ref") @db.VarChar(120)
+  direction           ParcelHandoverDirection
+  status              ParcelHandoverStatus   @default(RECEIVED)
+  jobId               String?                @map("job_id") @db.Uuid
+  job                 DeliveryJob?           @relation(fields: [jobId], references: [id], onDelete: SetNull)
+  custodianMemberId   String?                @map("custodian_member_id") @db.Uuid
+  receivedById        String                 @map("received_by_id") @db.Uuid
+  receivedAt          DateTime               @default(now()) @map("received_at") @db.Timestamptz(6)
+  pickupCode          String                 @map("pickup_code") @db.VarChar(12)
+  pickupCodeVerifiedAt DateTime?             @map("pickup_code_verified_at") @db.Timestamptz(6)
+  releasedAt          DateTime?              @map("released_at") @db.Timestamptz(6)
+  releasedToName      String?                @map("released_to_name") @db.VarChar(160)
+  releasedToPhone     String?                @map("released_to_phone") @db.VarChar(40)
+  notes               String?                @db.VarChar(500)
+  createdAt           DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([hubId, status])
+  @@index([companyId, status])
+  @@index([trackingRef])
+  @@map("parcel_hub_handovers")
 }

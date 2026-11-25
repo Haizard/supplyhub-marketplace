@@ -450,10 +450,15 @@ test strategy are in
   idempotent delivery requests, per-key rate limits, signed store webhooks with
   encrypted secrets, signed outbound webhooks with bounded retries and published API
   documentation in `docs/phase0/LOGISTICS_API.md`.
-- **L11** Fleet sharing and hubs. **L12** AI optimisation.
+- **L11 — DELIVERED** Consent-based fleet sharing agreements between verified
+  companies with insurance checks, explicit accountability records and no
+  double-promised vehicles, plus capacity-limited parcel hubs with a verified
+  pickup-code custody chain. Rules are documented in
+  `docs/phase0/LOGISTICS_SHARING.md`.
+- **L12** AI optimisation.
 
-All slices sit behind the `phase9.logisticsNetwork` feature flag. L1–L10 are
-implemented; L11–L12 are explicitly "Later" in the proposal and remain planned.
+All slices sit behind the `phase9.logisticsNetwork` feature flag. L1–L11 are
+implemented; L12 is explicitly "Later" in the proposal and remains planned.
 
 ---
 
@@ -479,5 +484,5 @@ Phase 7 (Ecosystem)                  ← DONE — requires all earlier phases
     ↓
 Phase 8 (Trust & Operations)         ← DONE — requires Phase 7 and the payment ledger
     ↓
-Phase 9 (Logistics Business Network) ← IN PROGRESS — L1-L10 done; L11-L12 later
+Phase 9 (Logistics Business Network) ← IN PROGRESS — L1-L11 done; L12 later
 ```
