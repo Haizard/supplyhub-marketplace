@@ -425,15 +425,18 @@ test strategy are in
   business/vendor, per-company `company_client_relationships` so one merchant can work
   with several companies, and primary contacts. Relationship status moves
   independently of the global client status.
-- **L5** Contracts, pricing, SLAs, versions and performance.
+- **L5 — DELIVERED** Contracts with pricing modes, SLAs, version history, forward-only
+  status machine and client acceptance, contract-linked deliveries, allocation progress,
+  expiry alerts, and draft-to-issued-to-paid invoices with duplicate-period protection.
+  Dedicated fleet and geographic contracts reject overlapping active commitments.
 - **L6** Company dispatch and delivery management on the existing job state machine.
 - **L7** Company financials, driver compensation, earnings and settlements.
 - **L8** Platform dispatch marketplace and company eligibility.
 - **L9** Partner acquisition, attribution and reward eligibility (requires L4 + L5).
 - **L10** External e-commerce APIs. **L11** Fleet sharing and hubs. **L12** AI optimisation.
 
-All slices sit behind the `phase9.logisticsNetwork` feature flag. L1–L4 are
-implemented; L5–L12 remain planned and should be delivered one slice at a time.
+All slices sit behind the `phase9.logisticsNetwork` feature flag. L1–L5 are
+implemented; L6–L12 remain planned and should be delivered one slice at a time.
 
 ---
 
@@ -459,5 +462,5 @@ Phase 7 (Ecosystem)                  ← DONE — requires all earlier phases
     ↓
 Phase 8 (Trust & Operations)         ← DONE — requires Phase 7 and the payment ledger
     ↓
-Phase 9 (Logistics Business Network) ← IN PROGRESS — L1-L4 done; L9 needs L5
+Phase 9 (Logistics Business Network) ← IN PROGRESS — L1-L5 done; L9 unblocked
 ```

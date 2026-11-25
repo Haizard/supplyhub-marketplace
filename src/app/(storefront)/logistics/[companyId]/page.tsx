@@ -97,6 +97,13 @@ async function LogisticsCompanyContent({ params }: { params: Promise<{ companyId
           <p className="mt-1 text-xs text-muted-foreground">Merchant relationships</p>
         </Link>
         <Link
+          href={`/logistics/${company.id}/contracts`}
+          className="rounded-xl border border-border bg-surface p-5 hover:border-border-strong"
+        >
+          <p className="font-display text-lg font-medium">Contracts</p>
+          <p className="mt-1 text-xs text-muted-foreground">Pricing and SLAs</p>
+        </Link>
+        <Link
           href={`/logistics/${company.id}/roles`}
           className="rounded-xl border border-border bg-surface p-5 hover:border-border-strong"
         >

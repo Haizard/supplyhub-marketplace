@@ -389,4 +389,5 @@ All scenarios must assert real database state transitions, not mocked success.
 - [x] L3 implemented: fleets, vehicles, documents/maintenance and company-independent
       driver memberships with schedules and vehicle assignments.
 - [x] L4 implemented: independent merchant clients, company relationships and contacts.
-- [ ] L5–L12 remain to be approved and implemented one slice at a time.
+- [x] L5 implemented: contracts, pricing, SLAs, versions, performance and invoices.
+- [ ] L6–L12 remain to be approved and implemented one slice at a time.
