@@ -34,3 +34,7 @@ export function consumeRateLimits(entries: { key: string; rule: RateLimitRule }[
 export function resetRateLimits(): void {
   limiter.reset();
 }
+
+/** Versioned logistics API: stricter than the storefront, per API key. */
+export const LOGISTICS_API_RATE_LIMIT = { limit: 120, windowMs: 60_000 } as const;
+export const LOGISTICS_WEBHOOK_RATE_LIMIT = { limit: 240, windowMs: 60_000 } as const;

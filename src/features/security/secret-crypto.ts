@@ -47,3 +47,40 @@ export function decryptTotpSecret(stored: string): string {
     decipher.final(),
   ]).toString("utf8");
 }
+
+function integrationKey(): Buffer {
+  return createHash("sha256")
+    .update(`supplyhub:integrations:${getServerEnv().AUTH_SECRET}`, "utf8")
+    .digest();
+}
+
+/** Integration webhook secrets are encrypted at rest with a server-derived key. */
+export function encryptIntegrationSecret(secret: string): string {
+  const iv = randomBytes(12);
+  const cipher = createCipheriv("aes-256-gcm", integrationKey(), iv);
+  const encrypted = Buffer.concat([cipher.update(secret, "utf8"), cipher.final()]);
+
+  return [
+    VERSION,
+    iv.toString("base64url"),
+    cipher.getAuthTag().toString("base64url"),
+    encrypted.toString("base64url"),
+  ].join(".");
+}
+
+export function decryptIntegrationSecret(stored: string): string {
+  const [version, ivPart, tagPart, payloadPart] = stored.split(".");
+  if (version !== VERSION || !ivPart || !tagPart || !payloadPart) {
+    throw new Error("Unsupported integration secret format.");
+  }
+  const decipher = createDecipheriv(
+    "aes-256-gcm",
+    integrationKey(),
+    Buffer.from(ivPart, "base64url"),
+  );
+  decipher.setAuthTag(Buffer.from(tagPart, "base64url"));
+  return Buffer.concat([
+    decipher.update(Buffer.from(payloadPart, "base64url")),
+    decipher.final(),
+  ]).toString("utf8");
+}

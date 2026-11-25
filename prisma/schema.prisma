@@ -458,6 +458,11 @@ enum AuditAction {
   PARTNER_REFERRAL_STATUS_CHANGED
   PARTNER_REWARD_CREATED
   PARTNER_REWARD_STATUS_CHANGED
+  LOGISTICS_API_KEY_CREATED
+  LOGISTICS_API_KEY_REVOKED
+  LOGISTICS_WEBHOOK_ENDPOINT_SAVED
+  LOGISTICS_EXTERNAL_STORE_SAVED
+  LOGISTICS_WEBHOOK_DELIVERED
 }
 
 model User {
@@ -1728,6 +1733,7 @@ model DeliveryRequest {
   note             String?
   jobs             DeliveryJob[]
   opportunities    DeliveryOpportunity[]
+  externalOrders   LogisticsExternalOrder[]
   createdAt        DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt        DateTime              @updatedAt @map("updated_at") @db.Timestamptz(6)
 
@@ -2804,6 +2810,9 @@ model LogisticsCompany {
   offerScores        LogisticsCompanyOfferScore[]
   referrals          PartnerReferral[]
   rewards            PartnerReward[]
+  apiKeys            LogisticsApiKey[]
+  webhookEndpoints   LogisticsWebhookEndpoint[]
+  externalStores     LogisticsExternalStore[]
 
   @@index([status, createdAt])
   @@map("logistics_companies")
@@ -3660,4 +3669,125 @@ model PartnerRewardTransaction {
 
   @@index([rewardId, createdAt])
   @@map("partner_reward_transactions")
+}
+
+// ── Phase 9 L10: external e-commerce integrations ───────────────────────────
+
+enum ApiKeyStatus {
+  ACTIVE
+  REVOKED
+}
+
+enum WebhookEndpointStatus {
+  ACTIVE
+  PAUSED
+}
+
+enum WebhookDeliveryStatus {
+  PENDING
+  DELIVERED
+  FAILED
+}
+
+enum ExternalStoreStatus {
+  ACTIVE
+  DISCONNECTED
+}
+
+model LogisticsApiKey {
+  id          String       @id @default(uuid()) @db.Uuid
+  keyId       String       @unique @db.VarChar(40)
+  secretHash  String       @map("secret_hash") @db.VarChar(128)
+  companyId   String       @map("company_id") @db.Uuid
+  company     LogisticsCompany @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  name        String       @db.VarChar(120)
+  scopes      Json
+  status      ApiKeyStatus @default(ACTIVE)
+  lastUsedAt  DateTime?    @map("last_used_at") @db.Timestamptz(6)
+  revokedAt   DateTime?    @map("revoked_at") @db.Timestamptz(6)
+  createdById String?      @map("created_by_id") @db.Uuid
+  createdAt   DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([companyId, status])
+  @@map("logistics_api_keys")
+}
+
+model LogisticsApiRequest {
+  id             String   @id @default(uuid()) @db.Uuid
+  idempotencyKey String   @map("idempotency_key") @db.VarChar(160)
+  companyId      String   @map("company_id") @db.Uuid
+  endpoint       String   @db.VarChar(120)
+  requestHash    String   @map("request_hash") @db.VarChar(64)
+  responseStatus Int      @map("response_status")
+  responseBody   Json
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@unique([companyId, idempotencyKey])
+  @@index([companyId, createdAt])
+  @@map("logistics_api_requests")
+}
+
+model LogisticsWebhookEndpoint {
+  id         String                @id @default(uuid()) @db.Uuid
+  companyId  String                @map("company_id") @db.Uuid
+  company    LogisticsCompany      @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  url        String                @db.VarChar(500)
+  secret     String                @db.VarChar(500)
+  events     Json
+  status     WebhookEndpointStatus @default(ACTIVE)
+  createdAt  DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
+  deliveries LogisticsWebhookDelivery[]
+
+  @@index([companyId, status])
+  @@map("logistics_webhook_endpoints")
+}
+
+model LogisticsWebhookDelivery {
+  id          String                @id @default(uuid()) @db.Uuid
+  endpointId  String                @map("endpoint_id") @db.Uuid
+  endpoint    LogisticsWebhookEndpoint @relation(fields: [endpointId], references: [id], onDelete: Cascade)
+  eventType   String                @map("event_type") @db.VarChar(80)
+  payload     Json
+  status      WebhookDeliveryStatus @default(PENDING)
+  attempts    Int                   @default(0)
+  availableAt DateTime              @default(now()) @map("available_at") @db.Timestamptz(6)
+  lastError   String?               @map("last_error") @db.Text
+  deliveredAt DateTime?             @map("delivered_at") @db.Timestamptz(6)
+  createdAt   DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([status, availableAt])
+  @@index([endpointId, createdAt])
+  @@map("logistics_webhook_deliveries")
+}
+
+model LogisticsExternalStore {
+  id             String              @id @default(uuid()) @db.Uuid
+  companyId      String              @map("company_id") @db.Uuid
+  company        LogisticsCompany    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  platform       String              @db.VarChar(60)
+  externalStoreId String             @map("external_store_id") @db.VarChar(120)
+  name           String              @db.VarChar(160)
+  webhookSecret  String              @map("webhook_secret") @db.VarChar(500)
+  status         ExternalStoreStatus @default(ACTIVE)
+  createdAt      DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  orders         LogisticsExternalOrder[]
+
+  @@unique([companyId, platform, externalStoreId])
+  @@map("logistics_external_stores")
+}
+
+model LogisticsExternalOrder {
+  id              String   @id @default(uuid()) @db.Uuid
+  storeId         String   @map("store_id") @db.Uuid
+  store           LogisticsExternalStore @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  externalOrderId String   @map("external_order_id") @db.VarChar(120)
+  deliveryRequestId String?  @map("delivery_request_id") @db.Uuid
+  deliveryRequest DeliveryRequest? @relation(fields: [deliveryRequestId], references: [id], onDelete: SetNull)
+  status          String   @db.VarChar(40)
+  payload         Json
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@unique([storeId, externalOrderId])
+  @@map("logistics_external_orders")
 }

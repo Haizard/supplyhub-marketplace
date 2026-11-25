@@ -394,4 +394,6 @@ All scenarios must assert real database state transitions, not mocked success.
 - [x] L7 implemented: compensation rules, earnings, payouts, expenses and settlements.
 - [x] L8 implemented: platform dispatch marketplace with eligibility ranking and offers.
 - [x] L9 implemented: referral attribution, fraud checks and reward eligibility.
-- [ ] L10–L12 remain to be approved and implemented one slice at a time.
+- [x] L10 implemented: versioned external APIs, API keys, idempotency and signed
+      webhooks with API documentation in `docs/phase0/LOGISTICS_API.md`.
+- [ ] L11–L12 are marked "Later" in this proposal and remain unstarted.

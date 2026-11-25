@@ -446,10 +446,14 @@ test strategy are in
   duplicate checks, and eligibility that requires a verified merchant, active
   relationship, completed deliveries and genuine payments before any reward is created.
   Eligibility points are recorded separately from delivery earnings.
-- **L10** External e-commerce APIs. **L11** Fleet sharing and hubs. **L12** AI optimisation.
+- **L10 — DELIVERED** Versioned `/api/v1/logistics` API with scoped API keys,
+  idempotent delivery requests, per-key rate limits, signed store webhooks with
+  encrypted secrets, signed outbound webhooks with bounded retries and published API
+  documentation in `docs/phase0/LOGISTICS_API.md`.
+- **L11** Fleet sharing and hubs. **L12** AI optimisation.
 
-All slices sit behind the `phase9.logisticsNetwork` feature flag. L1–L9 are
-implemented; L10–L12 remain planned and should be delivered one slice at a time.
+All slices sit behind the `phase9.logisticsNetwork` feature flag. L1–L10 are
+implemented; L11–L12 are explicitly "Later" in the proposal and remain planned.
 
 ---
 
@@ -475,5 +479,5 @@ Phase 7 (Ecosystem)                  ← DONE — requires all earlier phases
     ↓
 Phase 8 (Trust & Operations)         ← DONE — requires Phase 7 and the payment ledger
     ↓
-Phase 9 (Logistics Business Network) ← IN PROGRESS — L1-L9 done; L10 next
+Phase 9 (Logistics Business Network) ← IN PROGRESS — L1-L10 done; L11-L12 later
 ```
