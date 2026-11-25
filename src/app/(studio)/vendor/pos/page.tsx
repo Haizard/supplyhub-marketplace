@@ -3,8 +3,10 @@ import { Suspense } from "react";
 
 import { CloseSessionForm, ExpenseForm, OpenSessionForm } from "@/components/pos/pos-forms";
 import { PosTerminal } from "@/components/pos/pos-terminal";
+import { PosInstallmentForm } from "@/components/installments/pos-installment-form";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatMoney } from "@/features/catalog/money";
+import { isFeatureEnabled } from "@/features/flags/service";
 import { getPosWorkspace } from "@/features/pos/queries";
 import { requireStudioAccess } from "@/server/business/studio-access";
 
@@ -36,6 +38,7 @@ async function PosContent({
     searchParams,
   ]);
   const workspace = await getPosWorkspace(access.vendorId);
+  const installmentsEnabled = await isFeatureEnabled("phase10.installmentSales");
 
   const soldParam = params.sold;
   const closedParam = params.closed;
@@ -91,6 +94,16 @@ async function PosContent({
           <CloseSessionForm expectedCashCents={workspace.session.expectedCashCents} />
         ) : null,
         expense: canRecordExpenses ? <ExpenseForm /> : null,
+        installment:
+          installmentsEnabled && access.businessId && workspace.products.length > 0 ? (
+            <PosInstallmentForm
+              businessId={access.businessId}
+              products={workspace.products.map((product) => ({
+                id: product.id,
+                name: product.name,
+              }))}
+            />
+          ) : null,
       }}
       canRecordExpenses={canRecordExpenses}
       notices={{

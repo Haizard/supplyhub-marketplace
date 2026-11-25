@@ -12,6 +12,11 @@ import { requireActor } from "@/server/auth/guards";
 import { getDatabase } from "@/server/db/client";
 
 import { calculateInstallmentTerms, InstallmentTermsError, type ScheduleEntry } from "./rules";
+import {
+  holdInstallmentStock,
+  InstallmentStockError,
+  releaseInstallmentStock,
+} from "./stock-service";
 import { authorizeInstallmentSeller } from "./access";
 import {
   acceptInstallmentSchema,
@@ -145,6 +150,7 @@ export async function createInstallmentAgreementAction(
     source: formValue(formData, "source"),
     orderId: formValue(formData, "orderId"),
     itemName: formValue(formData, "itemName"),
+    productId: formValue(formData, "productId"),
     sku: formValue(formData, "sku"),
     quantity: formValue(formData, "quantity"),
     unitPrice: formValue(formData, "unitPrice"),
@@ -168,7 +174,11 @@ export async function createInstallmentAgreementAction(
     database.installmentSetting.findUnique({ where: { businessId: data.businessId } }),
     database.business.findUnique({
       where: { id: data.businessId },
-      select: { name: true, businessCode: true },
+      select: {
+        name: true,
+        businessCode: true,
+        vendors: { select: { id: true }, take: 1 },
+      },
     }),
     database.user.findUnique({
       where: { email: data.buyerEmail.trim().toLowerCase() },
@@ -201,7 +211,24 @@ export async function createInstallmentAgreementAction(
     }
   }
 
-  const cashPrice = Math.round(data.quantity * data.unitPrice * 100) / 100;
+  const vendorId = business.vendors[0]?.id ?? null;
+  let serverUnitPrice = data.unitPrice;
+  let serverItemName = data.itemName;
+  let serverSku = data.sku;
+  if (data.productId) {
+    if (!vendorId) return fail("This business has no studio vendor for stock reservations.");
+    const product = await database.product.findFirst({
+      where: { id: data.productId, vendorId, status: "PUBLISHED" },
+      select: { price: true, name: true, sku: true },
+    });
+    if (!product) return fail("That product is not on sale in this business's studio.");
+    // Catalogue price is authoritative when a real product is selected.
+    serverUnitPrice = Number(product.price.toString());
+    serverItemName = product.name;
+    serverSku = product.sku ?? data.sku;
+  }
+
+  const cashPrice = Math.round(data.quantity * serverUnitPrice * 100) / 100;
   let terms;
   try {
     terms = calculateInstallmentTerms({
@@ -226,11 +253,12 @@ export async function createInstallmentAgreementAction(
     source: data.source,
     orderId: data.orderId ?? null,
     item: {
-      name: data.itemName,
-      sku: data.sku ?? null,
+      name: serverItemName,
+      sku: serverSku ?? null,
       quantity: data.quantity,
-      unitPrice: data.unitPrice,
+      unitPrice: serverUnitPrice,
       lineTotal: cashPrice,
+      productId: data.productId ?? null,
     },
     currency: settings.currency,
     terms: {
@@ -255,77 +283,93 @@ export async function createInstallmentAgreementAction(
     generatedAt: new Date().toISOString(),
   };
 
-  const agreementId = await database.$transaction(async (tx) => {
-    const now = new Date();
-    const agreement = await tx.installmentAgreement.create({
-      data: {
-        agreementNumber: makeDocumentNumber("IA"),
-        businessId: data.businessId,
-        buyerUserId: buyer.id,
-        source: data.source,
-        orderId: data.orderId ?? null,
-        currency: settings.currency,
-        cashPrice: decimal(cashPrice),
-        depositAmount: decimal(terms.depositAmount),
-        totalPayable: decimal(terms.totalPayable),
-        outstandingBalance: decimal(terms.outstandingBalance),
-        depositMode: data.depositMode,
-        frequency: data.frequency,
-        installmentCount: data.installmentCount,
-        installmentAmount: decimal(terms.installmentAmount),
-        possessionModel: data.possessionModel,
-        gracePeriodDays: settings.gracePeriodDays,
-        latePaymentPolicy: data.latePaymentPolicy ?? null,
-        notes: data.notes ?? null,
-        status: "PENDING_CUSTOMER_ACCEPTANCE",
-        termsSnapshot: snapshot,
-        sellerAcceptedAt: now,
-        sellerAcceptedById: access.actorId,
-        createdById: access.actorId,
-        items: {
-          create: {
-            productName: data.itemName,
-            sku: data.sku ?? null,
-            quantity: data.quantity,
-            unitPrice: decimal(data.unitPrice),
-            lineTotal: decimal(cashPrice),
+  let agreementId: string;
+  try {
+    agreementId = await database.$transaction(async (tx) => {
+      const now = new Date();
+      const agreement = await tx.installmentAgreement.create({
+        data: {
+          agreementNumber: makeDocumentNumber("IA"),
+          businessId: data.businessId,
+          buyerUserId: buyer.id,
+          source: data.source,
+          orderId: data.orderId ?? null,
+          currency: settings.currency,
+          cashPrice: decimal(cashPrice),
+          depositAmount: decimal(terms.depositAmount),
+          totalPayable: decimal(terms.totalPayable),
+          outstandingBalance: decimal(terms.outstandingBalance),
+          depositMode: data.depositMode,
+          frequency: data.frequency,
+          installmentCount: data.installmentCount,
+          installmentAmount: decimal(terms.installmentAmount),
+          possessionModel: data.possessionModel,
+          gracePeriodDays: settings.gracePeriodDays,
+          latePaymentPolicy: data.latePaymentPolicy ?? null,
+          notes: data.notes ?? null,
+          status: "PENDING_CUSTOMER_ACCEPTANCE",
+          termsSnapshot: snapshot,
+          sellerAcceptedAt: now,
+          sellerAcceptedById: access.actorId,
+          createdById: access.actorId,
+          items: {
+            create: {
+              productId: data.productId ?? null,
+              productName: serverItemName,
+              sku: serverSku ?? null,
+              quantity: data.quantity,
+              unitPrice: decimal(serverUnitPrice),
+              lineTotal: decimal(cashPrice),
+            },
+          },
+          schedule: {
+            create: terms.schedule.map((entry) => ({
+              sequence: entry.sequence,
+              dueDate: entry.dueDate,
+              amount: decimal(entry.amount),
+              currency: settings.currency,
+            })),
+          },
+          events: {
+            create: {
+              type: "CREATED",
+              fromStatus: null,
+              toStatus: "PENDING_CUSTOMER_ACCEPTANCE",
+              actorId: access.actorId,
+              metadata: { source: data.source },
+            },
           },
         },
-        schedule: {
-          create: terms.schedule.map((entry) => ({
-            sequence: entry.sequence,
-            dueDate: entry.dueDate,
-            amount: decimal(entry.amount),
-            currency: settings.currency,
-          })),
+        select: { id: true },
+      });
+      if (data.productId && vendorId) {
+        await holdInstallmentStock(tx, {
+          vendorId,
+          productId: data.productId,
+          quantity: data.quantity,
+          agreementId: agreement.id,
+          actorId: access.actorId,
+        });
+      }
+      await recordAuditEvent(tx, {
+        actorId: access.actorId,
+        action: "INSTALLMENT_AGREEMENT_CREATED",
+        targetType: "InstallmentAgreement",
+        targetId: agreement.id,
+        metadata: {
+          businessId: data.businessId,
+          buyerUserId: buyer.id,
+          source: data.source,
+          totalPayable: terms.totalPayable,
+          currency: settings.currency,
         },
-        events: {
-          create: {
-            type: "CREATED",
-            fromStatus: null,
-            toStatus: "PENDING_CUSTOMER_ACCEPTANCE",
-            actorId: access.actorId,
-            metadata: { source: data.source },
-          },
-        },
-      },
-      select: { id: true },
+      });
+      return agreement.id;
     });
-    await recordAuditEvent(tx, {
-      actorId: access.actorId,
-      action: "INSTALLMENT_AGREEMENT_CREATED",
-      targetType: "InstallmentAgreement",
-      targetId: agreement.id,
-      metadata: {
-        businessId: data.businessId,
-        buyerUserId: buyer.id,
-        source: data.source,
-        totalPayable: terms.totalPayable,
-        currency: settings.currency,
-      },
-    });
-    return agreement.id;
-  });
+  } catch (error) {
+    if (error instanceof InstallmentStockError) return fail(error.message);
+    throw error;
+  }
 
   revalidatePath(sellerPath(data.businessId));
   revalidatePath("/account/installments");
@@ -428,6 +472,7 @@ export async function cancelInstallmentAction(
         cancellationReason: parsed.data.reason,
       },
     });
+    await releaseInstallmentStock(tx, agreement.id, access.actorId);
     await tx.installmentAgreementEvent.create({
       data: {
         agreementId: agreement.id,

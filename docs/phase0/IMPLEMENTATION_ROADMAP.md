@@ -478,7 +478,9 @@ sales. Behind `phase10.installmentSales` (seeded disabled).
 - **I3 — DELIVERED** Buyer-facing receipts, admin sweep/dispatch for upcoming and
   overdue reminders, grace-period-aware overdue marking. Notifications only;
   no late charges or collection action.
-- **I4** POS + inventory rules. **I5** Analytics, disputes, reconciliation.
+- **I4 — DELIVERED** POS/offline agreements with catalogue-authoritative prices,
+  stock held on creation, and possession-based conversion to sale or release.
+- **I5** Analytics, disputes, reconciliation. Remaining phases are planned.
   **I5** Analytics, disputes, reconciliation. Remaining phases are planned.
 
 ---
@@ -507,5 +509,5 @@ Phase 8 (Trust & Operations)         ← DONE — requires Phase 7 and the payme
     ↓
 Phase 9 (Logistics Business Network) ← DELIVERED — L1-L12 done
     ↓
-Phase 10 (Installment Sales)         ← IN PROGRESS — I1-I3 done, flag off
+Phase 10 (Installment Sales)         ← IN PROGRESS — I1-I4 done, flag off
 ```

@@ -1,6 +1,6 @@
 # Installment Sales — Seller-Funded Phase 10 Proposal
 
-**Status: IN PROGRESS — slices I1–I3 implemented behind `phase10.installmentSales`
+**Status: IN PROGRESS — slices I1–I4 implemented behind `phase10.installmentSales`
 (seeded disabled).**
 
 This document records the repository-first decisions for the Installment Sales /
@@ -55,7 +55,7 @@ code was written:
 | **I1** (done) | Seller settings, agreement creation with frozen snapshot, generated schedule, buyer acceptance, pre-activation cancellation, seller/buyer views | No client-supplied price/total; schedule sums exactly to outstanding; buyer accepts only from own session; flag disabled by default |
 | **I2** (done) | Verified deposit + payment allocation, overpayment, early settlement, partial payments, immutable transaction history | No success without verified callback; duplicate webhooks idempotent; overpay only when seller permits |
 | **I3** (done) | Buyer dashboard enhancements, receipts, reminders, overdue management | Reminders are notifications only; grace/late fees stay configurable |
-| **I4** | POS/offline sales, inventory reserve-vs-deduct by possession model | Immediate possession deducts stock; deferred possession reserves without marking delivered |
+| **I4** (done) | POS/offline sales, inventory reserve-vs-deduct by possession model | Immediate possession deducts stock; deferred possession reserves without marking delivered |
 | **I5** | Seller analytics, customer history, disputes and reconciliation | Ledger separation; refunds reverse the correct entries |
 | **I6–I9** | Digital signatures/contract management, advanced reporting, and (much later) financing partners | Regulated credit requires separate approval |
 
@@ -102,3 +102,20 @@ code was written:
   payment references beyond the agreement number, or provider payloads.
 - No late charges, penalties or collection action are applied. Migration
   `20261125200000_phase10_installments_i3`.
+
+### I4 acceptance
+
+- Selecting a catalogue product on an agreement overrides the client-supplied
+  unit price with the product's published price and holds stock inside the same
+  transaction. Both catalogue `stock` and the default warehouse balance must
+  cover the quantity, so reserved units cannot be sold twice.
+- A `RESERVE` inventory movement records the hold. The reservation converts to
+  `SOLD` only on `ACTIVE` for `IMMEDIATE` possession or `COMPLETED` for
+  `AFTER_FULL_PAYMENT` — no second stock decrement. Cancellation before sale
+  releases the units with a `RELEASE` movement.
+- POS cashiers can create installment agreements from `/vendor/pos`; the product
+  price is catalogue-authoritative and stock is held, not sold as a completed
+  POS transaction.
+- Refunds reverse money and allocations only; any physical stock return goes
+  through the existing returns process. Migration
+  `20261125300000_phase10_installments_i4`.

@@ -7,6 +7,8 @@ import { getDatabase } from "@/server/db/client";
 
 import { toMajor, toMinor, planPaymentAllocation, planRefund } from "./payment-rules";
 import { issueInstallmentReceipt } from "./receipt-service";
+import { markInstallmentStockSold } from "./stock-service";
+import { shouldConvertReservation } from "./stock-rules";
 
 export type VerificationResult = "APPLIED" | "DUPLICATE" | "MISMATCH" | "NOT_FOUND";
 
@@ -45,6 +47,7 @@ export async function applyVerifiedInstallmentPayment(input: {
         buyerUserId: true,
         status: true,
         depositAmount: true,
+        possessionModel: true,
         schedule: {
           select: { id: true, sequence: true, amount: true, paidAmount: true, status: true },
           orderBy: { sequence: "asc" },
@@ -156,6 +159,10 @@ export async function applyVerifiedInstallmentPayment(input: {
         completedAt: nextStatus === "COMPLETED" ? now : undefined,
       },
     });
+
+    if (shouldConvertReservation(agreement.possessionModel, nextStatus)) {
+      await markInstallmentStockSold(tx, agreement.id, input.verifiedById ?? null);
+    }
 
     await tx.installmentAgreementEvent.create({
       data: {

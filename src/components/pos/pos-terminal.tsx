@@ -61,7 +61,7 @@ export interface PosTerminalProps {
     total: string;
     time: string;
   }[];
-  forms: { open: ReactNode; close: ReactNode; expense: ReactNode };
+  forms: { open: ReactNode; close: ReactNode; expense: ReactNode; installment?: ReactNode };
   locationName: string | null;
   canRecordExpenses: boolean;
   notices: SaleNotice;
@@ -842,6 +842,17 @@ export function PosTerminal({
               )}
             </div>
           </form>
+
+          <details className="mt-2">
+            <summary className="cursor-pointer list-none rounded-full border border-white/70 bg-white/55 px-3 py-1.5 text-center text-[10px] font-medium text-[#3f3a5c] [&::-webkit-details-marker]:hidden">
+              + Installment agreement
+            </summary>
+            <div className="mt-2 rounded-xl bg-white p-2.5 text-[#1b1730] [&_label]:text-[#1b1730]">
+              {forms.installment ?? (
+                <p className="text-[10px] text-[#4a4560]">Installment sales are not available.</p>
+              )}
+            </div>
+          </details>
 
           <details className="mt-2">
             <summary className="cursor-pointer list-none rounded-full border border-white/70 bg-white/55 px-3 py-1.5 text-center text-[10px] font-medium text-[#3f3a5c] [&::-webkit-details-marker]:hidden">

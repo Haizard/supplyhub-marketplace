@@ -16,6 +16,7 @@ import { getBusinessById } from "@/features/business/queries";
 import { isFeatureEnabled } from "@/features/flags/service";
 import { getInstallmentSettings, listSellerInstallments } from "@/features/installments/queries";
 import { listBusinessInstallmentReminders } from "@/features/installments/reminder-queries";
+import { listInstallmentStockReservations } from "@/features/installments/stock-queries";
 import { requireActor } from "@/server/auth/guards";
 import {
   BusinessAccessError,
@@ -54,10 +55,11 @@ async function InstallmentsContent({ params }: { params: Promise<{ id: string }>
   }
 
   const enabled = await isFeatureEnabled("phase10.installmentSales");
-  const [settings, agreements, reminders] = await Promise.all([
+  const [settings, agreements, reminders, reservations] = await Promise.all([
     getInstallmentSettings(id),
     listSellerInstallments(id),
     listBusinessInstallmentReminders(id),
+    listInstallmentStockReservations(id),
   ]);
 
   return (
@@ -134,6 +136,22 @@ async function InstallmentsContent({ params }: { params: Promise<{ id: string }>
             </Link>
           </article>
         ))}
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="font-display text-lg font-medium">Stock reservations</h2>
+        {reservations.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No stock held for installments yet.</p>
+        ) : (
+          <ul className="space-y-1 text-xs text-muted-foreground">
+            {reservations.map((reservation) => (
+              <li key={reservation.id}>
+                {reservation.agreementNumber} · {reservation.productName} × {reservation.quantity} ·{" "}
+                {reservation.status}
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
 
       <section className="space-y-3">

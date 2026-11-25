@@ -56,6 +56,7 @@ enum InventoryReason {
   RETURN
   SALE
   RELEASE
+  RESERVE
 }
 
 enum OrderStatus {
@@ -482,6 +483,9 @@ enum AuditAction {
   INSTALLMENT_REMINDER_QUEUED
   INSTALLMENT_REMINDER_SENT
   INSTALLMENT_OVERDUE_MARKED
+  INSTALLMENT_STOCK_RESERVED
+  INSTALLMENT_STOCK_SOLD
+  INSTALLMENT_STOCK_RELEASED
 }
 
 model User {
@@ -852,6 +856,7 @@ model Product {
   chats              Chat[]
   aiRecommendations  AiRecommendationHistory[]
   groupBuyCampaigns  GroupBuyCampaign[]
+  installmentReservations InstallmentStockReservation[]
   createdAt          DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt          DateTime            @updatedAt @map("updated_at") @db.Timestamptz(6)
 
@@ -1290,6 +1295,7 @@ model Warehouse {
   movements     InventoryMovement[]
   transfersFrom WarehouseTransfer[] @relation("TransferFrom")
   transfersTo   WarehouseTransfer[] @relation("TransferTo")
+  installmentReservations InstallmentStockReservation[]
   createdAt     DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt     DateTime            @updatedAt @map("updated_at") @db.Timestamptz(6)
 
@@ -4150,6 +4156,7 @@ model InstallmentAgreement {
   payments              InstallmentPayment[]
   receipts              InstallmentReceipt[]
   reminders             InstallmentReminder[]
+  stockReservation      InstallmentStockReservation?
 
   @@index([businessId, status])
   @@index([buyerUserId, status])
@@ -4346,4 +4353,32 @@ model InstallmentReminder {
   @@unique([agreementId, scopeKey, reminderType])
   @@index([status, dueAt])
   @@map("installment_reminders")
+}
+
+// ── Phase 10 I4: installment stock reservations and POS sales ────────────────
+
+enum InstallmentStockReservationStatus {
+  HELD
+  SOLD
+  RELEASED
+}
+
+/// Stock held for an installment agreement. HELD reduces available stock but is
+/// not a sale; SOLD converts the same units once possession terms are met.
+model InstallmentStockReservation {
+  id          String                          @id @default(uuid()) @db.Uuid
+  agreementId String                          @unique @map("agreement_id") @db.Uuid
+  agreement   InstallmentAgreement            @relation(fields: [agreementId], references: [id], onDelete: Cascade)
+  productId   String                          @map("product_id") @db.Uuid
+  product     Product                         @relation(fields: [productId], references: [id], onDelete: Restrict)
+  warehouseId String                          @map("warehouse_id") @db.Uuid
+  warehouse   Warehouse                       @relation(fields: [warehouseId], references: [id], onDelete: Restrict)
+  quantity    Int
+  status      InstallmentStockReservationStatus @default(HELD)
+  soldAt      DateTime?                       @map("sold_at") @db.Timestamptz(6)
+  releasedAt  DateTime?                       @map("released_at") @db.Timestamptz(6)
+  createdAt   DateTime                        @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([productId, status])
+  @@map("installment_stock_reservations")
 }
