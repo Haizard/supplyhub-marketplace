@@ -13,6 +13,7 @@ const links = [
   { key: "invoices", label: "Invoices", suffix: "/invoices" },
   { key: "dispatch", label: "Dispatch", suffix: "/dispatch" },
   { key: "jobs", label: "Jobs", suffix: "/jobs" },
+  { key: "opportunities", label: "Opportunities", suffix: "/opportunities" },
   { key: "finance", label: "Finance", suffix: "/finance" },
   { key: "members", label: "Members", suffix: "/members" },
   { key: "roles", label: "Roles", suffix: "/roles" },

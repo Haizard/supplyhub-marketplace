@@ -611,7 +611,8 @@
     "disputes": "Disputes",
     "analytics": "Analytics",
     "reconciliation": "Reconciliation",
-    "logistics": "Logistics"
+    "logistics": "Logistics",
+    "logisticsMarketplace": "Dispatch marketplace"
   },
   "experience": {
     "eyebrow": "信任与体验",

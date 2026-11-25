@@ -449,6 +449,11 @@ enum AuditAction {
   LOGISTICS_EXPENSE_RECORDED
   LOGISTICS_SETTLEMENT_CREATED
   LOGISTICS_SETTLEMENT_RECONCILED
+  DELIVERY_OPPORTUNITY_CREATED
+  DELIVERY_OPPORTUNITY_OFFERED
+  DELIVERY_OPPORTUNITY_ACCEPTED
+  DELIVERY_OPPORTUNITY_DECLINED
+  DELIVERY_OPPORTUNITY_EXPIRED
 }
 
 model User {
@@ -1718,6 +1723,7 @@ model DeliveryRequest {
   contract         LogisticsContract?    @relation(fields: [contractId], references: [id], onDelete: SetNull)
   note             String?
   jobs             DeliveryJob[]
+  opportunities    DeliveryOpportunity[]
   createdAt        DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt        DateTime              @updatedAt @map("updated_at") @db.Timestamptz(6)
 
@@ -2790,6 +2796,8 @@ model LogisticsCompany {
   payouts            DriverPayout[]
   expenses           LogisticsExpense[]
   settlements        LogisticsSettlement[]
+  opportunities      DeliveryOpportunity[] @relation("OpportunityOfferedTo")
+  offerScores        LogisticsCompanyOfferScore[]
 
   @@index([status, createdAt])
   @@map("logistics_companies")
@@ -3502,4 +3510,68 @@ model LogisticsSettlement {
 
   @@index([companyId, createdAt])
   @@map("logistics_settlements")
+}
+
+// ── Phase 9 L8: platform dispatch marketplace ───────────────────────────────
+
+enum DeliveryOpportunityStatus {
+  OPEN
+  OFFERED
+  ACCEPTED
+  DECLINED
+  EXPIRED
+  CANCELLED
+  CONVERTED
+}
+
+model DeliveryOpportunity {
+  id            String                   @id @default(uuid()) @db.Uuid
+  opportunityNumber String                @unique @map("opportunity_number")
+  requestId     String                   @map("request_id") @db.Uuid
+  request       DeliveryRequest          @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  status        DeliveryOpportunityStatus @default(OPEN)
+  pickupName    String                   @map("pickup_name")
+  pickupAddress String                   @map("pickup_address")
+  pickupLatitude Decimal                  @map("pickup_latitude") @db.Decimal(10, 7)
+  pickupLongitude Decimal                 @map("pickup_longitude") @db.Decimal(10, 7)
+  dropoffName   String                   @map("dropoff_name")
+  dropoffAddress String                  @map("dropoff_address")
+  distanceKm    Decimal                  @map("distance_km") @db.Decimal(10, 3)
+  fee           Decimal                  @db.Decimal(12, 2)
+  currency      String                   @db.VarChar(3)
+  requiredVehicleType String?            @map("required_vehicle_type") @db.VarChar(32)
+  offeredToId   String?                  @map("offered_to_id") @db.Uuid
+  offeredTo     LogisticsCompany?        @relation("OpportunityOfferedTo", fields: [offeredToId], references: [id], onDelete: SetNull)
+  offeredAt     DateTime?                @map("offered_at") @db.Timestamptz(6)
+  respondedAt   DateTime?                @map("responded_at") @db.Timestamptz(6)
+  declineReason String?                  @map("decline_reason") @db.Text
+  convertedJobId String?                 @map("converted_job_id") @db.Uuid
+  expiresAt     DateTime                 @map("expires_at") @db.Timestamptz(6)
+  note          String?                  @db.Text
+  createdById   String?                  @map("created_by_id") @db.Uuid
+  createdAt     DateTime                 @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime                 @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([status, createdAt])
+  @@index([offeredToId, status])
+  @@map("delivery_opportunities")
+}
+
+model LogisticsCompanyOfferScore {
+  id            String           @id @default(uuid()) @db.Uuid
+  opportunityId String           @map("opportunity_id") @db.Uuid
+  companyId     String           @map("company_id") @db.Uuid
+  score         Decimal          @db.Decimal(8, 3)
+  coverageKm    Decimal?         @map("coverage_km") @db.Decimal(8, 3)
+  capacityCount Int              @default(0) @map("capacity_count")
+  company       LogisticsCompany @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  vehicleMatch  Boolean          @default(false) @map("vehicle_match")
+  reliabilityBps Int             @default(0) @map("reliability_bps")
+  eligible      Boolean          @default(false)
+  rank          Int?
+  createdAt     DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@unique([opportunityId, companyId])
+  @@index([opportunityId, rank])
+  @@map("logistics_company_offer_scores")
 }

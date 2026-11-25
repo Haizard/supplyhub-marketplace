@@ -392,4 +392,5 @@ All scenarios must assert real database state transitions, not mocked success.
 - [x] L5 implemented: contracts, pricing, SLAs, versions, performance and invoices.
 - [x] L6 implemented: company dispatch, reassignment and shared-lifecycle job management.
 - [x] L7 implemented: compensation rules, earnings, payouts, expenses and settlements.
-- [ ] L8–L12 remain to be approved and implemented one slice at a time.
+- [x] L8 implemented: platform dispatch marketplace with eligibility ranking and offers.
+- [ ] L9–L12 remain to be approved and implemented one slice at a time.

@@ -10,6 +10,7 @@ import {
   Inbox,
   ShieldCheck,
   MessageSquareWarning,
+  Package,
   Percent,
   RefreshCw,
   ShieldAlert,
@@ -46,6 +47,7 @@ const links = [
   { href: "/admin/analytics", labelKey: "admin.analytics", icon: ChartNoAxesCombined },
   { href: "/admin/reconciliation", labelKey: "admin.reconciliation", icon: RefreshCw },
   { href: "/admin/logistics", labelKey: "admin.logistics", icon: Truck },
+  { href: "/admin/logistics-marketplace", labelKey: "admin.logisticsMarketplace", icon: Package },
 ];
 
 export function AdminNav() {
