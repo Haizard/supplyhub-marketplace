@@ -52,6 +52,9 @@ export default async function FarmerPortalPage() {
         <Link href="/agriculture/farm-management" className="text-xs text-accent underline">
           Farm management
         </Link>
+        <Link href="/agriculture/logistics" className="ml-3 text-xs text-accent underline">
+          Logistics
+        </Link>
       </header>
 
       {!enabled ? (

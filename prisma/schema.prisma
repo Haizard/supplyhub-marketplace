@@ -511,6 +511,11 @@ enum AuditAction {
   AGRICULTURE_CROP_CREATED
   AGRICULTURE_EXPENSE_RECORDED
   AGRICULTURE_HARVEST_RECORDED
+  AGRICULTURE_CENTRE_REGISTERED
+  AGRICULTURE_STORAGE_REGISTERED
+  AGRICULTURE_DELIVERY_CREATED
+  AGRICULTURE_INTAKE_RECORDED
+  AGRICULTURE_STORAGE_BOOKING_CHANGED
 }
 
 model User {
@@ -1796,6 +1801,7 @@ model DeliveryRequest {
   opportunities    DeliveryOpportunity[]
   externalOrders   LogisticsExternalOrder[]
   optimizationSuggestions LogisticsOptimizationSuggestion[]
+  agriculturalDelivery AgriculturalDelivery?
   createdAt        DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt        DateTime              @updatedAt @map("updated_at") @db.Timestamptz(6)
 
@@ -4680,6 +4686,10 @@ model AgricultureFarmer {
   crops             FarmCrop[]
   expenses          FarmExpense[]
   harvests          HarvestBatch[]
+  collectionCentres AgriculturalCollectionCentre[]
+  deliveries        AgriculturalDelivery[]
+  intakes           AgriculturalIntakeRecord[]
+  storageBookings   AgriculturalStorageBooking[]
 
   @@index([verificationStatus, createdAt])
   @@map("agriculture_farmers")
@@ -4910,6 +4920,7 @@ model AgriculturalSupplier {
   inputs             AgriculturalInput[]
   services           AgriculturalService[]
   inputOrders        AgriculturalInputOrder[]
+  storageFacilities  AgriculturalStorageFacility[]
 
   @@index([verificationStatus, type])
   @@map("agricultural_suppliers")
@@ -5113,8 +5124,139 @@ model HarvestBatch {
   storageLocation String?         @map("storage_location") @db.VarChar(200)
   note           String?          @db.Text
   createdAt      DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  intakes        AgriculturalIntakeRecord[]
 
   @@index([cropId, harvestedAt])
   @@index([farmerId, createdAt])
   @@map("harvest_batches")
+}
+
+// ── Phase 11 D: agricultural logistics and collection centres ────────────────
+
+enum AgriculturalCargoType {
+  PRODUCE
+  INPUT
+  MANURE
+}
+
+enum AgriculturalDeliveryDirection {
+  FARM_TO_BUYER
+  FARM_TO_CENTRE
+  CENTRE_TO_BUYER
+  INPUT_TO_FARM
+}
+
+enum AgriculturalIntakeStatus {
+  RECEIVED
+  GRADED
+  REJECTED
+  ACCEPTED
+}
+
+enum AgriculturalStorageStatus {
+  HELD
+  STORED
+  RELEASED
+}
+
+model AgriculturalCollectionCentre {
+  id             String                  @id @default(uuid()) @db.Uuid
+  operatorFarmerId String                @map("operator_farmer_id") @db.Uuid
+  operator        AgricultureFarmer      @relation(fields: [operatorFarmerId], references: [id], onDelete: Cascade)
+  name           String                  @db.VarChar(160)
+  location       String                  @db.VarChar(300)
+  region         String?                 @db.VarChar(120)
+  district       String?                 @db.VarChar(120)
+  capacityKg     Decimal                 @map("capacity_kg") @db.Decimal(14, 2)
+  services       Json?
+  isActive       Boolean                 @default(true) @map("is_active")
+  createdAt      DateTime                @default(now()) @map("created_at") @db.Timestamptz(6)
+  deliveries     AgriculturalDelivery[]
+  intakes        AgriculturalIntakeRecord[]
+
+  @@index([operatorFarmerId, isActive])
+  @@map("agricultural_collection_centres")
+}
+
+model AgriculturalStorageFacility {
+  id             String                    @id @default(uuid()) @db.Uuid
+  supplierId     String                    @map("supplier_id") @db.Uuid
+  supplier       AgriculturalSupplier      @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  name           String                    @db.VarChar(160)
+  location       String                    @db.VarChar(300)
+  capacityKg     Decimal                   @map("capacity_kg") @db.Decimal(14, 2)
+  coldChain      Boolean                   @default(false) @map("cold_chain")
+  rateAmount     Decimal                   @map("rate_amount") @db.Decimal(14, 2)
+  rateUnit       String                    @map("rate_unit") @db.VarChar(40)
+  currency       String                    @db.VarChar(3)
+  isActive       Boolean                   @default(true) @map("is_active")
+  createdAt      DateTime                  @default(now()) @map("created_at") @db.Timestamptz(6)
+  bookings       AgriculturalStorageBooking[]
+  deliveries     AgriculturalDelivery[]
+
+  @@index([supplierId, isActive])
+  @@map("agricultural_storage_facilities")
+}
+
+/// Links agriculture to the shared delivery engine. Status comes from the
+/// DeliveryRequest/DeliveryJob lifecycle; this row never assigns a driver itself.
+model AgriculturalDelivery {
+  id             String                      @id @default(uuid()) @db.Uuid
+  farmerId       String                      @map("farmer_id") @db.Uuid
+  farmer         AgricultureFarmer           @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+  requestId      String                      @unique @map("request_id") @db.Uuid
+  request        DeliveryRequest             @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  cargoType      AgriculturalCargoType        @map("cargo_type")
+  direction      AgriculturalDeliveryDirection
+  quantity       Decimal                     @db.Decimal(14, 2)
+  unit           AgriculturalUnit
+  centreId       String?                     @map("centre_id") @db.Uuid
+  centre         AgriculturalCollectionCentre? @relation(fields: [centreId], references: [id], onDelete: SetNull)
+  facilityId     String?                     @map("facility_id") @db.Uuid
+  facility       AgriculturalStorageFacility? @relation(fields: [facilityId], references: [id], onDelete: SetNull)
+  note           String?                     @db.Text
+  createdAt      DateTime                    @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([farmerId, createdAt])
+  @@map("agricultural_deliveries")
+}
+
+model AgriculturalIntakeRecord {
+  id            String                  @id @default(uuid()) @db.Uuid
+  centreId      String                  @map("centre_id") @db.Uuid
+  centre        AgriculturalCollectionCentre @relation(fields: [centreId], references: [id], onDelete: Cascade)
+  farmerId      String                  @map("farmer_id") @db.Uuid
+  farmer        AgricultureFarmer       @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+  harvestBatchId String?                @map("harvest_batch_id") @db.Uuid
+  harvestBatch   HarvestBatch?          @relation(fields: [harvestBatchId], references: [id], onDelete: SetNull)
+  deliveredAt   DateTime                @default(now()) @map("delivered_at") @db.Timestamptz(6)
+  weighedKg     Decimal                 @map("weighed_kg") @db.Decimal(14, 2)
+  grade         String?                 @db.VarChar(80)
+  moisturePercent Decimal?              @map("moisture_percent") @db.Decimal(6, 2)
+  rejectedKg    Decimal                 @default(0) @map("rejected_kg") @db.Decimal(14, 2)
+  status        AgriculturalIntakeStatus @default(RECEIVED)
+  evidenceNote  String?                 @map("evidence_note") @db.Text
+  inspectedById String?                 @map("inspected_by_id") @db.Uuid
+  createdAt     DateTime                @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([centreId, deliveredAt])
+  @@index([farmerId, status])
+  @@map("agricultural_intake_records")
+}
+
+model AgriculturalStorageBooking {
+  id          String                    @id @default(uuid()) @db.Uuid
+  facilityId  String                    @map("facility_id") @db.Uuid
+  facility    AgriculturalStorageFacility @relation(fields: [facilityId], references: [id], onDelete: Cascade)
+  farmerId    String                    @map("farmer_id") @db.Uuid
+  farmer      AgricultureFarmer         @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+  quantityKg  Decimal                   @map("quantity_kg") @db.Decimal(14, 2)
+  status      AgriculturalStorageStatus @default(HELD)
+  storedAt    DateTime?                 @map("stored_at") @db.Timestamptz(6)
+  releasedAt  DateTime?                 @map("released_at") @db.Timestamptz(6)
+  createdAt   DateTime                  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([facilityId, status])
+  @@index([farmerId, status])
+  @@map("agricultural_storage_bookings")
 }

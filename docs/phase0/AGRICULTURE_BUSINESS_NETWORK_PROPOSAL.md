@@ -1,7 +1,7 @@
 # Agriculture Business Network — Phase 11 Proposal
 
-**Status: IN PROGRESS — Phases A–C implemented behind `phase11.agricultureNetwork`
-(seeded disabled). Phases D–F remain proposed.**
+**Status: IN PROGRESS — Phases A–D implemented behind `phase11.agricultureNetwork`
+(seeded disabled). Phases E–F remain proposed.**
 
 This is the repo-first specification for the Agriculture Business Network described
 in the product brief. The goal is a vertical built on the existing platform core —
@@ -54,7 +54,7 @@ and AI — not a second application or a duplicate commerce engine.
 | **A — Agricultural marketplace (done)** | Farmer/farm profiles, plots, produce listings, buyer discovery, quotations, orders, verified payments | A buyer can transact with a farmer through shared `Order`/`Payment`; no cross-tenant reads |
 | **B — Inputs and services (done)** | Verified input catalogue (incl. manure/compost), service providers, quotations and bookings | Sensitive inputs require verification; bookings never double-book a provider |
 | **C — Farm management (done)** | Crop cycles, activities, expenses, harvest batches, per-kg cost, seasonal records | Cost math tested; production data owned by farm member only |
-| **D — Agricultural logistics** | Farm pickup, bulk delivery, collection centres, storage listings, logistics-company jobs | Uses existing delivery engine; no duplicate assignment system |
+| **D — Agricultural logistics (done)** | Farm pickup, bulk delivery, collection centres, storage listings, logistics-company jobs | Uses existing delivery engine; no duplicate assignment system |
 | **E — Cooperatives and contracts** | Farmer groups, aggregated supply, bulk buyer requests, harvest purchase agreements | Group actions authorized; contracts snapshot quantity, quality and pricing |
 | **F — AI and intelligence** | Opt-in crop planning, cost/yield assistance, market intelligence and buyer matching | Deterministic baseline fallback; no PII or invented agronomic advice |
 
@@ -113,6 +113,20 @@ Permission keys: `agriculture.farm.manage`, `agriculture.trade.manage`,
   realised income or included in cost calculations.
 - Migration `20261129000000_phase11_agriculture_c`; tests in
   `tests/unit/agriculture-c.test.ts`.
+
+### Phase D acceptance
+
+- Agricultural deliveries create a shared `DeliveryRequest` on the existing
+  logistics engine and carry a link to it. Driver assignment and lifecycle stay in
+  the logistics company workspace; no second assignment system exists.
+- Only platform-approved logistics companies can be selected; pickup/drop-off
+  distance and fee are computed server-side.
+- Collection centres record weighing, grading, moisture, rejected quantity and
+  inspection evidence. Storage capacity is checked before units are held; held →
+  stored → released transitions are audited.
+- Intake records are visible only to the supplying farmer or the centre operator.
+- Migration `20261130000000_phase11_agriculture_d`; tests in
+  `tests/unit/agriculture-d.test.ts`.
 
 ## 5. Next step
 
