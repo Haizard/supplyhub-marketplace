@@ -1,7 +1,7 @@
 # Agriculture Business Network — Phase 11 Proposal
 
-**Status: IN PROGRESS — Phases A–D implemented behind `phase11.agricultureNetwork`
-(seeded disabled). Phases E–F remain proposed.**
+**Status: IN PROGRESS — Phases A–E implemented behind `phase11.agricultureNetwork`
+(seeded disabled). Phase F remains proposed.**
 
 This is the repo-first specification for the Agriculture Business Network described
 in the product brief. The goal is a vertical built on the existing platform core —
@@ -55,7 +55,7 @@ and AI — not a second application or a duplicate commerce engine.
 | **B — Inputs and services (done)** | Verified input catalogue (incl. manure/compost), service providers, quotations and bookings | Sensitive inputs require verification; bookings never double-book a provider |
 | **C — Farm management (done)** | Crop cycles, activities, expenses, harvest batches, per-kg cost, seasonal records | Cost math tested; production data owned by farm member only |
 | **D — Agricultural logistics (done)** | Farm pickup, bulk delivery, collection centres, storage listings, logistics-company jobs | Uses existing delivery engine; no duplicate assignment system |
-| **E — Cooperatives and contracts** | Farmer groups, aggregated supply, bulk buyer requests, harvest purchase agreements | Group actions authorized; contracts snapshot quantity, quality and pricing |
+| **E — Cooperatives and contracts (done)** | Farmer groups, aggregated supply, bulk buyer requests, harvest purchase agreements | Group actions authorized; contracts snapshot quantity, quality and pricing |
 | **F — AI and intelligence** | Opt-in crop planning, cost/yield assistance, market intelligence and buyer matching | Deterministic baseline fallback; no PII or invented agronomic advice |
 
 Pilot recommendation: one crop, one region, a small set of farmer groups, verified
@@ -127,6 +127,17 @@ Permission keys: `agriculture.farm.manage`, `agriculture.trade.manage`,
 - Intake records are visible only to the supplying farmer or the centre operator.
 - Migration `20261130000000_phase11_agriculture_d`; tests in
   `tests/unit/agriculture-d.test.ts`.
+
+### Phase E acceptance
+
+- Only a group coordinator can add or deactivate members; removing the coordinator
+  is blocked. Farmer and group agreements are scoped to the session-resolved farmer.
+- Harvest agreements snapshot crop, quality, quantity, price/formula, delivery,
+  collection, payment and variance terms. Later catalogue changes cannot rewrite them.
+- Agreement completion requires a verified `Payment` on the shared `Order`; delivery
+  variance is recorded with an auditable tolerance flag.
+- Migration `20261201000000_phase11_agriculture_e`; tests in
+  `tests/unit/agriculture-e.test.ts`.
 
 ## 5. Next step
 

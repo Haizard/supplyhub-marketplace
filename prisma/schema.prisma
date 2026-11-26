@@ -516,6 +516,11 @@ enum AuditAction {
   AGRICULTURE_DELIVERY_CREATED
   AGRICULTURE_INTAKE_RECORDED
   AGRICULTURE_STORAGE_BOOKING_CHANGED
+  AGRICULTURE_GROUP_CREATED
+  AGRICULTURE_GROUP_MEMBER_CHANGED
+  AGRICULTURE_AGREEMENT_CREATED
+  AGRICULTURE_AGREEMENT_CHANGED
+  AGRICULTURE_DELIVERY_RECORDED
 }
 
 model User {
@@ -1081,6 +1086,7 @@ model Order {
   installmentAgreements InstallmentAgreement[]
   agricultureContracts AgriculturalContract[]
   agriculturalInputOrders AgriculturalInputOrder[]
+  harvestAgreements HarvestPurchaseAgreement[]
   items                OrderItem[]
   payments             Payment[]
   refunds              Refund[]
@@ -4690,6 +4696,9 @@ model AgricultureFarmer {
   deliveries        AgriculturalDelivery[]
   intakes           AgriculturalIntakeRecord[]
   storageBookings   AgriculturalStorageBooking[]
+  coordinatedGroups FarmerGroup[] @relation("FarmerGroupCoordinator")
+  groupMemberships  FarmerGroupMember[]
+  harvestAgreements HarvestPurchaseAgreement[]
 
   @@index([verificationStatus, createdAt])
   @@map("agriculture_farmers")
@@ -5259,4 +5268,119 @@ model AgriculturalStorageBooking {
   @@index([facilityId, status])
   @@index([farmerId, status])
   @@map("agricultural_storage_bookings")
+}
+
+// ── Phase 11 E: farmer groups and harvest purchase agreements ────────────────
+
+enum FarmerGroupRole {
+  COORDINATOR
+  MANAGER
+  MEMBER
+}
+
+enum FarmerGroupMemberStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum HarvestAgreementStatus {
+  DRAFT
+  PENDING_FARMER
+  ACCEPTED
+  DELIVERED
+  COMPLETED
+  CANCELLED
+  DISPUTED
+}
+
+model FarmerGroup {
+  id                 String                   @id @default(uuid()) @db.Uuid
+  groupCode          String                   @unique @map("group_code") @db.VarChar(40)
+  name               String                   @db.VarChar(160)
+  registrationNumber String?                  @map("registration_number") @db.VarChar(120)
+  coordinatorId      String                   @map("coordinator_id") @db.Uuid
+  coordinator        AgricultureFarmer        @relation("FarmerGroupCoordinator", fields: [coordinatorId], references: [id], onDelete: Restrict)
+  region             String?                  @db.VarChar(120)
+  district           String?                  @db.VarChar(120)
+  description        String?                  @db.Text
+  isActive           Boolean                  @default(true) @map("is_active")
+  createdAt          DateTime                 @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime                 @updatedAt @map("updated_at") @db.Timestamptz(6)
+  members            FarmerGroupMember[]
+  agreements         HarvestPurchaseAgreement[]
+
+  @@index([coordinatorId, isActive])
+  @@map("farmer_groups")
+}
+
+model FarmerGroupMember {
+  id        String                   @id @default(uuid()) @db.Uuid
+  groupId   String                   @map("group_id") @db.Uuid
+  group     FarmerGroup              @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  farmerId  String                   @map("farmer_id") @db.Uuid
+  farmer    AgricultureFarmer        @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+  role      FarmerGroupRole          @default(MEMBER)
+  status    FarmerGroupMemberStatus  @default(ACTIVE)
+  joinedAt  DateTime                 @default(now()) @map("joined_at") @db.Timestamptz(6)
+
+  @@unique([groupId, farmerId])
+  @@index([farmerId, status])
+  @@map("farmer_group_members")
+}
+
+model HarvestPurchaseAgreement {
+  id               String                    @id @default(uuid()) @db.Uuid
+  agreementNumber  String                    @unique @map("agreement_number") @db.VarChar(40)
+  buyerUserId      String                    @map("buyer_user_id") @db.Uuid
+  farmerId         String?                   @map("farmer_id") @db.Uuid
+  farmer           AgricultureFarmer?        @relation(fields: [farmerId], references: [id], onDelete: SetNull)
+  groupId          String?                   @map("group_id") @db.Uuid
+  group            FarmerGroup?              @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  cropName         String                    @map("crop_name") @db.VarChar(120)
+  variety          String?                   @db.VarChar(120)
+  expectedQuantity Decimal                   @map("expected_quantity") @db.Decimal(14, 2)
+  unit             AgriculturalUnit
+  qualitySpec      String?                   @map("quality_spec") @db.Text
+  pricePerUnit     Decimal?                  @map("price_per_unit") @db.Decimal(14, 2)
+  pricingFormula   String?                   @map("pricing_formula") @db.VarChar(300)
+  estimatedTotal   Decimal?                  @map("estimated_total") @db.Decimal(14, 2)
+  currency         String                    @db.VarChar(3)
+  deliveryDate     DateTime                  @map("delivery_date") @db.Timestamptz(6)
+  collectionLocation String                  @map("collection_location") @db.VarChar(300)
+  paymentTerms     String                    @map("payment_terms") @db.Text
+  variancePolicy   String?                   @map("variance_policy") @db.Text
+  status           HarvestAgreementStatus    @default(DRAFT)
+  termsSnapshot    Json                      @map("terms_snapshot")
+  orderId          String?                   @map("order_id") @db.Uuid
+  order            Order?                    @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  buyerAcceptedAt  DateTime?                 @map("buyer_accepted_at") @db.Timestamptz(6)
+  farmerAcceptedAt DateTime?                 @map("farmer_accepted_at") @db.Timestamptz(6)
+  deliveredAt      DateTime?                 @map("delivered_at") @db.Timestamptz(6)
+  completedAt      DateTime?                 @map("completed_at") @db.Timestamptz(6)
+  cancelledAt      DateTime?                 @map("cancelled_at") @db.Timestamptz(6)
+  createdById      String                    @map("created_by_id") @db.Uuid
+  createdAt        DateTime                  @default(now()) @map("created_at") @db.Timestamptz(6)
+  deliveries       HarvestDeliveryRecord[]
+
+  @@index([buyerUserId, status])
+  @@index([farmerId, status])
+  @@index([groupId, status])
+  @@map("harvest_purchase_agreements")
+}
+
+model HarvestDeliveryRecord {
+  id              String                    @id @default(uuid()) @db.Uuid
+  agreementId     String                    @map("agreement_id") @db.Uuid
+  agreement       HarvestPurchaseAgreement  @relation(fields: [agreementId], references: [id], onDelete: Cascade)
+  deliveredQuantity Decimal                 @map("delivered_quantity") @db.Decimal(14, 2)
+  acceptedQuantity Decimal                  @map("accepted_quantity") @db.Decimal(14, 2)
+  unit            AgriculturalUnit
+  grade           String?                  @db.VarChar(80)
+  varianceKg      Decimal                  @map("variance_kg") @db.Decimal(14, 2)
+  note            String?                  @db.Text
+  recordedById    String                   @map("recorded_by_id") @db.Uuid
+  deliveredAt     DateTime                 @default(now()) @map("delivered_at") @db.Timestamptz(6)
+
+  @@index([agreementId, deliveredAt])
+  @@map("harvest_delivery_records")
 }
