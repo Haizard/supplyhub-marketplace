@@ -298,7 +298,7 @@ async function InventoryContent({
         </Button>
 
         <Button asChild size="sm">
-          <Link href="/vendor/products/new">
+          <Link href="/workspace/sell">
             <Plus className="size-4" aria-hidden="true" />
             {t("inventory.newObject")}
           </Link>
@@ -374,7 +374,7 @@ async function InventoryContent({
           description={t("inventory.description")}
         >
           <Link
-            href="/vendor/products/new"
+            href="/workspace/sell"
             className="inline-flex h-10 items-center gap-2 rounded-md bg-accent px-4 text-sm font-medium text-accent-foreground"
           >
             <Plus className="size-4" aria-hidden="true" />

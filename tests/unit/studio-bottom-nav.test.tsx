@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import type { ReactElement } from "react";
 import { describe, expect, it, vi } from "vitest";
 
@@ -33,18 +33,37 @@ describe("StudioBottomNav", () => {
     expect(overview).toHaveAttribute("aria-current", "page");
   });
 
-  it("includes every studio destination", () => {
+  it("keeps the phone bar to four destinations plus More", () => {
     renderNav(<StudioBottomNav />);
 
     const nav = screen.getByRole("navigation", { name: "Studio navigation" });
+    const links = within(nav).getAllByRole("link");
+
+    expect(links.map((link) => link.textContent)).toEqual([
+      "Overview",
+      "POS",
+      "Products",
+      "Orders",
+    ]);
+    expect(within(nav).getByRole("button", { name: "More" })).toBeInTheDocument();
+  });
+
+  it("keeps every other studio destination reachable behind More", () => {
+    renderNav(<StudioBottomNav />);
+
+    fireEvent.click(screen.getByRole("button", { name: "More" }));
+
     for (const [name, href] of [
-      ["Products", "/vendor/products"],
-      ["Orders", "/vendor/orders"],
+      ["Inventory", "/vendor/inventory"],
+      ["Returns", "/vendor/returns"],
+      ["Messages", "/vendor/messages"],
+      ["Customers", "/vendor/customers"],
+      ["Wholesale", "/vendor/wholesale"],
       ["Deliveries", "/delivery/request"],
       ["Earnings", "/vendor/earnings"],
       ["Studio profile", "/vendor/profile"],
     ] as const) {
-      expect(within(nav).getByRole("link", { name })).toHaveAttribute("href", href);
+      expect(screen.getByRole("link", { name })).toHaveAttribute("href", href);
     }
   });
 

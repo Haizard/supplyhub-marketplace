@@ -55,7 +55,7 @@ export function StudioSetupPanel({
       title: "Add your first object",
       description: "Add a cover photo, price, stock, and a short description. Save it as a draft.",
       done: objectCount > 0,
-      href: "/vendor/products/new",
+      href: "/workspace/sell",
       action: objectCount > 0 ? "Add another object" : "New object",
       icon: Package,
       tone: "bg-accent-soft text-accent",

@@ -110,6 +110,16 @@ export const studioTabs = [
 ] as const;
 
 /**
+ * The four destinations that earn a slot on a phone. Everything else lives
+ * behind "More", so the bar never squeezes twelve labels into 390 pixels.
+ */
+export const studioPrimaryHrefs = ["/vendor", "/vendor/pos", "/vendor/products", "/vendor/orders"];
+
+export const studioPrimaryTabs = studioTabs.filter((tab) => studioPrimaryHrefs.includes(tab.href));
+
+export const studioMoreTabs = studioTabs.filter((tab) => !studioPrimaryHrefs.includes(tab.href));
+
+/**
  * Desktop section rail. It sits beside every studio page, so moving between
  * sections swaps only the content column and never the navigation.
  */

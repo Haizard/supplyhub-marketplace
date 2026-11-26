@@ -568,7 +568,26 @@
     "messages": "الرسائل",
     "messagesShort": "دردشة",
     "customers": "العملاء",
-    "customersShort": "العملاء"
+    "customersShort": "العملاء",
+    "more": "المزيد",
+    "moreTitle": "أدوات إضافية",
+    "moreBody": "كل ما يمكن لعملك فعله أيضًا."
+  },
+  "dashboard": {
+    "last7Days": "آخر 7 أيام",
+    "retailReport": "تقرير البيع بالتجزئة",
+    "revenue": "الإيرادات",
+    "grossProfit": "الربح الإجمالي",
+    "expenses": "المصروفات",
+    "net": "الصافي",
+    "noSales": "لا مبيعات عند المنصة خلال آخر 7 أيام.",
+    "counterSalesOne": "عملية بيع واحدة",
+    "counterSales": "{count} عمليات بيع",
+    "profitNote": "الربح محسوب على تكلفة الوحدة المسجلة.",
+    "profitNoteUncosted": "{count} وحدة بيعت دون تكلفة مسجلة",
+    "runningLow": "على وشك النفاد",
+    "unitsLeft": "بقي {count}",
+    "unitsLeftOne": "بقي واحد"
   },
   "admin": {
     "nav": "الإدارة",

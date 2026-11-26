@@ -62,12 +62,20 @@ async function ProductsContent({
           stats.total === 1 ? "object" : "objects"
         } in your catalog · ${stats.published} live on the storefront.`}
         action={
-          <Button asChild size="sm">
-            <Link href="/vendor/products/new">
-              <Plus className="size-4" aria-hidden="true" />
-              Add object
+          <div className="flex items-center gap-3">
+            <Link
+              href="/vendor/products/new"
+              className="rounded-sm text-xs text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none"
+            >
+              Detailed form
             </Link>
-          </Button>
+            <Button asChild size="sm">
+              <Link href="/workspace/sell">
+                <Plus className="size-4" aria-hidden="true" />
+                Add object
+              </Link>
+            </Button>
+          </div>
         }
       />
 
@@ -94,7 +102,7 @@ async function ProductsContent({
           description="Describe the object, set a price, and add an image. It goes live on the storefront as soon as you save it."
         >
           <Link
-            href="/vendor/products/new"
+            href="/workspace/sell"
             className="inline-flex h-10 items-center gap-2 rounded-md bg-accent px-4 text-sm font-medium text-accent-foreground transition-colors hover:bg-accent/90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none"
           >
             <Plus className="size-4" aria-hidden="true" />
@@ -107,7 +115,7 @@ async function ProductsContent({
             <li key={product.id}>
               <Link
                 href={`/vendor/products/${product.id}`}
-                className="flex flex-wrap items-center gap-4 rounded-xl border border-border bg-surface p-3 transition-colors hover:border-border-strong hover:bg-surface-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none sm:flex-nowrap"
+                className="grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-2 rounded-xl border border-border bg-surface p-3 transition-colors hover:border-border-strong hover:bg-surface-muted focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none sm:flex sm:flex-nowrap sm:gap-4"
               >
                 <Image
                   src={product.image?.src ?? "/images/demo/placeholder.jpg"}
@@ -122,7 +130,7 @@ async function ProductsContent({
                     {product.sku} · {product.categoryName}
                   </p>
                 </div>
-                <div className="flex items-center gap-4 sm:flex-col sm:items-end sm:gap-1.5">
+                <div className="col-span-2 flex items-center justify-between gap-4 sm:col-span-1 sm:ml-auto sm:flex-col sm:items-end sm:justify-start sm:gap-1.5">
                   <ProductStatusBadge status={product.status} />
                   <p className="text-xs text-muted-foreground">
                     {formatMoney(product.priceCents, product.currency)} · {product.stock}{" "}

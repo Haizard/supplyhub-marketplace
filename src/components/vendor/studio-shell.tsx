@@ -116,7 +116,7 @@ export async function StudioShell({
             ) : null}
             {approved ? (
               <Button asChild size="sm" className="px-2.5 sm:px-3">
-                <Link href="/vendor/products/new" aria-label={t("studio.addObject")}>
+                <Link href="/workspace/sell" aria-label={t("studio.addObject")}>
                   <Plus className="size-4" aria-hidden="true" />
                   <span className="hidden sm:inline">{t("studio.addObject")}</span>
                 </Link>

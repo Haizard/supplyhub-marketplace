@@ -568,7 +568,26 @@
     "messages": "消息",
     "messagesShort": "沟通",
     "customers": "客户",
-    "customersShort": "客户"
+    "customersShort": "客户",
+    "more": "更多",
+    "moreTitle": "更多工具",
+    "moreBody": "你的业务还能做的其他事情。"
+  },
+  "dashboard": {
+    "last7Days": "最近 7 天",
+    "retailReport": "零售报表",
+    "revenue": "营业额",
+    "grossProfit": "毛利",
+    "expenses": "支出",
+    "net": "净额",
+    "noSales": "最近 7 天还没有柜台销售。",
+    "counterSalesOne": "1 笔柜台销售",
+    "counterSales": "{count} 笔柜台销售",
+    "profitNote": "利润按你记录的单位成本计算。",
+    "profitNoteUncosted": "{count} 件售出但未记录单位成本",
+    "runningLow": "库存偏低",
+    "unitsLeft": "剩 {count} 件",
+    "unitsLeftOne": "剩 1 件"
   },
   "admin": {
     "nav": "管理后台",

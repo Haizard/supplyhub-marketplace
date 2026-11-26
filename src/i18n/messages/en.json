@@ -568,7 +568,26 @@
     "messages": "Messages",
     "messagesShort": "Chat",
     "customers": "Customers",
-    "customersShort": "Customers"
+    "customersShort": "Customers",
+    "more": "More",
+    "moreTitle": "More tools",
+    "moreBody": "Everything else your business can do."
+  },
+  "dashboard": {
+    "last7Days": "Last 7 days",
+    "retailReport": "Retail report",
+    "revenue": "Revenue",
+    "grossProfit": "Gross profit",
+    "expenses": "Expenses",
+    "net": "Net",
+    "noSales": "No counter sales in the last 7 days yet.",
+    "counterSalesOne": "1 counter sale",
+    "counterSales": "{count} counter sales",
+    "profitNote": "Profit uses the unit cost you recorded.",
+    "profitNoteUncosted": "{count} units sold without a unit cost",
+    "runningLow": "Running low",
+    "unitsLeft": "{count} left",
+    "unitsLeftOne": "1 left"
   },
   "admin": {
     "nav": "Administration",

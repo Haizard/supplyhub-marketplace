@@ -568,7 +568,26 @@
     "messages": "Messages",
     "messagesShort": "Chat",
     "customers": "Clients",
-    "customersShort": "Clients"
+    "customersShort": "Clients",
+    "more": "Plus",
+    "moreTitle": "Plus d'outils",
+    "moreBody": "Tout le reste que votre activité peut faire."
+  },
+  "dashboard": {
+    "last7Days": "7 derniers jours",
+    "retailReport": "Rapport de caisse",
+    "revenue": "Chiffre d'affaires",
+    "grossProfit": "Marge brute",
+    "expenses": "Dépenses",
+    "net": "Net",
+    "noSales": "Aucune vente au comptoir ces 7 derniers jours.",
+    "counterSalesOne": "1 vente au comptoir",
+    "counterSales": "{count} ventes au comptoir",
+    "profitNote": "La marge utilise le coût unitaire que vous avez saisi.",
+    "profitNoteUncosted": "{count} unités vendues sans coût unitaire",
+    "runningLow": "Stock faible",
+    "unitsLeft": "{count} restants",
+    "unitsLeftOne": "1 restant"
   },
   "admin": {
     "nav": "Administration",

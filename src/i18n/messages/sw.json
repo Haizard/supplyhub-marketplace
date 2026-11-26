@@ -568,7 +568,26 @@
     "messages": "Ujumbe",
     "messagesShort": "Ongea",
     "customers": "Wateja",
-    "customersShort": "Wateja"
+    "customersShort": "Wateja",
+    "more": "Zaidi",
+    "moreTitle": "Zana zaidi",
+    "moreBody": "Kila kitu kingine biashara yako inaweza kufanya."
+  },
+  "dashboard": {
+    "last7Days": "Siku 7 zilizopita",
+    "retailReport": "Ripoti ya mauzo",
+    "revenue": "Mapato",
+    "grossProfit": "Faida ghafi",
+    "expenses": "Matumizi",
+    "net": "Faida halisi",
+    "noSales": "Hakuna mauzo ya kaunta katika siku 7 zilizopita.",
+    "counterSalesOne": "Mauzo 1 ya kaunta",
+    "counterSales": "Mauzo {count} ya kaunta",
+    "profitNote": "Faida inatumia gharama ya kipande uliyoingiza.",
+    "profitNoteUncosted": "Vipande {count} viliuzwa bila gharama ya kipande",
+    "runningLow": "Zinaisha",
+    "unitsLeft": "Zimebaki {count}",
+    "unitsLeftOne": "Kimebaki 1"
   },
   "admin": {
     "nav": "Utawala",

@@ -505,7 +505,7 @@ async function VendorContent({
               <p className="px-4 py-8 text-center text-xs text-muted-foreground">
                 No objects yet.{" "}
                 <Link
-                  href="/vendor/products/new"
+                  href="/workspace/sell"
                   className="rounded-sm font-medium text-accent underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none"
                 >
                   Add your first object
