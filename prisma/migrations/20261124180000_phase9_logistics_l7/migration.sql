@@ -124,5 +124,3 @@ CREATE TABLE "logistics_settlements" (
 CREATE UNIQUE INDEX "logistics_settlements_number_key" ON "logistics_settlements"("settlement_number");
 CREATE INDEX "logistics_settlements_company_created_idx" ON "logistics_settlements"("company_id", "created_at");
 ALTER TABLE "logistics_settlements" ADD CONSTRAINT "logistics_settlements_company_fkey" FOREIGN KEY ("company_id") REFERENCES "logistics_companies"("id") ON DELETE CASCADE;
-EOF
-npx prisma generate 2>&1 | tail -6

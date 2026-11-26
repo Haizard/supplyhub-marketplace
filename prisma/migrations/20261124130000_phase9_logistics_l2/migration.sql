@@ -37,5 +37,3 @@ CREATE TABLE "logistics_company_settings" (
 );
 CREATE UNIQUE INDEX "logistics_company_settings_company_key" ON "logistics_company_settings"("company_id");
 ALTER TABLE "logistics_company_settings" ADD CONSTRAINT "logistics_company_settings_company_fkey" FOREIGN KEY ("company_id") REFERENCES "logistics_companies"("id") ON DELETE CASCADE;
-EOF
-npx prisma generate 2>&1 | tail -4

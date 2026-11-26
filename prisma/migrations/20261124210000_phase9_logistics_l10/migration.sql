@@ -102,5 +102,3 @@ CREATE TABLE "logistics_external_orders" (
 CREATE UNIQUE INDEX "logistics_external_orders_store_external_key" ON "logistics_external_orders"("store_id", "external_order_id");
 ALTER TABLE "logistics_external_orders" ADD CONSTRAINT "logistics_external_orders_store_fkey" FOREIGN KEY ("store_id") REFERENCES "logistics_external_stores"("id") ON DELETE CASCADE;
 ALTER TABLE "logistics_external_orders" ADD CONSTRAINT "logistics_external_orders_request_fkey" FOREIGN KEY ("delivery_request_id") REFERENCES "delivery_requests"("id") ON DELETE SET NULL;
-EOF
-npx prisma generate 2>&1 | tail -5

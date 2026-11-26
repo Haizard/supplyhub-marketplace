@@ -65,5 +65,3 @@ CREATE TABLE "logistics_client_contacts" (
 );
 CREATE INDEX "logistics_client_contacts_client_primary_idx" ON "logistics_client_contacts"("client_id", "is_primary");
 ALTER TABLE "logistics_client_contacts" ADD CONSTRAINT "logistics_client_contacts_client_fkey" FOREIGN KEY ("client_id") REFERENCES "logistics_clients"("id") ON DELETE CASCADE;
-EOF
-npx prisma generate 2>&1 | tail -8

@@ -122,8 +122,6 @@ CREATE TABLE "reconciliation_findings" (
 CREATE INDEX "rf_run_severity_idx" ON "reconciliation_findings"("run_id", "severity");
 ALTER TABLE "reconciliation_findings" ADD CONSTRAINT "rf_run_fkey" FOREIGN KEY ("run_id") REFERENCES "reconciliation_runs"("id") ON DELETE CASCADE;
 ALTER TABLE "reconciliation_findings" ADD CONSTRAINT "rf_payment_fkey" FOREIGN KEY ("payment_id") REFERENCES "payments"("id") ON DELETE SET NULL;
-EOF
-echo "migration written"
 -- Business staff need an explicit permission to submit KYC documents.
 INSERT INTO "permissions" ("id", "permission_key", "description")
 VALUES (gen_random_uuid(), 'verification.manage', 'Submit and view business verification documents')

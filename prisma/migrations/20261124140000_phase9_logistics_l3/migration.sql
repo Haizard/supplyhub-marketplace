@@ -170,5 +170,3 @@ CREATE INDEX "driver_assignments_membership_status_idx" ON "driver_vehicle_assig
 CREATE INDEX "driver_assignments_vehicle_status_idx" ON "driver_vehicle_assignments"("vehicle_id", "status");
 ALTER TABLE "driver_vehicle_assignments" ADD CONSTRAINT "driver_assignments_membership_fkey" FOREIGN KEY ("membership_id") REFERENCES "driver_company_memberships"("id") ON DELETE CASCADE;
 ALTER TABLE "driver_vehicle_assignments" ADD CONSTRAINT "driver_assignments_vehicle_fkey" FOREIGN KEY ("vehicle_id") REFERENCES "logistics_vehicles"("id") ON DELETE CASCADE;
-EOF
-npx prisma generate 2>&1 | tail -10

@@ -59,5 +59,3 @@ CREATE UNIQUE INDEX "logistics_company_offer_scores_opportunity_company_key" ON 
 CREATE INDEX "logistics_company_offer_scores_opportunity_rank_idx" ON "logistics_company_offer_scores"("opportunity_id", "rank");
 ALTER TABLE "logistics_company_offer_scores" ADD CONSTRAINT "logistics_company_offer_scores_opportunity_fkey" FOREIGN KEY ("opportunity_id") REFERENCES "delivery_opportunities"("id") ON DELETE CASCADE;
 ALTER TABLE "logistics_company_offer_scores" ADD CONSTRAINT "logistics_company_offer_scores_company_fkey" FOREIGN KEY ("company_id") REFERENCES "logistics_companies"("id") ON DELETE CASCADE;
-EOF
-npx prisma generate 2>&1 | tail -5 && npm run typecheck 2>&1 | tail -8

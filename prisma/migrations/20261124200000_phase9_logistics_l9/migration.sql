@@ -68,5 +68,3 @@ CREATE TABLE "partner_reward_transactions" (
 CREATE UNIQUE INDEX "partner_reward_transactions_reference_key" ON "partner_reward_transactions"("reference");
 CREATE INDEX "partner_reward_transactions_reward_created_idx" ON "partner_reward_transactions"("reward_id", "created_at");
 ALTER TABLE "partner_reward_transactions" ADD CONSTRAINT "partner_reward_transactions_reward_fkey" FOREIGN KEY ("reward_id") REFERENCES "partner_rewards"("id") ON DELETE CASCADE;
-EOF
-npx prisma generate 2>&1 | tail -8

@@ -138,5 +138,3 @@ CREATE TABLE "logistics_invoice_items" (
 );
 CREATE INDEX "logistics_invoice_items_invoice_idx" ON "logistics_invoice_items"("invoice_id");
 ALTER TABLE "logistics_invoice_items" ADD CONSTRAINT "logistics_invoice_items_invoice_fkey" FOREIGN KEY ("invoice_id") REFERENCES "logistics_invoices"("id") ON DELETE CASCADE;
-EOF
-npx prisma generate 2>&1 | tail -8

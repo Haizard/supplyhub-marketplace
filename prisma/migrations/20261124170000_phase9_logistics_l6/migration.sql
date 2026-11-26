@@ -34,5 +34,3 @@ ALTER TABLE "delivery_jobs" ADD CONSTRAINT "delivery_jobs_company_fkey" FOREIGN 
 ALTER TABLE "delivery_jobs" ADD CONSTRAINT "delivery_jobs_contract_fkey" FOREIGN KEY ("contract_id") REFERENCES "logistics_contracts"("id") ON DELETE SET NULL;
 ALTER TABLE "delivery_jobs" ADD CONSTRAINT "delivery_jobs_membership_fkey" FOREIGN KEY ("driver_membership_id") REFERENCES "driver_company_memberships"("id") ON DELETE SET NULL;
 ALTER TABLE "delivery_assignments" ADD CONSTRAINT "delivery_assignments_membership_fkey" FOREIGN KEY ("driver_membership_id") REFERENCES "driver_company_memberships"("id") ON DELETE SET NULL;
-EOF
-npx prisma generate 2>&1 | tail -6

@@ -116,5 +116,3 @@ CROSS JOIN "permissions" p
 WHERE r."is_system" = true
   AND p."permission_key" LIKE 'logistics.%'
 ON CONFLICT DO NOTHING;
-EOF
-echo "migration written"
