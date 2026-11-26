@@ -1,5 +1,6 @@
 import {
   BarChart3,
+  Building2,
   CircleUserRound,
   Compass,
   House,
@@ -9,10 +10,12 @@ import {
   Plus,
   Receipt,
   ShoppingBag,
+  Sprout,
   Store,
   Truck,
   Users,
   Wallet,
+  Wheat,
   Clock,
   Heart,
   ListChecks,
@@ -37,6 +40,9 @@ const ICONS: Record<WorkspaceIcon, LucideIcon> = {
   home: House,
   compass: Compass,
   activity: Clock,
+  sprout: Sprout,
+  wheat: Wheat,
+  building: Building2,
   more: LayoutGrid,
 };
 

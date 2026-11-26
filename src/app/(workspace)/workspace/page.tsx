@@ -20,7 +20,7 @@ import {
   tasksFor,
   type ExperienceId,
 } from "@/features/workspace/experience";
-import { getWorkspaceSnapshot } from "@/features/workspace/queries";
+import { getWorkspaceSnapshot, type WorkspaceSnapshot } from "@/features/workspace/queries";
 import { getServerI18n } from "@/i18n/server";
 import { getSessionActor } from "@/server/auth/session";
 import { cn } from "@/lib/utils/cn";
@@ -55,12 +55,15 @@ async function WorkspaceContent({
   const experiences = snapshot
     ? availableExperiences({
         seller: Boolean(snapshot.seller),
+        farmer: Boolean(snapshot.farmer),
+        logistics: Boolean(snapshot.logistics),
         buyer: true,
         courier: Boolean(snapshot.courier),
       })
     : ["buyer" as ExperienceId];
   const experience = resolveExperience(params.as, experiences);
-  const nav = navFor(experience);
+  const context = { logisticsCompanyId: snapshot?.logistics?.companyId ?? null };
+  const nav = navFor(experience, context);
 
   if (!actor || !snapshot) {
     return (
@@ -88,16 +91,23 @@ async function WorkspaceContent({
       experience === "seller"
         ? (snapshot.seller?.unreadMessages ?? 0)
         : snapshot.buyer.unreadMessages,
-    activeDeliveries: snapshot.courier?.activeDeliveries ?? 0,
+    activeDeliveries:
+      experience === "logistics"
+        ? (snapshot.logistics?.activeJobs ?? 0)
+        : (snapshot.courier?.activeDeliveries ?? 0),
     buyerOpenOrders: snapshot.buyer.openOrders,
     savedProducts: snapshot.buyer.savedProducts,
+    pendingAgreements: snapshot.farmer?.pendingAgreements ?? 0,
+    openOpportunities: snapshot.logistics?.openOpportunities ?? 0,
+    logisticsCompanyId: snapshot.logistics?.companyId ?? null,
   });
 
   // Business accounts are named after the business, so the whole display name is
   // kinder than slicing it to its first word — and the business itself reads
   // best in the welcome line when there is one.
   const displayName = snapshot.business?.name ?? actor.name.trim();
-  const tasks = tasksFor(experience);
+  const tasks = tasksFor(experience, context);
+  const today = todaySummary(experience, snapshot, t, formatCurrency);
 
   return (
     <WorkspaceShell
@@ -125,80 +135,33 @@ async function WorkspaceContent({
           <div className="flex flex-wrap items-start justify-between gap-5">
             <div className="min-w-0">
               <p id="today-heading" className="eyebrow text-muted-foreground">
-                {experience === "seller"
-                  ? t("workspace.todayTitle")
-                  : experience === "courier"
-                    ? t("workspace.courierToday")
-                    : t("workspace.buyerToday")}
+                {today.eyebrow}
               </p>
               <p className="mt-2 font-display text-4xl leading-none font-medium tracking-[-0.04em] text-foreground tabular-nums sm:text-5xl">
-                {experience === "seller" && snapshot.seller
-                  ? formatCurrency(snapshot.seller.salesTodayCents, snapshot.seller.currency)
-                  : experience === "courier"
-                    ? String(snapshot.courier?.activeDeliveries ?? 0)
-                    : String(snapshot.buyer.openOrders)}
+                {today.value}
               </p>
-              <p className="mt-2 text-sm font-medium text-foreground">
-                {experience === "seller"
-                  ? t("workspace.salesToday")
-                  : experience === "courier"
-                    ? t("workspace.activeDeliveries")
-                    : t("workspace.openOrders")}
-              </p>
-              <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                {experience === "seller"
-                  ? t("workspace.salesNote")
-                  : experience === "courier"
-                    ? t("workspace.courierTodayNote")
-                    : t("workspace.buyerTodayNote")}
-              </p>
+              <p className="mt-2 text-sm font-medium text-foreground">{today.label}</p>
+              <p className="mt-1 text-xs leading-5 text-muted-foreground">{today.note}</p>
             </div>
 
-            {snapshot.courier ? (
+            {experience === "courier" && snapshot.courier ? (
               <Badge tone={snapshot.courier.presence === "ONLINE" ? "success" : "neutral"}>
                 {snapshot.courier.presence}
               </Badge>
             ) : null}
 
-            {experience === "seller" && snapshot.seller ? (
-              <dl className="w-full border-t border-border pt-4 sm:w-auto sm:min-w-[20rem] sm:self-end sm:border-t-0 sm:pt-0">
-                <div className="grid grid-cols-3 gap-3">
-                  {[
-                    { label: t("workspace.openOrders"), value: snapshot.seller.ordersToPrepare },
-                    { label: t("workspace.paymentsDue"), value: snapshot.seller.paymentsDue },
-                    { label: t("workspace.lowStock"), value: snapshot.seller.lowStock },
-                  ].map((stat) => (
-                    <div key={stat.label}>
-                      <dt className="text-[0.6875rem] leading-4 text-muted-foreground">
-                        {stat.label}
-                      </dt>
-                      <dd className="mt-1 font-mono text-lg font-semibold text-foreground tabular-nums">
-                        {stat.value}
-                      </dd>
-                    </div>
-                  ))}
-                </div>
-              </dl>
-            ) : null}
-
-            {experience === "buyer" ? (
-              <dl className="grid w-full grid-cols-2 gap-3 border-t border-border pt-4 sm:w-auto sm:min-w-[15rem] sm:self-end sm:border-t-0 sm:pt-0">
-                <div>
-                  <dt className="text-[0.6875rem] leading-4 text-muted-foreground">
-                    {t("workspace.savedProducts")}
-                  </dt>
-                  <dd className="mt-1 font-mono text-lg font-semibold text-foreground tabular-nums">
-                    {snapshot.buyer.savedProducts}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-[0.6875rem] leading-4 text-muted-foreground">
-                    {t("workspace.unreadMessages")}
-                  </dt>
-                  <dd className="mt-1 font-mono text-lg font-semibold text-foreground tabular-nums">
-                    {snapshot.buyer.unreadMessages}
-                  </dd>
-                </div>
+            {today.stats.length > 0 ? (
+              <dl className="flex w-full flex-wrap gap-x-8 gap-y-4 border-t border-border pt-4 sm:w-auto sm:self-end sm:border-t-0 sm:pt-0">
+                {today.stats.map((stat) => (
+                  <div key={stat.label} className="min-w-[5.5rem]">
+                    <dt className="text-[0.6875rem] leading-4 text-muted-foreground">
+                      {stat.label}
+                    </dt>
+                    <dd className="mt-1 font-mono text-lg font-semibold text-foreground tabular-nums">
+                      {stat.value}
+                    </dd>
+                  </div>
+                ))}
               </dl>
             ) : null}
           </div>
@@ -214,7 +177,7 @@ async function WorkspaceContent({
         </p>
 
         <div className="mt-4">
-          <ActionLauncher actions={actionsFor(experience)} experience={experience} />
+          <ActionLauncher actions={actionsFor(experience, context)} experience={experience} />
         </div>
 
         <ul className="mt-3 grid gap-2.5 sm:grid-cols-2">
@@ -351,6 +314,89 @@ async function WorkspaceContent({
       ) : null}
     </WorkspaceShell>
   );
+}
+
+type Translator = Awaited<ReturnType<typeof getServerI18n>>["t"];
+type CurrencyFormatter = Awaited<ReturnType<typeof getServerI18n>>["formatCurrency"];
+
+interface TodaySummary {
+  eyebrow: string;
+  value: string;
+  label: string;
+  note: string;
+  stats: Array<{ label: string; value: number }>;
+}
+
+/**
+ * The one number that answers "how is today going?" for the active view. Keeping
+ * it as data stops the card from growing a nested conditional per role.
+ */
+function todaySummary(
+  experience: ExperienceId,
+  snapshot: WorkspaceSnapshot,
+  t: Translator,
+  formatCurrency: CurrencyFormatter,
+): TodaySummary {
+  if (experience === "seller" && snapshot.seller) {
+    return {
+      eyebrow: t("workspace.todayTitle"),
+      value: formatCurrency(snapshot.seller.salesTodayCents, snapshot.seller.currency),
+      label: t("workspace.salesToday"),
+      note: t("workspace.salesNote"),
+      stats: [
+        { label: t("workspace.openOrders"), value: snapshot.seller.ordersToPrepare },
+        { label: t("workspace.paymentsDue"), value: snapshot.seller.paymentsDue },
+        { label: t("workspace.lowStock"), value: snapshot.seller.lowStock },
+      ],
+    };
+  }
+
+  if (experience === "farmer" && snapshot.farmer) {
+    return {
+      eyebrow: t("workspace.farmerToday"),
+      value: String(snapshot.farmer.activeCrops),
+      label: t("workspace.cropsGrowing"),
+      note: t("workspace.farmerTodayNote"),
+      stats: [
+        { label: t("workspace.pendingAgreements"), value: snapshot.farmer.pendingAgreements },
+        { label: t("workspace.activeGroups"), value: snapshot.farmer.activeGroups },
+      ],
+    };
+  }
+
+  if (experience === "logistics" && snapshot.logistics) {
+    return {
+      eyebrow: t("workspace.logisticsToday"),
+      value: String(snapshot.logistics.activeJobs),
+      label: t("workspace.activeJobs"),
+      note: t("workspace.logisticsTodayNote"),
+      stats: [
+        { label: t("workspace.teamMembers"), value: snapshot.logistics.activeMembers },
+        { label: t("workspace.openOpportunities"), value: snapshot.logistics.openOpportunities },
+      ],
+    };
+  }
+
+  if (experience === "courier") {
+    return {
+      eyebrow: t("workspace.courierToday"),
+      value: String(snapshot.courier?.activeDeliveries ?? 0),
+      label: t("workspace.activeDeliveries"),
+      note: t("workspace.courierTodayNote"),
+      stats: [],
+    };
+  }
+
+  return {
+    eyebrow: t("workspace.buyerToday"),
+    value: String(snapshot.buyer.openOrders),
+    label: t("workspace.openOrders"),
+    note: t("workspace.buyerTodayNote"),
+    stats: [
+      { label: t("workspace.savedProducts"), value: snapshot.buyer.savedProducts },
+      { label: t("workspace.unreadMessages"), value: snapshot.buyer.unreadMessages },
+    ],
+  };
 }
 
 function WorkspaceSkeleton() {

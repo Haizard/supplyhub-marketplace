@@ -19,18 +19,55 @@ const noAttention = {
   activeDeliveries: 0,
   buyerOpenOrders: 0,
   savedProducts: 0,
+  pendingAgreements: 0,
+  openOpportunities: 0,
+  logisticsCompanyId: null,
+};
+
+const everyCapability = {
+  seller: true,
+  farmer: true,
+  logistics: true,
+  courier: true,
+  buyer: true,
+};
+
+const noCapability = {
+  seller: false,
+  farmer: false,
+  logistics: false,
+  courier: false,
+  buyer: false,
 };
 
 describe("experience resolution", () => {
   it("offers one entry per capability the person actually has", () => {
-    expect(availableExperiences({ seller: true, buyer: true, courier: true })).toEqual([
+    expect(availableExperiences(everyCapability)).toEqual([
       "seller",
-      "buyer",
+      "farmer",
+      "logistics",
       "courier",
-    ]);
-    expect(availableExperiences({ seller: false, buyer: false, courier: false })).toEqual([
       "buyer",
     ]);
+    expect(availableExperiences(noCapability)).toEqual(["buyer"]);
+  });
+
+  it("opens a farmer or a logistics member on their own work, not on buying", () => {
+    const farmer = availableExperiences({
+      ...noCapability,
+      farmer: true,
+      buyer: true,
+    });
+    expect(farmer).toEqual(["farmer", "buyer"]);
+    expect(resolveExperience(undefined, farmer)).toBe("farmer");
+
+    const logistics = availableExperiences({
+      ...noCapability,
+      logistics: true,
+      buyer: true,
+    });
+    expect(logistics).toEqual(["logistics", "buyer"]);
+    expect(resolveExperience(undefined, logistics)).toBe("logistics");
   });
 
   it("never honours a view the person cannot open", () => {
@@ -41,15 +78,26 @@ describe("experience resolution", () => {
   });
 
   it("keeps navigation to five destinations and labels every task", () => {
-    for (const experience of ["seller", "buyer", "courier"] as const) {
-      const nav = navFor(experience);
+    const context = { logisticsCompanyId: "3f0c1d9e-0000-4000-8000-000000000000" };
+    for (const experience of ["seller", "farmer", "logistics", "courier", "buyer"] as const) {
+      const nav = navFor(experience, context);
       expect(nav.length).toBeLessThanOrEqual(5);
       expect(nav[0]?.href).toBe("/workspace");
-      for (const task of [...tasksFor(experience), ...actionsFor(experience)]) {
+      for (const task of [...tasksFor(experience, context), ...actionsFor(experience, context)]) {
         expect(task.labelKey.startsWith("workspace.")).toBe(true);
         expect(task.href.startsWith("/")).toBe(true);
       }
     }
+  });
+
+  it("keeps a logistics member inside their own company", () => {
+    const companyId = "3f0c1d9e-0000-4000-8000-000000000000";
+    const tasks = tasksFor("logistics", { logisticsCompanyId: companyId });
+    expect(tasks.length).toBeGreaterThan(0);
+    expect(tasks.every((task) => task.href.startsWith(`/logistics/${companyId}`))).toBe(true);
+    expect(navFor("logistics", { logisticsCompanyId: companyId })[2]?.href).toBe(
+      `/logistics/${companyId}/dispatch`,
+    );
   });
 });
 
@@ -71,6 +119,33 @@ describe("needs your attention", () => {
 
     expect(items.map((item) => item.id)).toEqual(["orders", "payments", "stock", "messages"]);
     expect(items[0]?.count).toBe(3);
+  });
+
+  it("asks a farmer for the agreements still waiting on them", () => {
+    const items = buildAttention("farmer", {
+      ...noAttention,
+      pendingAgreements: 2,
+      ordersToPrepare: 7,
+    });
+
+    expect(items.map((item) => item.id)).toEqual(["agreements"]);
+    expect(items[0]?.href).toBe("/agriculture/contracts");
+  });
+
+  it("keeps a logistics member's work and opportunities in their company", () => {
+    const companyId = "3f0c1d9e-0000-4000-8000-000000000000";
+    const items = buildAttention("logistics", {
+      ...noAttention,
+      activeDeliveries: 1,
+      openOpportunities: 3,
+      logisticsCompanyId: companyId,
+    });
+
+    expect(items.map((item) => item.id)).toEqual(["deliveries", "opportunities"]);
+    expect(items.map((item) => item.href)).toEqual([
+      `/logistics/${companyId}/jobs`,
+      `/logistics/${companyId}/opportunities`,
+    ]);
   });
 
   it("gives a courier their own deliveries and nothing seller-shaped", () => {

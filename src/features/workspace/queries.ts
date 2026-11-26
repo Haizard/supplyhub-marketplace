@@ -40,10 +40,29 @@ export interface CourierSnapshot {
   presence: string;
 }
 
+export interface FarmerSnapshot {
+  farmerId: string;
+  verificationStatus: string;
+  region: string | null;
+  activeCrops: number;
+  pendingAgreements: number;
+  activeGroups: number;
+}
+
+export interface LogisticsSnapshot {
+  companyId: string;
+  companyName: string;
+  activeJobs: number;
+  activeMembers: number;
+  openOpportunities: number;
+}
+
 export interface WorkspaceSnapshot {
   businesses: Array<{ id: string; name: string }>;
   business: { id: string; name: string } | null;
   seller: SellerSnapshot | null;
+  farmer: FarmerSnapshot | null;
+  logistics: LogisticsSnapshot | null;
   buyer: BuyerSnapshot;
   courier: CourierSnapshot | null;
 }
@@ -70,30 +89,52 @@ export async function getWorkspaceSnapshot(actor: Actor): Promise<WorkspaceSnaps
     vendor: actor.vendor,
   });
 
-  const [memberships, agent] = await Promise.all([
+  const [memberships, agent, farmer, logisticsMember] = await Promise.all([
     listBusinessesForUser(actor.id),
     database.deliveryAgent.findFirst({
       where: { userId: actor.id },
       select: { id: true, presence: true, completedTrips: true },
     }),
+    database.agricultureFarmer.findUnique({
+      where: { userId: actor.id },
+      select: { id: true, verificationStatus: true, region: true },
+    }),
+    database.logisticsCompanyMember.findFirst({
+      where: { userId: actor.id, status: "ACTIVE" },
+      orderBy: { createdAt: "asc" },
+      select: { companyId: true, company: { select: { name: true } } },
+    }),
   ]);
 
-  const [seller, buyerOrders, savedProducts, buyerConversations, activeDeliveries] =
-    await Promise.all([
-      studio
-        ? loadSellerSnapshot(actor, studio.vendorId, studio.businessId)
-        : Promise.resolve<SellerSnapshot | null>(null),
-      database.order.count({
-        where: { customerId: actor.id, status: { in: [...OPEN_BUYER_ORDER_STATUSES] } },
-      }),
-      listWishlistProducts(actor.id),
-      listConversations({ side: "buyer", viewerId: actor.id }, 50),
-      agent
-        ? database.deliveryJob.count({
-            where: { agentId: agent.id, status: { in: [...ACTIVE_JOB_STATUSES] } },
-          })
-        : Promise.resolve(0),
-    ]);
+  const [
+    seller,
+    buyerOrders,
+    savedProducts,
+    buyerConversations,
+    activeDeliveries,
+    farmerSnapshot,
+    logisticsSnapshot,
+  ] = await Promise.all([
+    studio
+      ? loadSellerSnapshot(actor, studio.vendorId, studio.businessId)
+      : Promise.resolve<SellerSnapshot | null>(null),
+    database.order.count({
+      where: { customerId: actor.id, status: { in: [...OPEN_BUYER_ORDER_STATUSES] } },
+    }),
+    listWishlistProducts(actor.id),
+    listConversations({ side: "buyer", viewerId: actor.id }, 50),
+    agent
+      ? database.deliveryJob.count({
+          where: { agentId: agent.id, status: { in: [...ACTIVE_JOB_STATUSES] } },
+        })
+      : Promise.resolve(0),
+    farmer
+      ? loadFarmerSnapshot(farmer.id, farmer.verificationStatus, farmer.region)
+      : Promise.resolve<FarmerSnapshot | null>(null),
+    logisticsMember
+      ? loadLogisticsSnapshot(logisticsMember.companyId, logisticsMember.company.name)
+      : Promise.resolve<LogisticsSnapshot | null>(null),
+  ]);
 
   return {
     businesses: memberships.map((membership) => ({
@@ -102,6 +143,8 @@ export async function getWorkspaceSnapshot(actor: Actor): Promise<WorkspaceSnaps
     })),
     business: actor.business ? { id: actor.business.id, name: actor.business.name } : null,
     seller,
+    farmer: farmerSnapshot,
+    logistics: logisticsSnapshot,
     buyer: {
       openOrders: buyerOrders,
       savedProducts: savedProducts.length,
@@ -115,6 +158,41 @@ export async function getWorkspaceSnapshot(actor: Actor): Promise<WorkspaceSnaps
         }
       : null,
   };
+}
+
+async function loadFarmerSnapshot(
+  farmerId: string,
+  verificationStatus: string,
+  region: string | null,
+): Promise<FarmerSnapshot> {
+  const database = getDatabase();
+
+  const [activeCrops, pendingAgreements, activeGroups] = await Promise.all([
+    database.farmCrop.count({ where: { farmerId, status: { in: ["PLANTED", "GROWING"] } } }),
+    database.harvestPurchaseAgreement.count({
+      where: { farmerId, status: "PENDING_FARMER" },
+    }),
+    database.farmerGroupMember.count({ where: { farmerId, status: "ACTIVE" } }),
+  ]);
+
+  return { farmerId, verificationStatus, region, activeCrops, pendingAgreements, activeGroups };
+}
+
+async function loadLogisticsSnapshot(
+  companyId: string,
+  companyName: string,
+): Promise<LogisticsSnapshot> {
+  const database = getDatabase();
+
+  const [activeJobs, activeMembers, openOpportunities] = await Promise.all([
+    database.deliveryJob.count({
+      where: { status: { in: [...ACTIVE_JOB_STATUSES] }, request: { companyId } },
+    }),
+    database.logisticsCompanyMember.count({ where: { companyId, status: "ACTIVE" } }),
+    database.deliveryOpportunity.count({ where: { offeredToId: companyId, status: "OPEN" } }),
+  ]);
+
+  return { companyId, companyName, activeJobs, activeMembers, openOpportunities };
 }
 
 async function loadSellerSnapshot(

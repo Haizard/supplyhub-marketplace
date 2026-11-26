@@ -45,17 +45,20 @@ second account.
 | Persona | Wants to accomplish | Reads storage | Home experience |
 | --- | --- | --- | --- |
 | Shop owner / studio | Sell, record a sale, prepare orders, know what they are owed | `Vendor`, `Business` | Selling |
-| Farmer / producer | Sell a harvest, buy inputs, find transport | Agriculture module (flag), `Business` | Selling |
+| Farmer / producer | Record a harvest, list produce, agree a price, pool with a group | `AgricultureFarmer` (flag) | Farming |
 | Bulk buyer / business buyer | Find products, request quantities, track orders and invoices | `Business`, B2B | Buying |
 | Customer | Buy, track, message, keep favourites | `User` | Buying |
 | Delivery agent | Find work, deliver, confirm hand-overs, see earnings | `DeliveryAgent` | Delivering |
-| Logistics company | Fleet, drivers, clients, contracts, dispatch | `LogisticsCompany` | Selling (ops), delivered through `/logistics` |
+| Logistics company | Dispatch, clients, fleet, team, opportunities | `LogisticsCompanyMember` (`ACTIVE`) | Logistics |
 | Service provider | Publish services, manage bookings | `ServiceListing` | Selling |
 | Administrator | Verification, moderation, reconciliation | `UserRole.ADMIN` | Admin surfaces (not personalised here) |
 
 Experience resolution is deterministic and tested:
 
 - `courier` is available when a `DeliveryAgent` row belongs to the user.
+- `farmer` is available when an `AgricultureFarmer` row belongs to the user.
+- `logistics` is available when the user holds an `ACTIVE` `LogisticsCompanyMember` row. Its tasks,
+  attention items and navigation carry that company id, so nothing has to be guessed in the browser.
 - `seller` is available when `studioIdentityFor()` resolves an approved vendor (business-linked or
   legacy owner) — the same rule the studio already uses.
 - `buyer` is always available.
@@ -80,6 +83,14 @@ Experience resolution is deterministic and tested:
 | RFQ / wholesale | Request quantities | `/b2b/rfq/new` |
 | Group buying | Buy together | `/vendor/group-buy/new` |
 | Courier jobs | My deliveries, My earnings | `/courier` |
+| Farm records | Record a harvest | `/agriculture/farm-management` |
+| Produce listings | List produce | `/agriculture/farmer` |
+| Harvest agreements | My agreements | `/agriculture/contracts` |
+| Farmer groups | My groups | `/agriculture/groups` |
+| Company dispatch | Dispatch a delivery | `/logistics/[companyId]/dispatch` |
+| Company jobs | Company deliveries | `/logistics/[companyId]/jobs` |
+| Company clients | Clients | `/logistics/[companyId]/clients` |
+| Company team | Team | `/logistics/[companyId]/members` |
 
 Adding a capability means adding one row here plus one `WorkspaceTask`; it does not mean adding a
 menu item to everyone's home screen.
@@ -90,13 +101,13 @@ menu item to everyone's home screen.
 
 ### Mobile (default)
 
-| Destination | Seller | Buyer | Courier |
-| --- | --- | --- | --- |
-| Home | `/workspace` | `/workspace` | `/workspace` |
-| Explore | `/products` | `/products` | `/products` |
-| Activities | `/vendor/orders` | `/account/orders` | `/courier` |
-| Messages | `/vendor/messages` | `/messages` | `/messages` |
-| More | `/account` | `/account` | `/account` |
+| Destination | Seller | Farmer | Logistics | Buyer | Courier |
+| --- | --- | --- | --- | --- | --- |
+| Home | `/workspace` | `/workspace` | `/workspace` | `/workspace` | `/workspace` |
+| Explore | `/products` | `/products` | `/products` | `/products` | `/products` |
+| Activities | `/vendor/orders` | `/agriculture/farm-management` | `/logistics/[companyId]/dispatch` | `/account/orders` | `/courier` |
+| Messages | `/vendor/messages` | `/messages` | `/messages` | `/messages` | `/messages` |
+| More | `/account` | `/account` | `/account` | `/account` | `/account` |
 
 - Five destinations maximum, persistent, with `aria-current="page"` and safe-area padding.
 - The universal **Create** launcher is a single entry point whose catalogue is role-filtered.

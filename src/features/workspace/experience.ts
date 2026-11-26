@@ -10,14 +10,24 @@
  * locales.
  */
 
-export const EXPERIENCES = ["seller", "buyer", "courier"] as const;
+export const EXPERIENCES = ["seller", "farmer", "logistics", "courier", "buyer"] as const;
 
 export type ExperienceId = (typeof EXPERIENCES)[number];
 
 export interface ExperienceAvailability {
   seller: boolean;
-  buyer: boolean;
+  farmer: boolean;
+  logistics: boolean;
   courier: boolean;
+  buyer: boolean;
+}
+
+/**
+ * Links that need an identifier the pure layer cannot invent. The caller reads
+ * it from the server snapshot; nothing here is trusted for authorization.
+ */
+export interface ExperienceContext {
+  logisticsCompanyId?: string | null;
 }
 
 export type WorkspaceIcon =
@@ -36,6 +46,9 @@ export type WorkspaceIcon =
   | "home"
   | "compass"
   | "activity"
+  | "sprout"
+  | "wheat"
+  | "building"
   | "more";
 
 export interface WorkspaceTask {
@@ -160,9 +173,95 @@ const COURIER_TASKS: WorkspaceTask[] = [
   },
 ];
 
+const FARMER_TASKS: WorkspaceTask[] = [
+  {
+    id: "record-harvest",
+    labelKey: "workspace.tasks.recordHarvest",
+    bodyKey: "workspace.tasks.recordHarvestBody",
+    href: "/agriculture/farm-management",
+    icon: "sprout",
+  },
+  {
+    id: "sell-produce",
+    labelKey: "workspace.tasks.sellProduce",
+    bodyKey: "workspace.tasks.sellProduceBody",
+    href: "/agriculture/farmer",
+    icon: "wheat",
+  },
+  {
+    id: "my-contracts",
+    labelKey: "workspace.tasks.myContracts",
+    bodyKey: "workspace.tasks.myContractsBody",
+    href: "/agriculture/contracts",
+    icon: "list",
+  },
+  {
+    id: "my-groups",
+    labelKey: "workspace.tasks.myGroups",
+    bodyKey: "workspace.tasks.myGroupsBody",
+    href: "/agriculture/groups",
+    icon: "users",
+  },
+];
+
+/** A logistics company member works inside one company, so links carry its id. */
+function logisticsHref(companyId: string | null, path = ""): string {
+  return companyId ? `/logistics/${companyId}${path}` : "/logistics";
+}
+
+function logisticsTasks(companyId: string | null): WorkspaceTask[] {
+  if (!companyId) {
+    return [
+      {
+        id: "open-network",
+        labelKey: "workspace.tasks.openNetwork",
+        bodyKey: "workspace.tasks.openNetworkBody",
+        href: "/logistics",
+        icon: "building",
+      },
+    ];
+  }
+
+  return [
+    {
+      id: "dispatch",
+      labelKey: "workspace.tasks.dispatch",
+      bodyKey: "workspace.tasks.dispatchBody",
+      href: logisticsHref(companyId, "/dispatch"),
+      icon: "truck",
+    },
+    {
+      id: "company-deliveries",
+      labelKey: "workspace.tasks.companyDeliveries",
+      bodyKey: "workspace.tasks.companyDeliveriesBody",
+      href: logisticsHref(companyId, "/jobs"),
+      icon: "package",
+    },
+    {
+      id: "clients",
+      labelKey: "workspace.tasks.clients",
+      bodyKey: "workspace.tasks.clientsBody",
+      href: logisticsHref(companyId, "/clients"),
+      icon: "users",
+    },
+    {
+      id: "team",
+      labelKey: "workspace.tasks.team",
+      bodyKey: "workspace.tasks.teamBody",
+      href: logisticsHref(companyId, "/members"),
+      icon: "building",
+    },
+  ];
+}
+
 /** The four (or three) things this person most likely opened the app to do. */
-export function tasksFor(experience: ExperienceId): WorkspaceTask[] {
+export function tasksFor(
+  experience: ExperienceId,
+  context: ExperienceContext = {},
+): WorkspaceTask[] {
   if (experience === "seller") return SELLER_TASKS;
+  if (experience === "farmer") return FARMER_TASKS;
+  if (experience === "logistics") return logisticsTasks(context.logisticsCompanyId ?? null);
   if (experience === "courier") return COURIER_TASKS;
   return BUYER_TASKS;
 }
@@ -171,7 +270,58 @@ export function tasksFor(experience: ExperienceId): WorkspaceTask[] {
  * The universal Create catalogue. The same launcher serves every role; only the
  * actions that make sense for the active experience are listed.
  */
-export function actionsFor(experience: ExperienceId): WorkspaceTask[] {
+export function actionsFor(
+  experience: ExperienceId,
+  context: ExperienceContext = {},
+): WorkspaceTask[] {
+  if (experience === "farmer") {
+    return [
+      FARMER_TASKS[1]!,
+      FARMER_TASKS[0]!,
+      {
+        id: "farm-delivery",
+        labelKey: "workspace.actions.farmDelivery",
+        bodyKey: "workspace.actions.farmDeliveryBody",
+        href: "/agriculture/logistics",
+        icon: "truck",
+      },
+      {
+        id: "ask-assistant",
+        labelKey: "workspace.actions.askAssistant",
+        bodyKey: "workspace.actions.askAssistantBody",
+        href: "/agriculture/assistant",
+        icon: "compass",
+      },
+    ];
+  }
+
+  if (experience === "logistics") {
+    const companyId = context.logisticsCompanyId ?? null;
+    return [
+      {
+        id: "new-delivery",
+        labelKey: "workspace.actions.newDelivery",
+        bodyKey: "workspace.actions.newDeliveryBody",
+        href: companyId ? logisticsHref(companyId, "/dispatch") : "/delivery/request",
+        icon: "truck",
+      },
+      {
+        id: "add-client",
+        labelKey: "workspace.actions.addClient",
+        bodyKey: "workspace.actions.addClientBody",
+        href: logisticsHref(companyId, "/clients"),
+        icon: "users",
+      },
+      {
+        id: "invite-member",
+        labelKey: "workspace.actions.inviteMember",
+        bodyKey: "workspace.actions.inviteMemberBody",
+        href: logisticsHref(companyId, "/members"),
+        icon: "building",
+      },
+    ];
+  }
+
   if (experience === "seller") {
     return [
       SELLER_TASKS[0]!,
@@ -245,18 +395,27 @@ export function actionsFor(experience: ExperienceId): WorkspaceTask[] {
  */
 export function createHintKey(experience: ExperienceId): string {
   if (experience === "seller") return "workspace.create.hintSeller";
+  if (experience === "farmer") return "workspace.create.hintFarmer";
+  if (experience === "logistics") return "workspace.create.hintLogistics";
   if (experience === "courier") return "workspace.create.hintCourier";
   return "workspace.create.hintBuyer";
 }
 
 /** Five destinations at most, so a phone screen never needs a menu maze. */
-export function navFor(experience: ExperienceId): WorkspaceNavItem[] {
+export function navFor(
+  experience: ExperienceId,
+  context: ExperienceContext = {},
+): WorkspaceNavItem[] {
   const activitiesHref =
     experience === "seller"
       ? "/vendor/orders"
-      : experience === "courier"
-        ? "/courier"
-        : "/account/orders";
+      : experience === "farmer"
+        ? "/agriculture/farm-management"
+        : experience === "logistics"
+          ? logisticsHref(context.logisticsCompanyId ?? null, "/dispatch")
+          : experience === "courier"
+            ? "/courier"
+            : "/account/orders";
   const messagesHref = experience === "seller" ? "/vendor/messages" : "/messages";
 
   return [
@@ -281,6 +440,9 @@ export interface AttentionInput {
   activeDeliveries: number;
   buyerOpenOrders: number;
   savedProducts: number;
+  pendingAgreements: number;
+  openOpportunities: number;
+  logisticsCompanyId: string | null;
 }
 
 export interface AttentionItem {
@@ -337,6 +499,64 @@ export function buildAttention(experience: ExperienceId, input: AttentionInput):
         bodyKey: "workspace.attention.messagesBody",
         count: input.unreadMessages,
         href: "/vendor/messages",
+        tone: "info",
+      });
+    }
+    return items;
+  }
+
+  if (experience === "farmer") {
+    if (input.pendingAgreements > 0) {
+      items.push({
+        id: "agreements",
+        labelKey: "workspace.attention.agreements",
+        bodyKey: "workspace.attention.agreementsBody",
+        count: input.pendingAgreements,
+        href: "/agriculture/contracts",
+        tone: "warning",
+      });
+    }
+    if (input.unreadMessages > 0) {
+      items.push({
+        id: "messages",
+        labelKey: "workspace.attention.messages",
+        bodyKey: "workspace.attention.messagesBody",
+        count: input.unreadMessages,
+        href: "/messages",
+        tone: "info",
+      });
+    }
+    return items;
+  }
+
+  if (experience === "logistics") {
+    if (input.activeDeliveries > 0) {
+      items.push({
+        id: "deliveries",
+        labelKey: "workspace.attention.deliveries",
+        bodyKey: "workspace.attention.deliveriesBody",
+        count: input.activeDeliveries,
+        href: logisticsHref(input.logisticsCompanyId, "/jobs"),
+        tone: "warning",
+      });
+    }
+    if (input.openOpportunities > 0) {
+      items.push({
+        id: "opportunities",
+        labelKey: "workspace.attention.opportunities",
+        bodyKey: "workspace.attention.opportunitiesBody",
+        count: input.openOpportunities,
+        href: logisticsHref(input.logisticsCompanyId, "/opportunities"),
+        tone: "info",
+      });
+    }
+    if (input.unreadMessages > 0) {
+      items.push({
+        id: "messages",
+        labelKey: "workspace.attention.messages",
+        bodyKey: "workspace.attention.messagesBody",
+        count: input.unreadMessages,
+        href: "/messages",
         tone: "info",
       });
     }
