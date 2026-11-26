@@ -1,7 +1,7 @@
 # Agriculture Business Network — Phase 11 Proposal
 
-**Status: IN PROGRESS — Phases A–B implemented behind `phase11.agricultureNetwork`
-(seeded disabled). Phases C–F remain proposed.**
+**Status: IN PROGRESS — Phases A–C implemented behind `phase11.agricultureNetwork`
+(seeded disabled). Phases D–F remain proposed.**
 
 This is the repo-first specification for the Agriculture Business Network described
 in the product brief. The goal is a vertical built on the existing platform core —
@@ -53,7 +53,7 @@ and AI — not a second application or a duplicate commerce engine.
 |---|---|---|
 | **A — Agricultural marketplace (done)** | Farmer/farm profiles, plots, produce listings, buyer discovery, quotations, orders, verified payments | A buyer can transact with a farmer through shared `Order`/`Payment`; no cross-tenant reads |
 | **B — Inputs and services (done)** | Verified input catalogue (incl. manure/compost), service providers, quotations and bookings | Sensitive inputs require verification; bookings never double-book a provider |
-| **C — Farm management** | Crop cycles, activities, expenses, harvest batches, per-kg cost, seasonal records | Cost math tested; production data owned by farm member only |
+| **C — Farm management (done)** | Crop cycles, activities, expenses, harvest batches, per-kg cost, seasonal records | Cost math tested; production data owned by farm member only |
 | **D — Agricultural logistics** | Farm pickup, bulk delivery, collection centres, storage listings, logistics-company jobs | Uses existing delivery engine; no duplicate assignment system |
 | **E — Cooperatives and contracts** | Farmer groups, aggregated supply, bulk buyer requests, harvest purchase agreements | Group actions authorized; contracts snapshot quantity, quality and pricing |
 | **F — AI and intelligence** | Opt-in crop planning, cost/yield assistance, market intelligence and buyer matching | Deterministic baseline fallback; no PII or invented agronomic advice |
@@ -103,6 +103,16 @@ Permission keys: `agriculture.farm.manage`, `agriculture.trade.manage`,
   payment is marked paid on checkout return.
 - Migration `20261128000000_phase11_agriculture_b`; tests in
   `tests/unit/agriculture-b.test.ts`.
+
+### Phase C acceptance
+
+- Crop cycles, activities, expenses and harvest batches are scoped to the
+  session-resolved farmer; farm and plot ownership is verified on every mutation.
+- Production cost per kilogram is computed from recorded expenses and recorded
+  harvest weights in integer minor units. Expected harvest is never treated as
+  realised income or included in cost calculations.
+- Migration `20261129000000_phase11_agriculture_c`; tests in
+  `tests/unit/agriculture-c.test.ts`.
 
 ## 5. Next step
 

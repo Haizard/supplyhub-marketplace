@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 
 import {
   FarmForm,
@@ -48,6 +49,9 @@ export default async function FarmerPortalPage() {
             {farmer.verificationStatus}
           </Badge>
         ) : null}
+        <Link href="/agriculture/farm-management" className="text-xs text-accent underline">
+          Farm management
+        </Link>
       </header>
 
       {!enabled ? (
