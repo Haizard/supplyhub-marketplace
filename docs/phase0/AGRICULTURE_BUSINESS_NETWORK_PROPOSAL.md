@@ -1,7 +1,7 @@
 # Agriculture Business Network — Phase 11 Proposal
 
-**Status: IN PROGRESS — Phase A implemented behind `phase11.agricultureNetwork`
-(seeded disabled). Phases B–F remain proposed.**
+**Status: IN PROGRESS — Phases A–B implemented behind `phase11.agricultureNetwork`
+(seeded disabled). Phases C–F remain proposed.**
 
 This is the repo-first specification for the Agriculture Business Network described
 in the product brief. The goal is a vertical built on the existing platform core —
@@ -52,7 +52,7 @@ and AI — not a second application or a duplicate commerce engine.
 | Phase | Deliverable | Gate |
 |---|---|---|
 | **A — Agricultural marketplace (done)** | Farmer/farm profiles, plots, produce listings, buyer discovery, quotations, orders, verified payments | A buyer can transact with a farmer through shared `Order`/`Payment`; no cross-tenant reads |
-| **B — Inputs and services** | Verified input catalogue (incl. manure/compost), service providers, quotations and bookings | Sensitive inputs require verification; bookings never double-book a provider |
+| **B — Inputs and services (done)** | Verified input catalogue (incl. manure/compost), service providers, quotations and bookings | Sensitive inputs require verification; bookings never double-book a provider |
 | **C — Farm management** | Crop cycles, activities, expenses, harvest batches, per-kg cost, seasonal records | Cost math tested; production data owned by farm member only |
 | **D — Agricultural logistics** | Farm pickup, bulk delivery, collection centres, storage listings, logistics-company jobs | Uses existing delivery engine; no duplicate assignment system |
 | **E — Cooperatives and contracts** | Farmer groups, aggregated supply, bulk buyer requests, harvest purchase agreements | Group actions authorized; contracts snapshot quantity, quality and pricing |
@@ -90,6 +90,19 @@ Permission keys: `agriculture.farm.manage`, `agriculture.trade.manage`,
   through the existing LynxPay flow — no payment is marked paid on checkout return.
 - Migration `20261127000000_phase11_agriculture_a`; tests in
   `tests/unit/agriculture-a.test.ts`.
+
+### Phase B acceptance
+
+- Suppliers are verified by an administrator at `/admin/agriculture`. Regulated
+  input categories (seed, fertilizer, crop protection, feed, veterinary) require
+  a registration/licence reference; spraying, soil testing and agronomy services
+  require a qualification reference. Organic/certified claims are unverified.
+- Bookings follow REQUESTED → QUOTED → CONFIRMED → IN_PROGRESS → COMPLETED with
+  cancellation, and confirmed jobs cannot overlap on the same provider day.
+- Input purchases create a shared `Order` and start verified LynxPay payment; no
+  payment is marked paid on checkout return.
+- Migration `20261128000000_phase11_agriculture_b`; tests in
+  `tests/unit/agriculture-b.test.ts`.
 
 ## 5. Next step
 

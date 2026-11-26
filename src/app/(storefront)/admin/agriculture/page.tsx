@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 
 import { VerifyFarmerForm } from "@/components/agriculture/forms";
+import { VerifySupplierForm } from "@/components/agriculture/supplier-forms";
 import { PageShell } from "@/components/storefront/page-shell";
 import { isFeatureEnabled } from "@/features/flags/service";
 import { listPendingFarmers } from "@/features/agriculture/queries";
+import { listPendingSuppliers } from "@/features/agriculture/supplier-queries";
 import { requireAdmin } from "@/server/auth/guards";
 
 export const metadata: Metadata = {
@@ -14,7 +16,7 @@ export const metadata: Metadata = {
 export default async function AdminAgriculturePage() {
   await requireAdmin();
   const enabled = await isFeatureEnabled("phase11.agricultureNetwork");
-  const farmers = await listPendingFarmers();
+  const [farmers, suppliers] = await Promise.all([listPendingFarmers(), listPendingSuppliers()]);
 
   return (
     <PageShell className="space-y-6 py-8">
@@ -46,6 +48,27 @@ export default async function AdminAgriculturePage() {
       {farmers.length === 0 ? (
         <p className="text-sm text-muted-foreground">No pending farmers.</p>
       ) : null}
+
+      <section className="space-y-3">
+        <h2 className="font-display text-lg font-medium">Suppliers awaiting verification</h2>
+        {suppliers.map((supplier) => (
+          <article
+            key={supplier.id}
+            className="space-y-2 rounded-xl border border-border bg-surface p-5 text-sm"
+          >
+            <p className="font-medium">
+              {supplier.businessName} · {supplier.type}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {supplier.name} · {supplier.email}
+            </p>
+            <VerifySupplierForm supplierId={supplier.id} />
+          </article>
+        ))}
+        {suppliers.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No pending suppliers.</p>
+        ) : null}
+      </section>
     </PageShell>
   );
 }

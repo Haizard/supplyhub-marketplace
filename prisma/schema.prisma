@@ -503,6 +503,11 @@ enum AuditAction {
   AGRICULTURE_OFFER_SUBMITTED
   AGRICULTURE_OFFER_DECIDED
   AGRICULTURE_CONTRACT_CREATED
+  AGRICULTURE_SUPPLIER_VERIFIED
+  AGRICULTURE_INPUT_PUBLISHED
+  AGRICULTURE_SERVICE_PUBLISHED
+  AGRICULTURE_BOOKING_CHANGED
+  AGRICULTURE_INPUT_ORDER_CREATED
 }
 
 model User {
@@ -562,6 +567,7 @@ model User {
   installmentDisputes       InstallmentDispute[] @relation("InstallmentDisputeOpener")
   installmentSignatures     InstallmentContractSignature[] @relation("InstallmentSigner")
   agricultureFarmer         AgricultureFarmer? @relation("AgricultureFarmerUser")
+  agricultureSupplier       AgriculturalSupplier? @relation("AgricultureSupplierUser")
   createdAt                 DateTime                @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt                 DateTime                @updatedAt @map("updated_at") @db.Timestamptz(6)
 
@@ -1066,6 +1072,7 @@ model Order {
   vendorOrders         VendorOrder[]
   installmentAgreements InstallmentAgreement[]
   agricultureContracts AgriculturalContract[]
+  agriculturalInputOrders AgriculturalInputOrder[]
   items                OrderItem[]
   payments             Payment[]
   refunds              Refund[]
@@ -4665,6 +4672,8 @@ model AgricultureFarmer {
   listings          AgriculturalListing[]
   offers            AgriculturalOffer[]
   contracts         AgriculturalContract[]
+  bookings          AgriculturalServiceBooking[]
+  inputOrders       AgriculturalInputOrder[]
 
   @@index([verificationStatus, createdAt])
   @@map("agriculture_farmers")
@@ -4809,4 +4818,187 @@ model AgriculturalContract {
   @@index([farmerId, status])
   @@index([buyerUserId, status])
   @@map("agricultural_contracts")
+}
+
+// ── Phase 11 B: agricultural inputs and services ─────────────────────────────
+
+enum AgricultureSupplierType {
+  INPUT
+  SERVICE
+  BOTH
+}
+
+enum AgriculturalInputCategory {
+  SEED
+  FERTILIZER
+  MANURE_COMPOST
+  CROP_PROTECTION
+  ANIMAL_FEED
+  VETERINARY
+  TOOL
+  IRRIGATION
+  EQUIPMENT
+  OTHER
+}
+
+enum AgriculturalInputStatus {
+  DRAFT
+  PUBLISHED
+  SUSPENDED
+}
+
+enum AgriculturalServiceType {
+  TRACTOR
+  PLOUGHING
+  PLANTING
+  SPRAYING
+  HARVESTING
+  IRRIGATION
+  SOIL_TESTING
+  AGRONOMY
+  TRANSPORT
+  STORAGE
+  LABOUR
+}
+
+enum AgriculturalServiceStatus {
+  DRAFT
+  PUBLISHED
+  SUSPENDED
+}
+
+enum AgriculturalBookingStatus {
+  REQUESTED
+  QUOTED
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum AgriculturalInputOrderStatus {
+  PENDING_PAYMENT
+  PAID
+  CANCELLED
+}
+
+model AgriculturalSupplier {
+  id                 String                  @id @default(uuid()) @db.Uuid
+  userId             String                  @unique @map("user_id") @db.Uuid
+  user               User                    @relation("AgricultureSupplierUser", fields: [userId], references: [id], onDelete: Cascade)
+  type               AgricultureSupplierType
+  verificationStatus AgricultureVerificationStatus @default(PENDING) @map("verification_status")
+  businessName       String                  @map("business_name") @db.VarChar(160)
+  registrationNumber String?                 @map("registration_number") @db.VarChar(120)
+  licenseReference   String?                 @map("license_reference") @db.VarChar(160)
+  insuranceReference String?                 @map("insurance_reference") @db.VarChar(160)
+  phone              String?                 @db.VarChar(40)
+  region             String?                 @db.VarChar(120)
+  district           String?                 @db.VarChar(120)
+  verifiedById       String?                 @map("verified_by_id") @db.Uuid
+  verifiedAt         DateTime?               @map("verified_at") @db.Timestamptz(6)
+  createdAt          DateTime                @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime                @updatedAt @map("updated_at") @db.Timestamptz(6)
+  inputs             AgriculturalInput[]
+  services           AgriculturalService[]
+  inputOrders        AgriculturalInputOrder[]
+
+  @@index([verificationStatus, type])
+  @@map("agricultural_suppliers")
+}
+
+model AgriculturalInput {
+  id               String                  @id @default(uuid()) @db.Uuid
+  supplierId       String                  @map("supplier_id") @db.Uuid
+  supplier         AgriculturalSupplier    @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  name             String                  @db.VarChar(160)
+  category         AgriculturalInputCategory
+  description      String?                 @db.Text
+  quantity         Decimal                 @db.Decimal(14, 2)
+  unit             AgriculturalUnit
+  pricePerUnit     Decimal                 @map("price_per_unit") @db.Decimal(14, 2)
+  currency         String                  @db.VarChar(3)
+  minimumOrder     Decimal                 @map("minimum_order") @db.Decimal(14, 2)
+  treatmentStatus  String?                 @map("treatment_status") @db.VarChar(160)
+  registrationRef  String?                 @map("registration_ref") @db.VarChar(160)
+  safetyNotes      String?                 @map("safety_notes") @db.Text
+  organicClaim     Boolean                 @default(false) @map("organic_claim")
+  status           AgriculturalInputStatus @default(DRAFT)
+  publishedAt      DateTime?               @map("published_at") @db.Timestamptz(6)
+  createdAt        DateTime                @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime                @updatedAt @map("updated_at") @db.Timestamptz(6)
+  orders           AgriculturalInputOrder[]
+
+  @@index([status, category])
+  @@index([supplierId, createdAt])
+  @@map("agricultural_inputs")
+}
+
+model AgriculturalService {
+  id               String                  @id @default(uuid()) @db.Uuid
+  supplierId       String                  @map("supplier_id") @db.Uuid
+  supplier         AgriculturalSupplier    @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  serviceType      AgriculturalServiceType @map("service_type")
+  title            String                  @db.VarChar(160)
+  description      String?                 @db.Text
+  rateAmount       Decimal                 @map("rate_amount") @db.Decimal(14, 2)
+  rateUnit         String                  @map("rate_unit") @db.VarChar(40)
+  currency         String                  @db.VarChar(3)
+  serviceArea      String?                 @map("service_area") @db.VarChar(200)
+  qualificationRef String?                 @map("qualification_ref") @db.VarChar(160)
+  status           AgriculturalServiceStatus @default(DRAFT)
+  publishedAt      DateTime?               @map("published_at") @db.Timestamptz(6)
+  createdAt        DateTime                @default(now()) @map("created_at") @db.Timestamptz(6)
+  bookings         AgriculturalServiceBooking[]
+
+  @@index([status, serviceType])
+  @@map("agricultural_services")
+}
+
+model AgriculturalServiceBooking {
+  id          String                   @id @default(uuid()) @db.Uuid
+  bookingNumber String                 @unique @map("booking_number") @db.VarChar(40)
+  serviceId   String                   @map("service_id") @db.Uuid
+  service     AgriculturalService      @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  supplierId  String                   @map("supplier_id") @db.Uuid
+  farmerId    String                   @map("farmer_id") @db.Uuid
+  farmer      AgricultureFarmer        @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+  requestedAt DateTime                 @default(now()) @map("requested_at") @db.Timestamptz(6)
+  requestedFor DateTime                 @map("requested_for") @db.Timestamptz(6)
+  scheduledAt DateTime?                @map("scheduled_at") @db.Timestamptz(6)
+  quoteAmount Decimal?                 @map("quote_amount") @db.Decimal(14, 2)
+  currency    String                   @db.VarChar(3)
+  quoteNote   String?                  @map("quote_note") @db.VarChar(500)
+  status      AgriculturalBookingStatus @default(REQUESTED)
+  completedAt DateTime?                @map("completed_at") @db.Timestamptz(6)
+  cancelledAt DateTime?                @map("cancelled_at") @db.Timestamptz(6)
+  cancellationReason String?           @map("cancellation_reason") @db.VarChar(500)
+  createdAt   DateTime                 @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([supplierId, status, scheduledAt])
+  @@index([farmerId, status])
+  @@map("agricultural_service_bookings")
+}
+
+model AgriculturalInputOrder {
+  id          String                     @id @default(uuid()) @db.Uuid
+  supplierId  String                     @map("supplier_id") @db.Uuid
+  supplier    AgriculturalSupplier       @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  inputId     String                     @map("input_id") @db.Uuid
+  input       AgriculturalInput          @relation(fields: [inputId], references: [id], onDelete: Cascade)
+  farmerId    String                     @map("farmer_id") @db.Uuid
+  farmer      AgricultureFarmer          @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+  quantity    Decimal                    @db.Decimal(14, 2)
+  unit        AgriculturalUnit
+  total       Decimal                    @db.Decimal(14, 2)
+  currency    String                     @db.VarChar(3)
+  status      AgriculturalInputOrderStatus @default(PENDING_PAYMENT)
+  orderId     String?                    @map("order_id") @db.Uuid
+  order       Order?                     @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  termsSnapshot Json                     @map("terms_snapshot")
+  createdAt   DateTime                   @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([farmerId, status])
+  @@index([supplierId, createdAt])
+  @@map("agricultural_input_orders")
 }
