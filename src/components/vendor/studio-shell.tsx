@@ -69,6 +69,14 @@ export async function StudioShell({
           </div>
 
           <div className="ml-auto flex min-w-0 items-center gap-1.5 sm:gap-2">
+            <Button
+              asChild
+              variant="ghost"
+              size="sm"
+              className="hidden gap-1.5 px-2.5 text-muted-foreground hover:text-foreground lg:inline-flex"
+            >
+              <Link href="/workspace">{t("workspace.myDay")}</Link>
+            </Button>
             {businesses.length > 1 ? (
               <form
                 action={switchActiveBusinessAction}

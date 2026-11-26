@@ -12,6 +12,12 @@ import { getDatabase } from "@/server/db/client";
 
 const switchSchema = z.object({
   businessId: z.uuid(),
+  // Optional same-site return path, so switching from the workspace stays there.
+  next: z
+    .string()
+    .startsWith("/")
+    .refine((value) => !value.startsWith("//"), { error: "Use an internal path." })
+    .optional(),
 });
 
 function activeBusinessCookieOptions() {
@@ -38,7 +44,10 @@ export async function switchActiveBusinessAction(formData: FormData): Promise<vo
     redirect("/sign-in?next=%2Fvendor");
   }
 
-  const parsed = switchSchema.safeParse({ businessId: formData.get("businessId") });
+  const parsed = switchSchema.safeParse({
+    businessId: formData.get("businessId"),
+    next: formData.get("next") || undefined,
+  });
 
   if (!parsed.success) {
     redirect("/vendor");
@@ -65,5 +74,5 @@ export async function switchActiveBusinessAction(formData: FormData): Promise<vo
   });
 
   revalidatePath("/vendor", "layout");
-  redirect("/vendor");
+  redirect(parsed.data.next ?? "/vendor");
 }
