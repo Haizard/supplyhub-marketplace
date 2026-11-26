@@ -1266,10 +1266,11 @@ try {
     ],
   );
 
-  // Phase 10: seller-funded installments stay off until an administrator enables them.
+  // Phase 10: operator-approved on 2026-11-26. Seller-funded installments are live;
+  // regulated financing remains record-only (no partner calls or disbursement).
   await client.query(
     `INSERT INTO feature_flags (id, key, name, description, enabled, created_at, updated_at)
-     VALUES (gen_random_uuid(), $1, $2, $3, false, now(), now())
+     VALUES (gen_random_uuid(), $1, $2, $3, true, now(), now())
      ON CONFLICT (key) DO NOTHING`,
     [
       "phase10.installmentSales",
@@ -1278,10 +1279,10 @@ try {
     ],
   );
 
-  // Phase 10: financing partner interface is prepared but must stay off until approved.
+  // Phase 10: financing partner workflow is operator-approved but remains record-only.
   await client.query(
     `INSERT INTO feature_flags (id, key, name, description, enabled, created_at, updated_at)
-     VALUES (gen_random_uuid(), $1, $2, $3, false, now(), now())
+     VALUES (gen_random_uuid(), $1, $2, $3, true, now(), now())
      ON CONFLICT (key) DO NOTHING`,
     [
       "phase10.installmentFinancing",

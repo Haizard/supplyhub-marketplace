@@ -1,7 +1,9 @@
 # Installment Sales — Seller-Funded Phase 10 Proposal
 
-**Status: DELIVERED — slices I1–I9 implemented behind `phase10.installmentSales`
-and `phase10.installmentFinancing` (both seeded disabled).**
+**Status: DELIVERED — slices I1–I9 implemented. Operator approved activation on
+2026-11-26; both `phase10.installmentSales` and `phase10.installmentFinancing`
+are enabled. Financing remains record-only: no partner calls, credit decisions,
+payouts or money movement by the platform.**
 
 This document records the repository-first decisions for the Installment Sales /
 BNPL / layaway capability requested in the product brief. The platform implements
@@ -149,9 +151,10 @@ code was written:
 - Advanced reports compute receivables aging (0/1–30/31–60/60+ days), collection
   forecast horizons (30/60/90 days) and repayment KPIs from stored schedules.
 - The financing interface records an application only when the separate
-  `phase10.installmentFinancing` flag is enabled (seeded disabled). It makes no
-  provider call, credit decision, payout or money movement. I9 adds admin decision,
+  `phase10.installmentFinancing` flag is enabled. I9 adds admin decision,
   buyer acceptance and partner funding-reference records at
-  `/admin/installments/financing`; the platform still disburses nothing. Local
-  compliance approval is required before the flag may be enabled.
-- Migration `20261125500000_phase10_installments_i6_i8` and `20261126000000_phase10_installments_i9`.
+  `/admin/installments/financing`; the platform still disburses nothing. The
+  operator approved activation on 2026-11-26; migration
+  `20261126100000_enable_installment_flags` enables both flags and `scripts/seed.mjs`
+  seeds them enabled for fresh deployments. Full regulated credit disbursement
+  remains out of scope.

@@ -470,7 +470,7 @@ slices (L1–L12) are implemented**; live AI remains opt-in via the existing
 ## Phase 10 — Installment Sales (PROPOSAL: `docs/phase0/INSTALLMENT_SALES_PROPOSAL.md`)
 
 Seller-funded installment agreements shared by marketplace and Business OS
-sales. Behind `phase10.installmentSales` (seeded disabled).
+sales. Behind `phase10.installmentSales` (operator-enabled 2026-11-26).
 
 - **I1 — DELIVERED** Seller settings, agreement creation with immutable price/terms
   snapshot, deterministic schedule generation, buyer acceptance and
@@ -488,8 +488,8 @@ sales. Behind `phase10.installmentSales` (seeded disabled).
 - **I6–I8 — DELIVERED** Versioned two-party signed contracts, amendment history,
   aging/forecast/KPI reporting, and a disabled financing-partner interface with no
   money movement.
-- **I9 — DELIVERED (compliance-gated)** Partner offer decision, buyer acceptance and
-  funding-reference recording behind the disabled `phase10.installmentFinancing`
+- **I9 — DELIVERED (compliance-gated, enabled)** Partner offer decision, buyer acceptance and
+  funding-reference recording behind the `phase10.installmentFinancing`
   flag. No disbursement, credit decision or provider call is made by the platform.
   Admin queue at `/admin/installments/financing`.
 
@@ -519,5 +519,5 @@ Phase 8 (Trust & Operations)         ← DONE — requires Phase 7 and the payme
     ↓
 Phase 9 (Logistics Business Network) ← DELIVERED — L1-L12 done
     ↓
-Phase 10 (Installment Sales)          ← DELIVERED — I1-I9 done, flags off
+Phase 10 (Installment Sales)          ← DELIVERED — I1-I9 done, flags enabled
 ```
