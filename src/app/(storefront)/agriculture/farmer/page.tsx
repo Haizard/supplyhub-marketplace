@@ -61,6 +61,9 @@ export default async function FarmerPortalPage() {
         <Link href="/agriculture/contracts" className="ml-3 text-xs text-accent underline">
           Contracts
         </Link>
+        <Link href="/agriculture/assistant" className="ml-3 text-xs text-accent underline">
+          Assistant
+        </Link>
       </header>
 
       {!enabled ? (

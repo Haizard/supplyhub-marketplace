@@ -521,6 +521,7 @@ enum AuditAction {
   AGRICULTURE_AGREEMENT_CREATED
   AGRICULTURE_AGREEMENT_CHANGED
   AGRICULTURE_DELIVERY_RECORDED
+  AGRICULTURE_ADVICE_GENERATED
 }
 
 model User {
@@ -4699,6 +4700,7 @@ model AgricultureFarmer {
   coordinatedGroups FarmerGroup[] @relation("FarmerGroupCoordinator")
   groupMemberships  FarmerGroupMember[]
   harvestAgreements HarvestPurchaseAgreement[]
+  advice            AgricultureAdvice[]
 
   @@index([verificationStatus, createdAt])
   @@map("agriculture_farmers")
@@ -5383,4 +5385,30 @@ model HarvestDeliveryRecord {
 
   @@index([agreementId, deliveredAt])
   @@map("harvest_delivery_records")
+}
+
+// ── Phase 11 F: advisory agriculture assistant ───────────────────────────────
+
+enum AgricultureAdviceSource {
+  BASELINE
+  AI
+}
+
+model AgricultureAdvice {
+  id          String                  @id @default(uuid()) @db.Uuid
+  farmerId    String                  @map("farmer_id") @db.Uuid
+  farmer      AgricultureFarmer       @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+  requestId   String                  @unique @map("request_id") @db.VarChar(40)
+  question    String                  @db.Text
+  language    String                  @db.VarChar(8)
+  source      AgricultureAdviceSource
+  model       String?                 @db.VarChar(80)
+  signalsHash String                  @map("signals_hash") @db.VarChar(64)
+  baseline    Json
+  advice      Json
+  note        String?                 @db.VarChar(500)
+  createdAt   DateTime                @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([farmerId, createdAt])
+  @@map("agriculture_advice")
 }

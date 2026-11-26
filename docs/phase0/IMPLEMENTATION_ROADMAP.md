@@ -498,11 +498,10 @@ sales. Behind `phase10.installmentSales` (operator-enabled 2026-11-26).
 Industry vertical built on the shared platform core, not a second application.
 Behind `phase11.agricultureNetwork` (seeded disabled).
 
-- **A–E — IN PROGRESS** Farmer/farm profiles, produce listings, buyer requests,
-  offers, verified-payment-backed contracts, verified input catalogue, service
-  bookings, crop cycles, expenses, harvests, production costing, farm collection
-  on the shared delivery engine, collection centres, storage, farmer groups and
-  harvest purchase agreements. Phase F (AI) remains proposed.
+- **A–F — DELIVERED** Farmer/farm profiles, produce marketplace, verified inputs and
+  services, farm management with production costing, agricultural logistics on the
+  shared delivery engine, farmer groups/harvest agreements, and an opt-in advisory
+  AI assistant with deterministic fallback.
 
 ---
 
@@ -532,5 +531,5 @@ Phase 9 (Logistics Business Network) ← DELIVERED — L1-L12 done
     ↓
 Phase 10 (Installment Sales)          ← DELIVERED — I1-I9 done, flags enabled
     ↓
-Phase 11 (Agriculture Business Network) ← IN PROGRESS — A-E done, flag off
+Phase 11 (Agriculture Business Network) ← DELIVERED — A-F done, flag off
 ```

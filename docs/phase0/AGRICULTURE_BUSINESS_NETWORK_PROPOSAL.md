@@ -1,7 +1,7 @@
 # Agriculture Business Network — Phase 11 Proposal
 
-**Status: IN PROGRESS — Phases A–E implemented behind `phase11.agricultureNetwork`
-(seeded disabled). Phase F remains proposed.**
+**Status: DELIVERED — Phases A–F implemented behind `phase11.agricultureNetwork`
+(seeded disabled).**
 
 This is the repo-first specification for the Agriculture Business Network described
 in the product brief. The goal is a vertical built on the existing platform core —
@@ -56,7 +56,7 @@ and AI — not a second application or a duplicate commerce engine.
 | **C — Farm management (done)** | Crop cycles, activities, expenses, harvest batches, per-kg cost, seasonal records | Cost math tested; production data owned by farm member only |
 | **D — Agricultural logistics (done)** | Farm pickup, bulk delivery, collection centres, storage listings, logistics-company jobs | Uses existing delivery engine; no duplicate assignment system |
 | **E — Cooperatives and contracts (done)** | Farmer groups, aggregated supply, bulk buyer requests, harvest purchase agreements | Group actions authorized; contracts snapshot quantity, quality and pricing |
-| **F — AI and intelligence** | Opt-in crop planning, cost/yield assistance, market intelligence and buyer matching | Deterministic baseline fallback; no PII or invented agronomic advice |
+| **F — AI and intelligence (done)** | Opt-in crop planning, cost/yield assistance, market intelligence and buyer matching | Deterministic baseline fallback; no PII or invented agronomic advice |
 
 Pilot recommendation: one crop, one region, a small set of farmer groups, verified
 input suppliers and bulk buyers. Validate real listings, grading, delivery and
@@ -138,6 +138,21 @@ Permission keys: `agriculture.farm.manage`, `agriculture.trade.manage`,
   variance is recorded with an auditable tolerance flag.
 - Migration `20261201000000_phase11_agriculture_e`; tests in
   `tests/unit/agriculture-e.test.ts`.
+
+### Phase F acceptance
+
+- The assistant uses only aggregate signals from the farmer's own records: crop
+  names, recorded cost per kg, harvest weights and dates, region, area, offer and
+  input prices. Names, phone numbers, email, village and coordinates never cross
+  the provider boundary; free-text questions are sanitised first.
+- Every recommendation must cite evidence IDs that were supplied to the model.
+  Unknown evidence, malformed output, disabled opt-in and provider failures all
+  fall back to the deterministic record-based answer.
+- Answers are advisory, include a standing caveat that they do not replace laboratory
+  testing or qualified agronomic advice, and are stored with a signals hash and audit
+  event. English and Kiswahili are supported.
+- Migration `20261202000000_phase11_agriculture_f`; tests in
+  `tests/unit/agriculture-f.test.ts`.
 
 ## 5. Next step
 
