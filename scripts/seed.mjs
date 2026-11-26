@@ -1291,6 +1291,18 @@ try {
     ],
   );
 
+  // Phase 11: agriculture network stays off until the pilot is approved.
+  await client.query(
+    `INSERT INTO feature_flags (id, key, name, description, enabled, created_at, updated_at)
+     VALUES (gen_random_uuid(), $1, $2, $3, false, now(), now())
+     ON CONFLICT (key) DO NOTHING`,
+    [
+      "phase11.agricultureNetwork",
+      "Agriculture business network",
+      "Farmer profiles, produce marketplace and agricultural trade.",
+    ],
+  );
+
   // ── Phase 7: Ecosystem demo data ──────────────────────────────────────
   // Services marketplace
   const atelierVendorId = studios[0].id;

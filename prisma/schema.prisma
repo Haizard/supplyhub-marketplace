@@ -498,6 +498,11 @@ enum AuditAction {
   INSTALLMENT_FINANCING_DECIDED
   INSTALLMENT_FINANCING_ACCEPTED
   INSTALLMENT_FINANCING_FUNDED
+  AGRICULTURE_FARMER_VERIFIED
+  AGRICULTURE_LISTING_PUBLISHED
+  AGRICULTURE_OFFER_SUBMITTED
+  AGRICULTURE_OFFER_DECIDED
+  AGRICULTURE_CONTRACT_CREATED
 }
 
 model User {
@@ -556,6 +561,7 @@ model User {
   installmentAgreements     InstallmentAgreement[] @relation("InstallmentBuyer")
   installmentDisputes       InstallmentDispute[] @relation("InstallmentDisputeOpener")
   installmentSignatures     InstallmentContractSignature[] @relation("InstallmentSigner")
+  agricultureFarmer         AgricultureFarmer? @relation("AgricultureFarmerUser")
   createdAt                 DateTime                @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt                 DateTime                @updatedAt @map("updated_at") @db.Timestamptz(6)
 
@@ -1059,6 +1065,7 @@ model Order {
   cancelledAt          DateTime?            @map("cancelled_at") @db.Timestamptz(6)
   vendorOrders         VendorOrder[]
   installmentAgreements InstallmentAgreement[]
+  agricultureContracts AgriculturalContract[]
   items                OrderItem[]
   payments             Payment[]
   refunds              Refund[]
@@ -4583,4 +4590,223 @@ model InstallmentFinancingApplication {
 
   @@index([agreementId, status])
   @@map("installment_financing_applications")
+}
+
+// ── Phase 11 A: agriculture business network ─────────────────────────────────
+
+enum AgricultureVerificationStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum AgriculturalUnit {
+  KG
+  BAG
+  TONNE
+  CRATE
+  LITRE
+  PIECE
+}
+
+enum FarmSizeUnit {
+  ACRE
+  HECTARE
+}
+
+enum FarmOwnership {
+  OWNED
+  LEASED
+}
+
+enum AgriculturalListingStatus {
+  DRAFT
+  PUBLISHED
+  SOLD
+  CANCELLED
+}
+
+enum AgriculturalBuyerRequestStatus {
+  OPEN
+  CLOSED
+  CANCELLED
+}
+
+enum AgriculturalOfferStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  EXPIRED
+}
+
+enum AgriculturalContractStatus {
+  PENDING_PAYMENT
+  PAID
+  COMPLETED
+  CANCELLED
+}
+
+model AgricultureFarmer {
+  id                String                      @id @default(uuid()) @db.Uuid
+  userId            String                      @unique @map("user_id") @db.Uuid
+  user              User                        @relation("AgricultureFarmerUser", fields: [userId], references: [id], onDelete: Cascade)
+  verificationStatus AgricultureVerificationStatus @default(PENDING) @map("verification_status")
+  phone             String?                     @db.VarChar(40)
+  region            String?                     @db.VarChar(120)
+  district          String?                     @db.VarChar(120)
+  ward              String?                     @db.VarChar(120)
+  village           String?                     @db.VarChar(120)
+  note              String?                     @db.Text
+  verifiedById      String?                     @map("verified_by_id") @db.Uuid
+  verifiedAt        DateTime?                   @map("verified_at") @db.Timestamptz(6)
+  createdAt         DateTime                    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime                    @updatedAt @map("updated_at") @db.Timestamptz(6)
+  farms             Farm[]
+  listings          AgriculturalListing[]
+  offers            AgriculturalOffer[]
+  contracts         AgriculturalContract[]
+
+  @@index([verificationStatus, createdAt])
+  @@map("agriculture_farmers")
+}
+
+model Farm {
+  id          String            @id @default(uuid()) @db.Uuid
+  farmerId    String            @map("farmer_id") @db.Uuid
+  farmer      AgricultureFarmer @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+  name        String            @db.VarChar(160)
+  sizeValue   Decimal           @map("size_value") @db.Decimal(12, 2)
+  sizeUnit    FarmSizeUnit      @map("size_unit")
+  ownership   FarmOwnership     @default(OWNED)
+  region      String?           @db.VarChar(120)
+  district    String?           @db.VarChar(120)
+  ward        String?           @db.VarChar(120)
+  village     String?           @db.VarChar(120)
+  waterSource String?           @map("water_source") @db.VarChar(200)
+  soilInfo    String?           @map("soil_info") @db.VarChar(300)
+  isActive    Boolean           @default(true) @map("is_active")
+  createdAt   DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime          @updatedAt @map("updated_at") @db.Timestamptz(6)
+  plots       FarmPlot[]
+  listings    AgriculturalListing[]
+
+  @@index([farmerId, isActive])
+  @@map("farms")
+}
+
+model FarmPlot {
+  id          String    @id @default(uuid()) @db.Uuid
+  farmId      String    @map("farm_id") @db.Uuid
+  farm        Farm      @relation(fields: [farmId], references: [id], onDelete: Cascade)
+  name        String    @db.VarChar(120)
+  sizeValue   Decimal   @map("size_value") @db.Decimal(12, 2)
+  sizeUnit    FarmSizeUnit @map("size_unit")
+  boundaryNotes String? @map("boundary_notes") @db.VarChar(500)
+  latitude    Decimal?  @db.Decimal(10, 7)
+  longitude   Decimal?  @db.Decimal(10, 7)
+  cropVarieties String? @map("crop_varieties") @db.VarChar(300)
+  isActive    Boolean   @default(true) @map("is_active")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@unique([farmId, name])
+  @@map("farm_plots")
+}
+
+model AgriculturalListing {
+  id               String                  @id @default(uuid()) @db.Uuid
+  farmerId         String                  @map("farmer_id") @db.Uuid
+  farmer           AgricultureFarmer       @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+  buyerUserId      String?                 @map("buyer_user_id") @db.Uuid
+  farmId           String?                 @map("farm_id") @db.Uuid
+  farm             Farm?                   @relation(fields: [farmId], references: [id], onDelete: SetNull)
+  plotId           String?                 @map("plot_id") @db.Uuid
+  cropName         String                  @map("crop_name") @db.VarChar(120)
+  variety          String?                 @db.VarChar(120)
+  quantity         Decimal                 @db.Decimal(14, 2)
+  unit             AgriculturalUnit
+  pricePerUnit     Decimal                 @map("price_per_unit") @db.Decimal(14, 2)
+  currency         String                  @db.VarChar(3)
+  minimumOrder     Decimal                 @map("minimum_order") @db.Decimal(14, 2)
+  grade            String?                 @db.VarChar(80)
+  harvestDate      DateTime?               @map("harvest_date") @db.Timestamptz(6)
+  collectionLocation String                 @map("collection_location") @db.VarChar(300)
+  deliveryAvailable Boolean                 @default(false) @map("delivery_available")
+  organicClaim     Boolean                 @default(false) @map("organic_claim")
+  certifiedClaim   Boolean                 @default(false) @map("certified_claim")
+  photos           Json?
+  status           AgriculturalListingStatus @default(DRAFT)
+  publishedAt      DateTime?               @map("published_at") @db.Timestamptz(6)
+  createdAt        DateTime                @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime                @updatedAt @map("updated_at") @db.Timestamptz(6)
+  offers           AgriculturalOffer[]
+
+  @@index([status, cropName])
+  @@index([farmerId, createdAt])
+  @@map("agricultural_listings")
+}
+
+model AgriculturalBuyerRequest {
+  id              String                        @id @default(uuid()) @db.Uuid
+  buyerUserId     String                        @map("buyer_user_id") @db.Uuid
+  productName     String                        @map("product_name") @db.VarChar(120)
+  quantity        Decimal                       @db.Decimal(14, 2)
+  unit            AgriculturalUnit
+  qualitySpec     String?                       @map("quality_spec") @db.Text
+  deliveryLocation String                       @map("delivery_location") @db.VarChar(300)
+  deliveryDeadline DateTime                     @map("delivery_deadline") @db.Timestamptz(6)
+  offerDeadline   DateTime                      @map("offer_deadline") @db.Timestamptz(6)
+  status          AgriculturalBuyerRequestStatus @default(OPEN)
+  createdAt       DateTime                      @default(now()) @map("created_at") @db.Timestamptz(6)
+  offers          AgriculturalOffer[]
+
+  @@index([status, productName])
+  @@map("agricultural_buyer_requests")
+}
+
+model AgriculturalOffer {
+  id            String                 @id @default(uuid()) @db.Uuid
+  requestId     String?                @map("request_id") @db.Uuid
+  request       AgriculturalBuyerRequest? @relation(fields: [requestId], references: [id], onDelete: SetNull)
+  listingId     String                 @map("listing_id") @db.Uuid
+  listing       AgriculturalListing    @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  farmerId      String                 @map("farmer_id") @db.Uuid
+  farmer        AgricultureFarmer      @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+  buyerUserId   String                 @map("buyer_user_id") @db.Uuid
+  quantity      Decimal                @db.Decimal(14, 2)
+  unit          AgriculturalUnit
+  pricePerUnit  Decimal                @map("price_per_unit") @db.Decimal(14, 2)
+  currency      String                 @db.VarChar(3)
+  note          String?                @db.VarChar(500)
+  status        AgriculturalOfferStatus @default(PENDING)
+  decidedAt     DateTime?              @map("decided_at") @db.Timestamptz(6)
+  createdAt     DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
+  contract      AgriculturalContract?
+
+  @@index([farmerId, status])
+  @@index([buyerUserId, status])
+  @@map("agricultural_offers")
+}
+
+model AgriculturalContract {
+  id            String                    @id @default(uuid()) @db.Uuid
+  contractNumber String                   @unique @map("contract_number") @db.VarChar(40)
+  offerId       String                    @unique @map("offer_id") @db.Uuid
+  offer         AgriculturalOffer         @relation(fields: [offerId], references: [id], onDelete: Cascade)
+  farmerId      String                    @map("farmer_id") @db.Uuid
+  farmer        AgricultureFarmer         @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+  buyerUserId   String                    @map("buyer_user_id") @db.Uuid
+  quantity      Decimal                   @db.Decimal(14, 2)
+  unit          AgriculturalUnit
+  pricePerUnit  Decimal                   @map("price_per_unit") @db.Decimal(14, 2)
+  total         Decimal                   @db.Decimal(14, 2)
+  currency      String                    @db.VarChar(3)
+  status        AgriculturalContractStatus @default(PENDING_PAYMENT)
+  orderId       String?                   @map("order_id") @db.Uuid
+  order         Order?                    @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  termsSnapshot Json                      @map("terms_snapshot")
+  createdAt     DateTime                  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([farmerId, status])
+  @@index([buyerUserId, status])
+  @@map("agricultural_contracts")
 }

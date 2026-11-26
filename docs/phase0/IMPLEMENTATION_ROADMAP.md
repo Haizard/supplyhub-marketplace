@@ -400,7 +400,7 @@ and reconcile payments automatically instead of by hand.
 
 ---
 
-## Phase 9 — Logistics Business Network (IN PROGRESS — L1 delivered)
+## Phase 9 — Logistics Business Network (DELIVERED — L1-L12)
 
 **Goal**: Promote logistics companies to first-class commercial partners that can run
 their own fleet, drivers, merchant clients, contracts and finances through the platform,
@@ -493,6 +493,15 @@ sales. Behind `phase10.installmentSales` (operator-enabled 2026-11-26).
   flag. No disbursement, credit decision or provider call is made by the platform.
   Admin queue at `/admin/installments/financing`.
 
+## Phase 11 — Agriculture Business Network (PROPOSAL: `docs/phase0/AGRICULTURE_BUSINESS_NETWORK_PROPOSAL.md`)
+
+Industry vertical built on the shared platform core, not a second application.
+Behind `phase11.agricultureNetwork` (seeded disabled).
+
+- **A — IN PROGRESS** Farmer/farm profiles, plots, produce listings, bulk buyer
+  requests, offers and verified-payment-backed contracts. Further phases (inputs,
+  services, farm management, logistics, cooperatives, AI) remain proposed.
+
 ---
 
 ## Dependency Graph
@@ -520,4 +529,6 @@ Phase 8 (Trust & Operations)         ← DONE — requires Phase 7 and the payme
 Phase 9 (Logistics Business Network) ← DELIVERED — L1-L12 done
     ↓
 Phase 10 (Installment Sales)          ← DELIVERED — I1-I9 done, flags enabled
+    ↓
+Phase 11 (Agriculture Business Network) ← IN PROGRESS — Phase A done, flag off
 ```
