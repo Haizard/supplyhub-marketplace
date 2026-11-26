@@ -28,6 +28,10 @@ export interface FinancingApplicationView {
   requestedAmount: string;
   currency: string;
   status: string;
+  offeredAmount: string | null;
+  acceptedAt: string | null;
+  fundedAt: string | null;
+  providerReference: string | null;
   createdAt: string;
 }
 
@@ -98,6 +102,10 @@ export async function listFinancingApplications(
       requestedAmount: true,
       currency: true,
       status: true,
+      offeredAmount: true,
+      acceptedAt: true,
+      fundedAt: true,
+      providerReference: true,
       createdAt: true,
     },
   });
@@ -108,6 +116,53 @@ export async function listFinancingApplications(
     requestedAmount: row.requestedAmount.toString(),
     currency: row.currency,
     status: row.status,
+    offeredAmount: row.offeredAmount?.toString() ?? null,
+    acceptedAt: row.acceptedAt?.toISOString() ?? null,
+    fundedAt: row.fundedAt?.toISOString() ?? null,
+    providerReference: row.providerReference,
     createdAt: row.createdAt.toISOString(),
+  }));
+}
+
+export async function listAllInstallmentFinancingApplications(): Promise<
+  (FinancingApplicationView & { buyerEmail: string; sellerName: string })[]
+> {
+  const rows = await getDatabase().installmentFinancingApplication.findMany({
+    orderBy: { createdAt: "desc" },
+    take: 100,
+    select: {
+      id: true,
+      applicationNumber: true,
+      partnerCode: true,
+      requestedAmount: true,
+      currency: true,
+      status: true,
+      offeredAmount: true,
+      acceptedAt: true,
+      fundedAt: true,
+      providerReference: true,
+      createdAt: true,
+      agreement: {
+        select: {
+          buyer: { select: { email: true } },
+          business: { select: { name: true } },
+        },
+      },
+    },
+  });
+  return rows.map((row) => ({
+    id: row.id,
+    applicationNumber: row.applicationNumber,
+    partnerCode: row.partnerCode,
+    requestedAmount: row.requestedAmount.toString(),
+    currency: row.currency,
+    status: row.status,
+    offeredAmount: row.offeredAmount?.toString() ?? null,
+    acceptedAt: row.acceptedAt?.toISOString() ?? null,
+    fundedAt: row.fundedAt?.toISOString() ?? null,
+    providerReference: row.providerReference,
+    createdAt: row.createdAt.toISOString(),
+    buyerEmail: row.agreement.buyer.email,
+    sellerName: row.agreement.business.name,
   }));
 }

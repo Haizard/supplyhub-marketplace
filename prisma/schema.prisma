@@ -495,6 +495,9 @@ enum AuditAction {
   INSTALLMENT_AMENDMENT_PROPOSED
   INSTALLMENT_AMENDMENT_DECIDED
   INSTALLMENT_FINANCING_SUBMITTED
+  INSTALLMENT_FINANCING_DECIDED
+  INSTALLMENT_FINANCING_ACCEPTED
+  INSTALLMENT_FINANCING_FUNDED
 }
 
 model User {
@@ -4496,6 +4499,7 @@ enum InstallmentFinancingStatus {
   SUBMITTED
   APPROVED
   DECLINED
+  ACCEPTED
   FUNDED
   CANCELLED
 }
@@ -4566,8 +4570,14 @@ model InstallmentFinancingApplication {
   currency          String                     @db.VarChar(3)
   status            InstallmentFinancingStatus @default(DRAFT)
   decisionNote      String?                    @map("decision_note") @db.Text
+  offeredAmount     Decimal?                   @map("offered_amount") @db.Decimal(14, 2)
+  offeredAt         DateTime?                  @map("offered_at") @db.Timestamptz(6)
+  acceptedAt        DateTime?                  @map("accepted_at") @db.Timestamptz(6)
+  fundedAt          DateTime?                  @map("funded_at") @db.Timestamptz(6)
+  providerReference String?                    @map("provider_reference") @db.VarChar(160)
   submittedById     String                     @map("submitted_by_id") @db.Uuid
   decidedById       String?                    @map("decided_by_id") @db.Uuid
+  decidedAt         DateTime?                  @map("decided_at") @db.Timestamptz(6)
   createdAt         DateTime                   @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt         DateTime                   @updatedAt @map("updated_at") @db.Timestamptz(6)
 

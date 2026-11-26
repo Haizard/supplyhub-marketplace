@@ -136,3 +136,20 @@ export const submitInstallmentFinancingSchema = z.object({
   partnerCode: z.string().trim().min(2).max(60),
   requestedAmount: z.coerce.number().positive().max(99_999_999),
 });
+
+export const decideInstallmentFinancingSchema = z.object({
+  applicationId: uuid,
+  decision: z.enum(["APPROVE", "DECLINE"]),
+  note: z.string().trim().min(10).max(2000),
+  offeredAmount: z.preprocess(
+    (value) => (value === "" ? undefined : value),
+    z.coerce.number().positive().max(99_999_999).optional(),
+  ),
+});
+
+export const acceptInstallmentFinancingSchema = z.object({ applicationId: uuid });
+
+export const fundInstallmentFinancingSchema = z.object({
+  applicationId: uuid,
+  providerReference: z.string().trim().min(3).max(160),
+});

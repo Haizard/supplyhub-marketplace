@@ -6,10 +6,13 @@ import {
   DecideAmendmentForm,
   SignInstallmentDocumentForm,
 } from "@/components/installments/contract-forms";
+import { AcceptFinancingForm } from "@/components/installments/financing-forms";
 import {
   listContractDocuments,
+  listFinancingApplications,
   listInstallmentAmendments,
 } from "@/features/installments/contract-queries";
+import { isFeatureEnabled } from "@/features/flags/service";
 import { PageShell } from "@/components/storefront/page-shell";
 import { Badge } from "@/components/ui/badge";
 import { StartInstallmentPaymentForm } from "@/components/installments/payment-forms";
@@ -35,10 +38,12 @@ export default async function BuyerInstallmentDetailPage({
   const actor = await requireActor(`/account/installments/${agreementId}`);
   const agreement = await getBuyerAgreementDetail(actor.id, agreementId);
   if (!agreement) notFound();
-  const [payments, documents, amendments] = await Promise.all([
+  const [payments, documents, amendments, applications, financingEnabled] = await Promise.all([
     listAgreementPayments(agreementId, { buyerUserId: actor.id }),
     listContractDocuments(agreementId),
     listInstallmentAmendments(agreementId),
+    listFinancingApplications(agreementId),
+    isFeatureEnabled("phase10.installmentFinancing"),
   ]);
   const nextAmount =
     agreement.schedule.find((entry) => entry.status === "PENDING")?.amount ??
@@ -229,6 +234,29 @@ export default async function BuyerInstallmentDetailPage({
           ) : null}
         </ul>
       </section>
+
+      {financingEnabled && applications.length > 0 ? (
+        <section className="rounded-xl border border-border bg-surface p-6 text-sm">
+          <h2 className="font-display text-lg font-medium">Financing offers</h2>
+          <ul className="mt-3 space-y-2 text-xs">
+            {applications.map((application) => (
+              <li
+                key={application.id}
+                className="flex flex-wrap items-center justify-between gap-2"
+              >
+                <span>
+                  {application.applicationNumber} · {application.partnerCode} ·{" "}
+                  {application.requestedAmount} {application.currency} · {application.status}
+                  {application.offeredAmount ? ` · offered ${application.offeredAmount}` : ""}
+                </span>
+                {application.status === "APPROVED" ? (
+                  <AcceptFinancingForm applicationId={application.id} />
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
 
       <section className="rounded-xl border border-border bg-surface p-6 text-sm">
         <h2 className="font-display text-lg font-medium">Open a dispute</h2>

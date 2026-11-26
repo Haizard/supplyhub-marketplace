@@ -38,9 +38,12 @@ These must be resolved before new feature development starts:
 
 1. **Instant publishing without moderation** — add an automated check or post-publish review queue
 2. **Experience centre demo labelling** — every panel must clearly state it is a prototype, not live functionality
-3. **Search suggest rate limiting + caching** — prevents DB hammering on every keystroke
+3. **Search suggest rate limiting + caching — DONE** (`/api/search-suggest` uses a
+   60 req/min per-address rule; responses stay `no-store` because suggestions depend
+   on live catalogue)
 4. **Add `CHECK (stock >= 0)` on `products`** — prevents negative stock from bugs
-5. **Add CSP / security headers** to `next.config.ts`
+5. **Add CSP / security headers — DONE** (`next.config.ts` now sends an enforced
+   `Content-Security-Policy` plus the stricter report-only policy for monitoring)
 6. **Define `resolveBusinessContext` interface** — needed before Phase 1 work begins
 
 ---
@@ -485,7 +488,10 @@ sales. Behind `phase10.installmentSales` (seeded disabled).
 - **I6–I8 — DELIVERED** Versioned two-party signed contracts, amendment history,
   aging/forecast/KPI reporting, and a disabled financing-partner interface with no
   money movement.
-- **I9** regulated platform-financed BNPL requires compliance approval.
+- **I9 — DELIVERED (compliance-gated)** Partner offer decision, buyer acceptance and
+  funding-reference recording behind the disabled `phase10.installmentFinancing`
+  flag. No disbursement, credit decision or provider call is made by the platform.
+  Admin queue at `/admin/installments/financing`.
 
 ---
 
@@ -513,5 +519,5 @@ Phase 8 (Trust & Operations)         ← DONE — requires Phase 7 and the payme
     ↓
 Phase 9 (Logistics Business Network) ← DELIVERED — L1-L12 done
     ↓
-Phase 10 (Installment Sales)         ← DELIVERED — I1-I8 done, flags off
+Phase 10 (Installment Sales)          ← DELIVERED — I1-I9 done, flags off
 ```

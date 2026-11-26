@@ -66,6 +66,11 @@ const serverEnvSchema = z
     SMTP_USER: optionalText,
     SMTP_PASSWORD: optionalText,
     EMAIL_FROM: optionalText,
+    // Provider-neutral SMS delivery. "webhook" posts to a configured endpoint;
+    // "none" keeps the development outbox and reports unconfigured in production.
+    SMS_PROVIDER: z.enum(["none", "webhook"]).default("none"),
+    SMS_WEBHOOK_URL: optionalHttpUrl,
+    SMS_WEBHOOK_TOKEN: optionalText,
     STORAGE_DRIVER: z.enum(["local", "s3"]).default("local"),
     S3_ENDPOINT: optionalHttpUrl,
     S3_REGION: optionalText,
@@ -117,6 +122,14 @@ const serverEnvSchema = z
           });
         }
       }
+    }
+
+    if (value.SMS_PROVIDER === "webhook" && !value.SMS_WEBHOOK_URL) {
+      context.addIssue({
+        code: "custom",
+        path: ["SMS_WEBHOOK_URL"],
+        message: "is required when SMS_PROVIDER is webhook",
+      });
     }
 
     if (value.NODE_ENV === "production" && isLoopbackDatabaseUrl(value.DATABASE_URL)) {

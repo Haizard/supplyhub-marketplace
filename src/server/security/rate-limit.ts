@@ -38,3 +38,4 @@ export function resetRateLimits(): void {
 /** Versioned logistics API: stricter than the storefront, per API key. */
 export const LOGISTICS_API_RATE_LIMIT = { limit: 120, windowMs: 60_000 } as const;
 export const LOGISTICS_WEBHOOK_RATE_LIMIT = { limit: 240, windowMs: 60_000 } as const;
+export const SEARCH_SUGGEST_RATE_LIMIT = { limit: 60, windowMs: 60_000 } as const;

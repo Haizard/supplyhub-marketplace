@@ -7,6 +7,11 @@ import {
   listVendorSummaries,
 } from "@/features/catalog/queries";
 import { normalizeSearchText } from "@/features/catalog/search";
+import {
+  consumeRateLimit,
+  getClientAddress,
+  SEARCH_SUGGEST_RATE_LIMIT,
+} from "@/server/security/rate-limit";
 
 const querySchema = z.string().trim().max(80).catch("");
 
@@ -52,6 +57,14 @@ export async function GET(request: Request): Promise<Response> {
   const raw = querySchema.parse(url.searchParams.get("q") ?? "");
   const q = normalizeSearchText(raw);
   const headers = { "Cache-Control": "no-store" };
+
+  const address = await getClientAddress();
+  if (!consumeRateLimit(`search-suggest:${address}`, SEARCH_SUGGEST_RATE_LIMIT)) {
+    return Response.json(
+      { error: "Too many search requests. Try again shortly." },
+      { status: 429, headers: { ...headers, "Retry-After": "60" } },
+    );
+  }
 
   if (q.length < 2) {
     return Response.json(

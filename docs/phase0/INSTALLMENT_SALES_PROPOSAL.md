@@ -1,6 +1,6 @@
 # Installment Sales — Seller-Funded Phase 10 Proposal
 
-**Status: DELIVERED — slices I1–I8 implemented behind `phase10.installmentSales`
+**Status: DELIVERED — slices I1–I9 implemented behind `phase10.installmentSales`
 and `phase10.installmentFinancing` (both seeded disabled).**
 
 This document records the repository-first decisions for the Installment Sales /
@@ -60,7 +60,7 @@ code was written:
 | **I6** (done) | Versioned, signed contract documents and amendment history | Frozen snapshot never rewritten; both parties sign explicitly |
 | **I7** (done) | Advanced reporting: aging, collection forecast, repayment KPIs | Pure integer-minor-unit calculations |
 | **I8** (done) | Prepared financing-partner interface | Separate disabled flag; no partner calls, credit decision or money movement |
-| **I9** | Full regulated platform-financed BNPL | Requires local legal/compliance approval — not implemented |
+| **I9** (done, gated) | Offer decision, buyer acceptance and funding-reference records | No disbursement, credit decision or provider call; compliance approval required to enable |
 
 ## 4. I1 acceptance
 
@@ -150,6 +150,8 @@ code was written:
   forecast horizons (30/60/90 days) and repayment KPIs from stored schedules.
 - The financing interface records an application only when the separate
   `phase10.installmentFinancing` flag is enabled (seeded disabled). It makes no
-  provider call, credit decision, payout or money movement. Full regulated BNPL
-  (I9) remains unimplemented pending compliance review.
-- Migration `20261125500000_phase10_installments_i6_i8`.
+  provider call, credit decision, payout or money movement. I9 adds admin decision,
+  buyer acceptance and partner funding-reference records at
+  `/admin/installments/financing`; the platform still disburses nothing. Local
+  compliance approval is required before the flag may be enabled.
+- Migration `20261125500000_phase10_installments_i6_i8` and `20261126000000_phase10_installments_i9`.

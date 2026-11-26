@@ -22,6 +22,26 @@ const contentSecurityPolicy = [
   .filter(Boolean)
   .join("; ");
 
+const enforcedContentSecurityPolicy = [
+  "default-src 'self'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "frame-ancestors 'none'",
+  "frame-src https://maps.google.com https://www.google.com",
+  "object-src 'none'",
+  "img-src 'self' data: blob: https:",
+  "font-src 'self' data:",
+  "style-src 'self' 'unsafe-inline'",
+  "media-src 'self' https:",
+  "manifest-src 'self'",
+  "worker-src 'self' blob:",
+  // The App Router emits inline bootstrap scripts; allow them while the stricter
+  // report-only policy below monitors progress toward a nonce-based policy.
+  "script-src 'self' 'unsafe-inline'",
+  "connect-src 'self' https: ws: wss:",
+  ...(isProduction ? ["upgrade-insecure-requests"] : []),
+].join("; ");
+
 const securityHeaders = [
   { key: "X-Content-Type-Options", value: "nosniff" },
   // In development, allow embedding in local preview iframes (e.g. WorkBuddy preview panel).
@@ -36,6 +56,7 @@ const securityHeaders = [
       "camera=(), geolocation=(self), microphone=(), payment=(), usb=(), clipboard-write=(self)",
   },
   { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
+  { key: "Content-Security-Policy", value: enforcedContentSecurityPolicy },
   { key: "Content-Security-Policy-Report-Only", value: contentSecurityPolicy },
   ...(isProduction
     ? [
