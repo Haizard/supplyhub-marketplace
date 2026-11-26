@@ -103,3 +103,36 @@ export const resolveInstallmentDisputeSchema = z.object({
   decision: z.enum(["RESOLVE", "REJECT"]),
   resolution: z.string().trim().min(10).max(2000),
 });
+
+export const createInstallmentDocumentSchema = z.object({
+  businessId: uuid,
+  agreementId: uuid,
+});
+
+export const signInstallmentDocumentSchema = z.object({
+  businessId: z.preprocess((value) => (value === "" ? undefined : value), uuid.optional()),
+  documentId: uuid,
+});
+
+export const voidInstallmentDocumentSchema = z.object({
+  businessId: uuid,
+  documentId: uuid,
+});
+
+export const proposeInstallmentAmendmentSchema = z.object({
+  businessId: uuid,
+  agreementId: uuid,
+  reason: z.string().trim().min(10).max(2000),
+});
+
+export const decideInstallmentAmendmentSchema = z.object({
+  amendmentId: uuid,
+  decision: z.enum(["ACCEPT", "REJECT"]),
+});
+
+export const submitInstallmentFinancingSchema = z.object({
+  businessId: uuid,
+  agreementId: uuid,
+  partnerCode: z.string().trim().min(2).max(60),
+  requestedAmount: z.coerce.number().positive().max(99_999_999),
+});

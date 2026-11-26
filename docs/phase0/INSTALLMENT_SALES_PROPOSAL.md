@@ -1,7 +1,7 @@
 # Installment Sales — Seller-Funded Phase 10 Proposal
 
-**Status: IMPLEMENTED — slices I1–I5 delivered behind `phase10.installmentSales`
-(seeded disabled). Remaining phases are out of scope until approved.**
+**Status: DELIVERED — slices I1–I8 implemented behind `phase10.installmentSales`
+and `phase10.installmentFinancing` (both seeded disabled).**
 
 This document records the repository-first decisions for the Installment Sales /
 BNPL / layaway capability requested in the product brief. The platform implements
@@ -57,7 +57,10 @@ code was written:
 | **I3** (done) | Buyer dashboard enhancements, receipts, reminders, overdue management | Reminders are notifications only; grace/late fees stay configurable |
 | **I4** (done) | POS/offline sales, inventory reserve-vs-deduct by possession model | Immediate possession deducts stock; deferred possession reserves without marking delivered |
 | **I5** (done) | Seller analytics, customer history, disputes and reconciliation | Ledger separation; refunds reverse the correct entries |
-| **I6–I9** | Digital signatures/contract management, advanced reporting, and (much later) financing partners | Regulated credit requires separate approval |
+| **I6** (done) | Versioned, signed contract documents and amendment history | Frozen snapshot never rewritten; both parties sign explicitly |
+| **I7** (done) | Advanced reporting: aging, collection forecast, repayment KPIs | Pure integer-minor-unit calculations |
+| **I8** (done) | Prepared financing-partner interface | Separate disabled flag; no partner calls, credit decision or money movement |
+| **I9** | Full regulated platform-financed BNPL | Requires local legal/compliance approval — not implemented |
 
 ## 4. I1 acceptance
 
@@ -135,3 +138,18 @@ code was written:
   receipts, allocation/currency mismatches and missing provider references. No
   finding mutates a payment; refunds remain the only reversal path.
 - Migration `20261125400000_phase10_installments_i5`.
+
+### I6–I8 acceptance
+
+- Contract versions are generated from the immutable snapshot with a SHA-256
+  content hash. Buyer and seller each sign exactly once per version from their
+  own authenticated session; a version is `SIGNED` only after both signatures.
+  Voiding retains history. Amendments are proposed/responded to and never mutate
+  the frozen financial terms.
+- Advanced reports compute receivables aging (0/1–30/31–60/60+ days), collection
+  forecast horizons (30/60/90 days) and repayment KPIs from stored schedules.
+- The financing interface records an application only when the separate
+  `phase10.installmentFinancing` flag is enabled (seeded disabled). It makes no
+  provider call, credit decision, payout or money movement. Full regulated BNPL
+  (I9) remains unimplemented pending compliance review.
+- Migration `20261125500000_phase10_installments_i6_i8`.

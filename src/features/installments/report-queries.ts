@@ -2,6 +2,7 @@ import "server-only";
 
 import { getDatabase } from "@/server/db/client";
 
+import { buildAdvancedInstallmentReport, type AdvancedSchedule } from "./advanced-analytics";
 import {
   buildInstallmentReport,
   type AnalyticsAgreement,
@@ -37,6 +38,29 @@ export interface ReconciliationRunView {
   findingCount: number;
   finishedAt: string | null;
   createdAt: string;
+}
+
+export async function getAdvancedInstallmentReport(businessId: string) {
+  const [schedules, agreements] = await Promise.all([
+    getDatabase().installmentSchedule.findMany({
+      where: { agreement: { businessId } },
+      select: { dueDate: true, amount: true, paidAmount: true, paidAt: true },
+    }),
+    getDatabase().installmentAgreement.findMany({
+      where: { businessId },
+      select: { status: true },
+    }),
+  ]);
+  const advanced: AdvancedSchedule[] = schedules.map((row) => ({
+    dueDate: row.dueDate,
+    amountMinor: toMinor(Number(row.amount.toString())),
+    paidMinor: toMinor(Number(row.paidAmount.toString())),
+    paidAt: row.paidAt,
+  }));
+  return buildAdvancedInstallmentReport(
+    advanced,
+    agreements.map((row) => row.status),
+  );
 }
 
 export async function getInstallmentReport(businessId: string): Promise<InstallmentReport> {

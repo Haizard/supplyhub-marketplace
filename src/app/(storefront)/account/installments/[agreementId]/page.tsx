@@ -2,6 +2,14 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { z } from "zod";
 
+import {
+  DecideAmendmentForm,
+  SignInstallmentDocumentForm,
+} from "@/components/installments/contract-forms";
+import {
+  listContractDocuments,
+  listInstallmentAmendments,
+} from "@/features/installments/contract-queries";
 import { PageShell } from "@/components/storefront/page-shell";
 import { Badge } from "@/components/ui/badge";
 import { StartInstallmentPaymentForm } from "@/components/installments/payment-forms";
@@ -27,7 +35,11 @@ export default async function BuyerInstallmentDetailPage({
   const actor = await requireActor(`/account/installments/${agreementId}`);
   const agreement = await getBuyerAgreementDetail(actor.id, agreementId);
   if (!agreement) notFound();
-  const payments = await listAgreementPayments(agreementId, { buyerUserId: actor.id });
+  const [payments, documents, amendments] = await Promise.all([
+    listAgreementPayments(agreementId, { buyerUserId: actor.id }),
+    listContractDocuments(agreementId),
+    listInstallmentAmendments(agreementId),
+  ]);
   const nextAmount =
     agreement.schedule.find((entry) => entry.status === "PENDING")?.amount ??
     agreement.installmentAmount;
@@ -165,6 +177,55 @@ export default async function BuyerInstallmentDetailPage({
           ))}
           {payments.length === 0 ? (
             <li className="text-muted-foreground">No payments recorded.</li>
+          ) : null}
+        </ul>
+      </section>
+
+      <section className="rounded-xl border border-border bg-surface p-6 text-sm">
+        <h2 className="font-display text-lg font-medium">Contract versions</h2>
+        <ul className="mt-3 space-y-3">
+          {documents.map((document) => (
+            <li key={document.id} className="rounded-md border border-border/50 p-3 text-xs">
+              <p>
+                v{document.version} · {document.documentNumber} · {document.status} · sha256{" "}
+                {document.contentHash.slice(0, 12)}
+              </p>
+              <p className="text-muted-foreground">
+                Signatures: {document.signatures.map((s) => s.role).join(", ") || "none"}
+              </p>
+              <details className="mt-2">
+                <summary className="cursor-pointer text-accent">Read contract text</summary>
+                <pre className="mt-2 whitespace-pre-wrap">{document.body}</pre>
+              </details>
+              {!document.signatures.some((s) => s.role === "BUYER") &&
+              document.status !== "VOID" ? (
+                <div className="mt-2">
+                  <SignInstallmentDocumentForm documentId={document.id} />
+                </div>
+              ) : null}
+            </li>
+          ))}
+          {documents.length === 0 ? (
+            <li className="text-muted-foreground">No contract versions yet.</li>
+          ) : null}
+        </ul>
+      </section>
+
+      <section className="rounded-xl border border-border bg-surface p-6 text-sm">
+        <h2 className="font-display text-lg font-medium">Amendments</h2>
+        <ul className="mt-3 space-y-2 text-xs">
+          {amendments.map((amendment) => (
+            <li key={amendment.id} className="flex flex-wrap items-center justify-between gap-2">
+              <span>
+                v{amendment.version} · {amendment.status} · {amendment.reason}
+              </span>
+              {amendment.status === "PROPOSED" ? (
+                <DecideAmendmentForm amendmentId={amendment.id} />
+              ) : null}
+            </li>
+          ))}
+          {amendments.length === 0 ? (
+            <li className="text-muted-foreground">No amendments proposed.</li>
           ) : null}
         </ul>
       </section>

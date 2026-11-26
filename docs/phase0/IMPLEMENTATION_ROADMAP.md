@@ -482,9 +482,10 @@ sales. Behind `phase10.installmentSales` (seeded disabled).
   stock held on creation, and possession-based conversion to sale or release.
 - **I5 — DELIVERED** Seller receivables/collections reporting, customer history,
   two-sided disputes and business-scoped reconciliation findings.
-- **I6–I9** (digital signatures, advanced contracts, financing partners) remain
-  unapproved and unstarted.
-  **I5** Analytics, disputes, reconciliation. Remaining phases are planned.
+- **I6–I8 — DELIVERED** Versioned two-party signed contracts, amendment history,
+  aging/forecast/KPI reporting, and a disabled financing-partner interface with no
+  money movement.
+- **I9** regulated platform-financed BNPL requires compliance approval.
 
 ---
 
@@ -512,5 +513,5 @@ Phase 8 (Trust & Operations)         ← DONE — requires Phase 7 and the payme
     ↓
 Phase 9 (Logistics Business Network) ← DELIVERED — L1-L12 done
     ↓
-Phase 10 (Installment Sales)         ← DELIVERED — I1-I5 done, flag off
+Phase 10 (Installment Sales)         ← DELIVERED — I1-I8 done, flags off
 ```

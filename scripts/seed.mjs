@@ -1278,6 +1278,18 @@ try {
     ],
   );
 
+  // Phase 10: financing partner interface is prepared but must stay off until approved.
+  await client.query(
+    `INSERT INTO feature_flags (id, key, name, description, enabled, created_at, updated_at)
+     VALUES (gen_random_uuid(), $1, $2, $3, false, now(), now())
+     ON CONFLICT (key) DO NOTHING`,
+    [
+      "phase10.installmentFinancing",
+      "Installment financing partner interface",
+      "Prepared interface only. No partner calls or money movement.",
+    ],
+  );
+
   // ── Phase 7: Ecosystem demo data ──────────────────────────────────────
   // Services marketplace
   const atelierVendorId = studios[0].id;

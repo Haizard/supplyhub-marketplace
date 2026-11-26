@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { authorizeInstallmentSeller } from "@/features/installments/access";
 import { formatReceiptAmount } from "@/features/installments/overdue-rules";
 import {
+  getAdvancedInstallmentReport,
   getInstallmentReport,
   listInstallmentDisputes,
   listInstallmentReconciliationFindings,
@@ -45,8 +46,9 @@ export default async function InstallmentReportsPage({
   const emailParam = Array.isArray(query.email) ? query.email[0] : query.email;
   const email = emailParam?.trim() ?? "";
 
-  const [report, settings, disputes, runs, customers] = await Promise.all([
+  const [report, advanced, settings, disputes, runs, customers] = await Promise.all([
     getInstallmentReport(id),
+    getAdvancedInstallmentReport(id),
     getInstallmentSettings(id),
     listInstallmentDisputes(id),
     listInstallmentReconciliationRuns(id),
@@ -85,6 +87,39 @@ export default async function InstallmentReportsPage({
             <p className="mt-1 text-lg font-medium">{value}</p>
           </div>
         ))}
+      </section>
+
+      <section className="rounded-xl border border-border bg-surface p-6 text-sm">
+        <h2 className="font-display text-lg font-medium">Receivables aging</h2>
+        <ul className="mt-3 space-y-1 text-xs">
+          <li>Current: {money(advanced.aging.currentMinor)}</li>
+          <li>1–30 days: {money(advanced.aging.days1To30Minor)}</li>
+          <li>31–60 days: {money(advanced.aging.days31To60Minor)}</li>
+          <li>Over 60 days: {money(advanced.aging.over60Minor)}</li>
+        </ul>
+      </section>
+
+      <section className="grid gap-3 sm:grid-cols-2">
+        <div className="rounded-xl border border-border bg-surface p-6 text-sm">
+          <h2 className="font-display text-lg font-medium">Collection forecast</h2>
+          <ul className="mt-3 space-y-1 text-xs">
+            <li>Next 30 days: {money(advanced.forecast.next30Minor)}</li>
+            <li>Next 60 days: {money(advanced.forecast.next60Minor)}</li>
+            <li>Next 90 days: {money(advanced.forecast.next90Minor)}</li>
+          </ul>
+        </div>
+        <div className="rounded-xl border border-border bg-surface p-6 text-sm">
+          <h2 className="font-display text-lg font-medium">Repayment KPIs</h2>
+          <ul className="mt-3 space-y-1 text-xs">
+            <li>
+              On-time rate: {advanced.kpis.onTimeRate}% ({advanced.kpis.onTimeCount}/
+              {advanced.kpis.settledCount})
+            </li>
+            <li>Average days late: {advanced.kpis.averageDaysLate}</li>
+            <li>Completion rate: {advanced.kpis.completionRate}%</li>
+            <li>Default rate: {advanced.kpis.defaultRate}%</li>
+          </ul>
+        </div>
       </section>
 
       <section className="rounded-xl border border-border bg-surface p-6 text-sm">

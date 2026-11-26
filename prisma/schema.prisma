@@ -489,6 +489,12 @@ enum AuditAction {
   INSTALLMENT_DISPUTE_OPENED
   INSTALLMENT_DISPUTE_RESOLVED
   INSTALLMENT_RECONCILIATION_COMPLETED
+  INSTALLMENT_CONTRACT_DOCUMENT_CREATED
+  INSTALLMENT_CONTRACT_SIGNED
+  INSTALLMENT_CONTRACT_VOIDED
+  INSTALLMENT_AMENDMENT_PROPOSED
+  INSTALLMENT_AMENDMENT_DECIDED
+  INSTALLMENT_FINANCING_SUBMITTED
 }
 
 model User {
@@ -546,6 +552,7 @@ model User {
   groupBuyParticipations    GroupBuyParticipation[] @relation("GroupBuyParticipations")
   installmentAgreements     InstallmentAgreement[] @relation("InstallmentBuyer")
   installmentDisputes       InstallmentDispute[] @relation("InstallmentDisputeOpener")
+  installmentSignatures     InstallmentContractSignature[] @relation("InstallmentSigner")
   createdAt                 DateTime                @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt                 DateTime                @updatedAt @map("updated_at") @db.Timestamptz(6)
 
@@ -4163,6 +4170,9 @@ model InstallmentAgreement {
   reminders             InstallmentReminder[]
   stockReservation      InstallmentStockReservation?
   disputes              InstallmentDispute[]
+  contractDocuments     InstallmentContractDocument[]
+  amendments            InstallmentAmendment[]
+  financingApplications InstallmentFinancingApplication[]
 
   @@index([businessId, status])
   @@index([buyerUserId, status])
@@ -4459,4 +4469,108 @@ model InstallmentReconciliationFinding {
 
   @@index([runId, severity])
   @@map("installment_reconciliation_findings")
+}
+
+// ── Phase 10 I6-I8: contract documents, advanced reporting, financing interface ──
+
+enum InstallmentDocumentStatus {
+  DRAFT
+  PENDING_SIGNATURES
+  SIGNED
+  VOID
+}
+
+enum InstallmentSignatureRole {
+  BUYER
+  SELLER
+}
+
+enum InstallmentAmendmentStatus {
+  PROPOSED
+  ACCEPTED
+  REJECTED
+}
+
+enum InstallmentFinancingStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  DECLINED
+  FUNDED
+  CANCELLED
+}
+
+/// Versioned human-readable contract. The frozen terms snapshot is never rewritten;
+/// a new version stores a new document instead.
+model InstallmentContractDocument {
+  id             String                    @id @default(uuid()) @db.Uuid
+  documentNumber String                    @unique @map("document_number") @db.VarChar(40)
+  agreementId    String                    @map("agreement_id") @db.Uuid
+  agreement      InstallmentAgreement      @relation(fields: [agreementId], references: [id], onDelete: Cascade)
+  version        Int
+  body           String                    @db.Text
+  contentHash    String                    @map("content_hash") @db.VarChar(64)
+  status         InstallmentDocumentStatus @default(DRAFT)
+  createdById    String                    @map("created_by_id") @db.Uuid
+  createdAt      DateTime                  @default(now()) @map("created_at") @db.Timestamptz(6)
+  signatures     InstallmentContractSignature[]
+
+  @@unique([agreementId, version])
+  @@map("installment_contract_documents")
+}
+
+model InstallmentContractSignature {
+  id           String                      @id @default(uuid()) @db.Uuid
+  documentId   String                      @map("document_id") @db.Uuid
+  document     InstallmentContractDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  signerUserId String                      @map("signer_user_id") @db.Uuid
+  signer       User                        @relation("InstallmentSigner", fields: [signerUserId], references: [id], onDelete: Restrict)
+  role         InstallmentSignatureRole
+  method       String                      @default("ACCOUNT_SESSION") @db.VarChar(40)
+  evidenceHash String                      @map("evidence_hash") @db.VarChar(64)
+  signedAt     DateTime                    @default(now()) @map("signed_at") @db.Timestamptz(6)
+
+  @@unique([documentId, role])
+  @@map("installment_contract_signatures")
+}
+
+/// Proposed term changes are recorded as history. They never mutate the original
+/// frozen snapshot; accepting one creates a new document version instead.
+model InstallmentAmendment {
+  id             String                    @id @default(uuid()) @db.Uuid
+  amendmentNumber String                   @unique @map("amendment_number") @db.VarChar(40)
+  agreementId    String                    @map("agreement_id") @db.Uuid
+  agreement      InstallmentAgreement      @relation(fields: [agreementId], references: [id], onDelete: Cascade)
+  version        Int
+  reason         String                    @db.Text
+  changes        Json
+  status         InstallmentAmendmentStatus @default(PROPOSED)
+  proposedById   String                    @map("proposed_by_id") @db.Uuid
+  decidedById    String?                   @map("decided_by_id") @db.Uuid
+  decidedAt      DateTime?                 @map("decided_at") @db.Timestamptz(6)
+  createdAt      DateTime                  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([agreementId, createdAt])
+  @@map("installment_amendments")
+}
+
+/// Prepared interface only. No partner API calls or money movement are implemented;
+/// a separate disabled flag and compliance approval are required before use.
+model InstallmentFinancingApplication {
+  id                String                     @id @default(uuid()) @db.Uuid
+  applicationNumber String                     @unique @map("application_number") @db.VarChar(40)
+  agreementId       String                     @map("agreement_id") @db.Uuid
+  agreement         InstallmentAgreement       @relation(fields: [agreementId], references: [id], onDelete: Cascade)
+  partnerCode       String                     @map("partner_code") @db.VarChar(60)
+  requestedAmount   Decimal                    @map("requested_amount") @db.Decimal(14, 2)
+  currency          String                     @db.VarChar(3)
+  status            InstallmentFinancingStatus @default(DRAFT)
+  decisionNote      String?                    @map("decision_note") @db.Text
+  submittedById     String                     @map("submitted_by_id") @db.Uuid
+  decidedById       String?                    @map("decided_by_id") @db.Uuid
+  createdAt         DateTime                   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime                   @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([agreementId, status])
+  @@map("installment_financing_applications")
 }
