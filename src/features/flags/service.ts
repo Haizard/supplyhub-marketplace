@@ -35,8 +35,12 @@ export async function listFeatureFlags(): Promise<FeatureFlagView[]> {
 }
 
 export async function getFeatureFlag(key: string): Promise<FeatureFlagView | null> {
-  const row = await getDatabase().featureFlag.findUnique({
-    where: { key: normalizeFeatureFlagKey(key) },
+  const normalized = normalizeFeatureFlagKey(key);
+  // Seeded rollout switches use camelCase keys (`phase9.logisticsNetwork`) while
+  // normalization lowercases on read, so an exact match reported live networks as
+  // switched off. Match the stored key case-insensitively either way.
+  const row = await getDatabase().featureFlag.findFirst({
+    where: { key: { equals: normalized, mode: "insensitive" } },
   });
   return row ? toView(row) : null;
 }

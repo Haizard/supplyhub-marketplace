@@ -12,9 +12,31 @@ export function PwaRegistration() {
 
   useEffect(() => {
     if ("serviceWorker" in navigator) {
-      void navigator.serviceWorker.register("/service-worker.js", { scope: "/" }).catch(() => {
-        // The site remains usable when service workers are unavailable or blocked.
-      });
+      if (process.env.NODE_ENV === "production") {
+        void navigator.serviceWorker.register("/service-worker.js", { scope: "/" }).catch(() => {
+          // The site remains usable when service workers are unavailable or blocked.
+        });
+      } else {
+        // The worker serves /_next/static cache-first, which in development keeps
+        // serving stale chunks after an edit. Undo it locally so the browser shows
+        // the code that is actually on disk.
+        void navigator.serviceWorker
+          .getRegistrations()
+          .then((registrations) => Promise.all(registrations.map((entry) => entry.unregister())))
+          .catch(() => undefined);
+        if ("caches" in window) {
+          void caches
+            .keys()
+            .then((keys) =>
+              Promise.all(
+                keys
+                  .filter((key) => key.startsWith("supplyhub-static-"))
+                  .map((key) => caches.delete(key)),
+              ),
+            )
+            .catch(() => undefined);
+        }
+      }
     }
 
     const handleInstallPrompt = (event: Event) => {

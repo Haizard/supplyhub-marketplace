@@ -11,13 +11,15 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getLogisticsCompany } from "@/features/logistics-companies/queries";
 import { COMPANY_STATUS_LABELS } from "@/features/logistics-companies/status";
-import { requireLogisticsAccess } from "@/server/logistics/access";
+import { getServerI18n } from "@/i18n/server";
+import { getSessionActor } from "@/server/auth/session";
+import { tryLogisticsAccess } from "@/server/logistics/access";
 
 const uuidSchema = z.uuid();
 
 export const metadata: Metadata = {
   title: "Logistics company",
-  robots: { index: false, follow: false },
+  robots: { index: false, follow: true },
 };
 
 export default function LogisticsCompanyPage({
@@ -35,13 +37,16 @@ export default function LogisticsCompanyPage({
 async function LogisticsCompanyContent({ params }: { params: Promise<{ companyId: string }> }) {
   const { companyId } = await params;
   if (!uuidSchema.safeParse(companyId).success) notFound();
-  const access = await requireLogisticsAccess(
-    "logistics.company.read",
-    companyId,
-    `/logistics/${companyId}`,
-  );
+
   const company = await getLogisticsCompany(companyId);
   if (!company) notFound();
+
+  // Members open the management console; everyone else gets the public profile.
+  const access = await tryLogisticsAccess(companyId);
+  if (!access) {
+    if (company.status !== "APPROVED") notFound();
+    return <PublicCompanyProfile company={company} />;
+  }
 
   return (
     <PageShell className="space-y-6 py-8">
@@ -156,6 +161,105 @@ async function LogisticsCompanyContent({ params }: { params: Promise<{ companyId
           You are the owner of this company. Fleet, drivers and contracts arrive in later slices.
         </p>
       ) : null}
+    </PageShell>
+  );
+}
+
+function sentenceCase(value: string) {
+  return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
+/** What a buyer sees: the company as a public listing, with no management tools. */
+async function PublicCompanyProfile({
+  company,
+}: {
+  company: NonNullable<Awaited<ReturnType<typeof getLogisticsCompany>>>;
+}) {
+  const [{ t, formatDate }, actor] = await Promise.all([getServerI18n(), getSessionActor()]);
+  const signInHref = `/sign-in?next=${encodeURIComponent(`/logistics/${company.id}`)}`;
+
+  return (
+    <PageShell className="space-y-8 py-8">
+      <Link href="/logistics" className="text-sm text-muted-foreground hover:text-foreground">
+        ← {t("logistics.public.back")}
+      </Link>
+
+      <header className="rounded-2xl border border-border bg-surface p-6 sm:p-8">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="min-w-0">
+            <p className="eyebrow text-muted-foreground">{t("marketplaces.logistics")}</p>
+            <h1 className="mt-2 font-display text-3xl leading-tight tracking-tight text-balance">
+              {company.name}
+            </h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {company.companyCode} · {company.city ?? "—"} · {sentenceCase(company.plan)}{" "}
+              {t("logistics.public.plan").toLowerCase()}
+            </p>
+          </div>
+          <Badge tone="success">{COMPANY_STATUS_LABELS[company.status]}</Badge>
+        </div>
+        {company.description ? (
+          <p className="mt-4 max-w-2xl text-sm leading-6 text-muted-foreground">
+            {company.description}
+          </p>
+        ) : null}
+      </header>
+
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,21rem)]">
+        <section className="rounded-xl border border-border bg-surface p-6">
+          <h2 className="font-display text-lg font-medium">{t("logistics.public.facts")}</h2>
+          <dl className="mt-4 grid gap-x-8 gap-y-3 text-sm sm:grid-cols-2">
+            <div className="flex justify-between gap-4 border-b border-border/50 pb-2">
+              <dt className="text-muted-foreground">{t("logistics.public.members")}</dt>
+              <dd className="font-medium tabular-nums">{company.memberCount}</dd>
+            </div>
+            <div className="flex justify-between gap-4 border-b border-border/50 pb-2">
+              <dt className="text-muted-foreground">{t("logistics.public.roles")}</dt>
+              <dd className="font-medium tabular-nums">{company.roleCount}</dd>
+            </div>
+            <div className="flex justify-between gap-4 border-b border-border/50 pb-2">
+              <dt className="text-muted-foreground">{t("logistics.public.plan")}</dt>
+              <dd className="font-medium">{sentenceCase(company.plan)}</dd>
+            </div>
+            <div className="flex justify-between gap-4 border-b border-border/50 pb-2">
+              <dt className="text-muted-foreground">{t("logistics.public.city")}</dt>
+              <dd className="font-medium">{company.city ?? "—"}</dd>
+            </div>
+            <div className="flex justify-between gap-4 border-b border-border/50 pb-2">
+              <dt className="text-muted-foreground">{t("logistics.public.joined")}</dt>
+              <dd className="font-medium">{formatDate(company.createdAt)}</dd>
+            </div>
+          </dl>
+        </section>
+
+        <aside className="space-y-4 self-start">
+          <div className="rounded-xl border border-border bg-surface p-6">
+            <h2 className="font-display text-lg font-medium">{t("logistics.public.delivery")}</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {t("logistics.public.deliveryBody")}
+            </p>
+            <Link
+              href="/delivery/request"
+              className="mt-4 inline-flex h-11 w-full items-center justify-center rounded-md bg-accent px-5 text-sm font-medium text-accent-foreground hover:bg-accent/90"
+            >
+              {t("logistics.public.delivery")}
+            </Link>
+          </div>
+
+          <div className="rounded-xl border border-border bg-surface-muted/60 p-6">
+            <h2 className="font-display text-lg font-medium">{t("logistics.public.operator")}</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {t("logistics.public.operatorBody")}
+            </p>
+            <Link
+              href={actor ? "/workspace" : signInHref}
+              className="mt-3 inline-flex text-xs font-medium text-accent underline-offset-4 hover:underline"
+            >
+              {actor ? t("logistics.public.workspace") : t("logistics.public.signIn")}
+            </Link>
+          </div>
+        </aside>
+      </div>
     </PageShell>
   );
 }

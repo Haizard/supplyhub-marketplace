@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 
 import { BottomNav } from "@/components/storefront/bottom-nav";
+import { MarketplaceSwitcher } from "@/components/storefront/marketplace-switcher";
 import { SiteFooter } from "@/components/storefront/site-footer";
 import { SiteHeader } from "@/components/storefront/site-header";
 import {
@@ -20,6 +21,13 @@ export default function StorefrontLayout({ children }: LayoutProps<"/">) {
         <div className="flex min-h-dvh flex-col">
           <Suspense fallback={<SiteHeaderSkeleton />}>
             <SiteHeader />
+          </Suspense>
+          <Suspense
+            fallback={
+              <div aria-hidden="true" className="h-[51px] border-b border-border bg-surface/50" />
+            }
+          >
+            <MarketplaceSwitcher />
           </Suspense>
           <main id="main" className="bottom-nav-clearance flex-1">
             {children}

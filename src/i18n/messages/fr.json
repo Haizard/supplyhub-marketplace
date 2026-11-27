@@ -88,6 +88,29 @@
     "notice": "Catalogue d'aperçu — produits, studios et commandes de démonstration. Paiements sandbox LynxPay.",
     "tagline": "Studios indépendants · Gestion de marketplace"
   },
+  "marketplaces": {
+    "switcherLabel": "Marchés",
+    "all": "Tout",
+    "allTitle": "Tous les marchés",
+    "allBody": "Tous les réseaux de SupplyHub au même endroit — objets de détail, produits agricoles, entreprises de livraison et services. Ouvrez-en un seul quand vous voulez une vue plus étroite.",
+    "retail": "Détail",
+    "retailBody": "Objets de studios indépendants et de vendeurs vérifiés.",
+    "farm": "Produits agricoles",
+    "farmBody": "Annonces de récoltes et demandes d'achat en gros des agriculteurs.",
+    "logistics": "Logistique",
+    "logisticsBody": "Entreprises de livraison à réserver ou à rejoindre.",
+    "services": "Services",
+    "servicesBody": "Réservez des prestations de studios vérifiés.",
+    "openNamed": "Ouvrir {marketplace}",
+    "allObjects": "{count} objets",
+    "allListings": "{count} annonces de récoltes",
+    "allRequests": "{count} demandes d'achat",
+    "allCompanies": "{count} entreprises",
+    "allServices": "{count} services",
+    "closed": "Pas encore ouvert",
+    "empty": "Rien pour l'instant",
+    "oneAccount": "Un compte · tous les réseaux"
+  },
   "nav": {
     "primary": "Navigation principale",
     "shopAll": "Toute la boutique",
@@ -1178,6 +1201,7 @@
     "bookings": "Réservations",
     "book": "Réserver",
     "duration": "{minutes} min",
+    "session": "séance",
     "price": "Prix",
     "location": "Lieu",
     "provider": "Prestataire",
@@ -1438,6 +1462,64 @@
       "activities": "Activités",
       "messages": "Messages",
       "more": "Plus"
+    }
+  },
+  "agriculture": {
+    "sell": "Vendez votre production",
+    "detail": {
+      "back": "Produits de la ferme",
+      "produce": "Détails de la récolte",
+      "available": "Disponible",
+      "minimum": "Commande minimum",
+      "grade": "Qualité",
+      "harvest": "Récolte",
+      "collection": "Retrait",
+      "delivery": "Livraison",
+      "deliveryAvailable": "Livraison disponible",
+      "collectionOnly": "Retrait uniquement",
+      "claims": "Mentions",
+      "organic": "Bio, déclaré par le vendeur",
+      "certified": "Certifié, déclaré par le vendeur",
+      "verified": "Agriculteur vérifié",
+      "declared": "Déclaré par le vendeur",
+      "ask": "Demander un devis en gros",
+      "askBody": "Envoyez votre besoin au marché et comparez les offres des agriculteurs.",
+      "farmer": "Agriculteur",
+      "farm": "Ferme",
+      "region": "Région",
+      "listed": "Publié le"
+    }
+  },
+  "logistics": {
+    "register": "Enregistrer une entreprise",
+    "manage": "Gérer l’entreprise",
+    "public": {
+      "back": "Réseau logistique",
+      "about": "À propos de cette entreprise",
+      "facts": "Informations sur l’entreprise",
+      "members": "Membres de l’équipe",
+      "roles": "Rôles",
+      "plan": "Formule",
+      "city": "Ville de base",
+      "joined": "Sur SupplyHub depuis",
+      "delivery": "Demander une livraison",
+      "deliveryBody": "Indiquez l’enlèvement et la livraison, cette entreprise vous fera un devis.",
+      "operator": "Vous gérez cette entreprise ?",
+      "operatorBody": "Connectez-vous avec le compte de l’entreprise pour gérer les expéditions, la flotte, l’équipe et les finances.",
+      "signIn": "Se connecter pour gérer",
+      "workspace": "Ouvrir votre espace de travail"
+    },
+    "entry": {
+      "title": "Vous gérez votre propre entreprise de livraison ?",
+      "body": "L’enregistrement de l’entreprise se fait dans votre espace de travail, avec les autres outils.",
+      "action": "Enregistrer dans votre espace",
+      "signIn": "Se connecter pour enregistrer"
+    },
+    "registerPage": {
+      "eyebrow": "Logistique",
+      "title": "Enregistrer une entreprise de livraison",
+      "body": "Vous en devenez le propriétaire. Soumettez l’entreprise à vérification quand le profil est prêt.",
+      "back": "Retour au réseau logistique"
     }
   }
 }

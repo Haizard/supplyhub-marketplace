@@ -4,6 +4,7 @@ import { Menu } from "lucide-react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
+import { ALL_MARKETPLACES_HREF, MARKETPLACES } from "@/features/marketplaces/catalog";
 import {
   Sheet,
   SheetClose,
@@ -47,6 +48,34 @@ export function MobileNav({ categories, vendors }: MobileNavProps) {
 
         <div className="mt-7">
           <SearchForm inputId="mobile-catalog-search" />
+        </div>
+
+        <div className="mt-7">
+          <p className="eyebrow text-muted-foreground">{t("marketplaces.switcherLabel")}</p>
+          <ul className="mt-2 space-y-1">
+            <li>
+              <SheetClose asChild>
+                <Link
+                  href={ALL_MARKETPLACES_HREF}
+                  className="flex items-center justify-between rounded-md py-2 text-sm font-medium transition-colors hover:text-accent"
+                >
+                  {t("marketplaces.allTitle")} <span aria-hidden="true">→</span>
+                </Link>
+              </SheetClose>
+            </li>
+            {MARKETPLACES.map((marketplace) => (
+              <li key={marketplace.id}>
+                <SheetClose asChild>
+                  <Link
+                    href={marketplace.href}
+                    className="flex items-center justify-between rounded-md py-2 text-sm transition-colors hover:text-accent"
+                  >
+                    {t(marketplace.labelKey)} <span aria-hidden="true">→</span>
+                  </Link>
+                </SheetClose>
+              </li>
+            ))}
+          </ul>
         </div>
 
         <nav aria-label={t("nav.mobile")} className="mt-8 flex flex-col">

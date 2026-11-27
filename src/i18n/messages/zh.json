@@ -88,6 +88,29 @@
     "notice": "预览目录——演示商品、工作室与订单。LynxPay 沙盒支付。",
     "tagline": "独立工作室 · 平台运营"
   },
+  "marketplaces": {
+    "switcherLabel": "市场",
+    "all": "全部",
+    "allTitle": "全部市场",
+    "allBody": "SupplyHub 的所有网络汇聚一处——零售商品、农场产品、物流公司与服务。想专注一处时，可单独打开某个市场。",
+    "retail": "零售",
+    "retailBody": "来自独立工作室和认证卖家的商品。",
+    "farm": "农产品",
+    "farmBody": "农户的农产品供应和批量采购需求。",
+    "logistics": "物流",
+    "logisticsBody": "可预约或加入的配送公司。",
+    "services": "服务",
+    "servicesBody": "预约认证工作室的服务。",
+    "openNamed": "打开{marketplace}",
+    "allObjects": "{count} 件商品",
+    "allListings": "{count} 条供应信息",
+    "allRequests": "{count} 条采购需求",
+    "allCompanies": "{count} 家公司",
+    "allServices": "{count} 项服务",
+    "closed": "尚未开放",
+    "empty": "暂无内容",
+    "oneAccount": "一个账户 · 所有网络"
+  },
   "nav": {
     "primary": "主导航",
     "shopAll": "全部商品",
@@ -1178,6 +1201,7 @@
     "bookings": "预约",
     "book": "预约",
     "duration": "{minutes} 分钟",
+    "session": "每次",
     "price": "价格",
     "location": "地点",
     "provider": "服务商",
@@ -1438,6 +1462,64 @@
       "activities": "动态",
       "messages": "消息",
       "more": "更多"
+    }
+  },
+  "agriculture": {
+    "sell": "出售你的农产品",
+    "detail": {
+      "back": "农产品",
+      "produce": "产品详情",
+      "available": "可供数量",
+      "minimum": "最小起订量",
+      "grade": "等级",
+      "harvest": "采收日期",
+      "collection": "提货",
+      "delivery": "配送",
+      "deliveryAvailable": "可配送",
+      "collectionOnly": "仅限自提",
+      "claims": "声明",
+      "organic": "有机（卖家声明）",
+      "certified": "已认证（卖家声明）",
+      "verified": "已验证农户",
+      "declared": "卖家声明",
+      "ask": "申请批量报价",
+      "askBody": "把您的需求发布到市场，比较农户报价。",
+      "farmer": "农户",
+      "farm": "农场",
+      "region": "地区",
+      "listed": "上架时间"
+    }
+  },
+  "logistics": {
+    "register": "注册公司",
+    "manage": "管理公司",
+    "public": {
+      "back": "物流网络",
+      "about": "关于此公司",
+      "facts": "公司信息",
+      "members": "团队成员",
+      "roles": "角色",
+      "plan": "方案",
+      "city": "所在城市",
+      "joined": "入驻 SupplyHub 时间",
+      "delivery": "申请配送",
+      "deliveryBody": "填写取货和送达地址，这家公司将为您报价。",
+      "operator": "经营这家公司？",
+      "operatorBody": "使用公司账号登录，管理调度、车队、团队和财务。",
+      "signIn": "登录管理",
+      "workspace": "打开工作台"
+    },
+    "entry": {
+      "title": "经营自己的配送公司？",
+      "body": "公司注册在工作台内，与其他经营工具放在一起。",
+      "action": "在工作台注册",
+      "signIn": "登录后注册"
+    },
+    "registerPage": {
+      "eyebrow": "物流",
+      "title": "注册配送公司",
+      "body": "您将成为所有者。资料齐全后提交公司审核。",
+      "back": "返回物流网络"
     }
   }
 }

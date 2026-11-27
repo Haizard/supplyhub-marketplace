@@ -104,7 +104,7 @@ menu item to everyone's home screen.
 | Destination | Seller | Farmer | Logistics | Buyer | Courier |
 | --- | --- | --- | --- | --- | --- |
 | Home | `/workspace` | `/workspace` | `/workspace` | `/workspace` | `/workspace` |
-| Explore | `/products` | `/products` | `/products` | `/products` | `/products` |
+| Explore | `/marketplaces` | `/marketplaces` | `/marketplaces` | `/marketplaces` | `/marketplaces` |
 | Activities | `/vendor/orders` | `/agriculture/farm-management` | `/logistics/[companyId]/dispatch` | `/account/orders` | `/courier` |
 | Messages | `/vendor/messages` | `/messages` | `/messages` | `/messages` | `/messages` |
 | More | `/account` | `/account` | `/account` | `/account` | `/account` |
@@ -113,6 +113,25 @@ menu item to everyone's home screen.
 - The universal **Create** launcher is a single entry point whose catalogue is role-filtered.
 - Desktop keeps the same information architecture: an inline navigation row plus the same launcher,
   rather than a second, differently organised product.
+
+### Marketplace switcher (implemented)
+
+The platform runs four marketplaces on one account: retail, farm produce, logistics and services.
+Both readings of "where do I shop" are one tap away.
+
+- A slim strip under the site header renders `All · Retail · Farm produce · Logistics · Services` on
+  every storefront page, with the current network marked `aria-current="page"`. It is hidden in the
+  single-purpose checkout and authentication screens.
+- `All` opens `/marketplaces`, the all-in-one hub: one card per network with its live counts, the
+  three newest items and a single `Open …` action. It is the answer to "show me everything at once".
+- Each network page stays a separate marketplace: no cross-network noise, one audience, one task.
+- The workspace `Explore` destination points at `/marketplaces`, so a seller, farmer or driver can
+  reach any network from their own home screen without hunting through a menu.
+- The logistics directory is public: a signed-out visitor can see approved delivery companies and
+  is asked to sign in only when they want to register their own.
+
+The list lives in `src/features/marketplaces/catalog.ts`; adding a fifth network means adding one
+entry there, not editing four navigation components.
 
 ### Screen hierarchy
 

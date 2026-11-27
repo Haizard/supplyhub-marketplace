@@ -21,6 +21,14 @@ export interface ListingView {
   verificationStatus: string;
 }
 
+export interface ListingDetailView extends ListingView {
+  harvestDate: string | null;
+  publishedAt: string | null;
+  farmName: string | null;
+  farmerRegion: string | null;
+  farmerDistrict: string | null;
+}
+
 export interface BuyerRequestView {
   id: string;
   productName: string;
@@ -100,6 +108,63 @@ export async function listPublishedListings(): Promise<ListingView[]> {
     farmerName: row.farmer.user.name,
     verificationStatus: row.farmer.verificationStatus,
   }));
+}
+
+export async function getPublishedListing(id: string): Promise<ListingDetailView | null> {
+  const row = await getDatabase().agriculturalListing.findFirst({
+    where: { id, status: "PUBLISHED" },
+    select: {
+      id: true,
+      cropName: true,
+      variety: true,
+      quantity: true,
+      unit: true,
+      pricePerUnit: true,
+      currency: true,
+      minimumOrder: true,
+      grade: true,
+      harvestDate: true,
+      publishedAt: true,
+      collectionLocation: true,
+      deliveryAvailable: true,
+      organicClaim: true,
+      certifiedClaim: true,
+      status: true,
+      farm: { select: { name: true } },
+      farmer: {
+        select: {
+          region: true,
+          district: true,
+          verificationStatus: true,
+          user: { select: { name: true } },
+        },
+      },
+    },
+  });
+  if (!row) return null;
+  return {
+    id: row.id,
+    cropName: row.cropName,
+    variety: row.variety,
+    quantity: row.quantity.toString(),
+    unit: row.unit,
+    pricePerUnit: row.pricePerUnit.toString(),
+    currency: row.currency,
+    minimumOrder: row.minimumOrder.toString(),
+    grade: row.grade,
+    harvestDate: row.harvestDate?.toISOString() ?? null,
+    publishedAt: row.publishedAt?.toISOString() ?? null,
+    collectionLocation: row.collectionLocation,
+    deliveryAvailable: row.deliveryAvailable,
+    organicClaim: row.organicClaim,
+    certifiedClaim: row.certifiedClaim,
+    status: row.status,
+    farmerName: row.farmer.user.name,
+    verificationStatus: row.farmer.verificationStatus,
+    farmName: row.farm?.name ?? null,
+    farmerRegion: row.farmer.region,
+    farmerDistrict: row.farmer.district,
+  };
 }
 
 export async function listOpenBuyerRequests(): Promise<BuyerRequestView[]> {

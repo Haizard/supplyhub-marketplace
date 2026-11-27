@@ -36,6 +36,9 @@ export async function SiteHeader() {
 
         <nav aria-label={t("nav.primary")} className="ml-4 hidden items-center gap-1 lg:flex">
           <Button asChild variant="ghost" size="sm" className="px-3 font-normal">
+            <Link href="/marketplaces">{t("marketplaces.switcherLabel")}</Link>
+          </Button>
+          <Button asChild variant="ghost" size="sm" className="px-3 font-normal">
             <Link href="/products">{t("nav.shopAll")}</Link>
           </Button>
           <DepartmentMenu categories={categories} />

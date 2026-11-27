@@ -88,6 +88,29 @@
     "notice": "Katalogi ya onyesho — bidhaa, studio na oda za mfano. Malipo ya sandbox ya LynxPay.",
     "tagline": "Studio huru · Uendeshaji wa soko"
   },
+  "marketplaces": {
+    "switcherLabel": "Masoko",
+    "all": "Yote",
+    "allTitle": "Masoko yote",
+    "allBody": "Mitandao yote ya SupplyHub mahali pamoja — bidhaa za rejareja, mazao ya shamba, kampuni za usafirishaji na huduma. Fungua mmoja peke yake ukitaka mwonekano mwembamba.",
+    "retail": "Rejareja",
+    "retailBody": "Bidhaa kutoka studio huru na wauzaji waliothibitishwa.",
+    "farm": "Mazao ya shamba",
+    "farmBody": "Orodha za mazao na maombi ya wanunuzi wa jumla kutoka kwa wakulima.",
+    "logistics": "Usafirishaji",
+    "logisticsBody": "Kampuni za usafirishaji unazoweza kukodisha au kujiunga nazo.",
+    "services": "Huduma",
+    "servicesBody": "Weka nafasi ya huduma kutoka studio zilizothibitishwa.",
+    "openNamed": "Fungua {marketplace}",
+    "allObjects": "Bidhaa {count}",
+    "allListings": "Orodha {count} za mazao",
+    "allRequests": "Maombi {count} ya wanunuzi",
+    "allCompanies": "Kampuni {count}",
+    "allServices": "Huduma {count}",
+    "closed": "Bado haijafunguliwa",
+    "empty": "Hakuna kilichoorodheshwa bado",
+    "oneAccount": "Akaunti moja · mitandao yote"
+  },
   "nav": {
     "primary": "Msingi",
     "shopAll": "Nunua vyote",
@@ -1178,6 +1201,7 @@
     "bookings": "Miadi",
     "book": "Panga",
     "duration": "Dakika {minutes}",
+    "session": "kipindi",
     "price": "Bei",
     "location": "Eneo",
     "provider": "Mtoaji",
@@ -1438,6 +1462,64 @@
       "activities": "Shughuli",
       "messages": "Ujumbe",
       "more": "Zaidi"
+    }
+  },
+  "agriculture": {
+    "sell": "Uza mazao yako",
+    "detail": {
+      "back": "Mazao ya shamba",
+      "produce": "Maelezo ya mazao",
+      "available": "Inapatikana",
+      "minimum": "Kiwango cha chini cha oda",
+      "grade": "Daraja",
+      "harvest": "Mavuno",
+      "collection": "Ukusanyaji",
+      "delivery": "Usafirishaji",
+      "deliveryAvailable": "Usafirishaji unapatikana",
+      "collectionOnly": "Kuchukua pekee",
+      "claims": "Madai",
+      "organic": "Kikaboni, imetangazwa na muuzaji",
+      "certified": "Imethibitishwa, imetangazwa na muuzaji",
+      "verified": "Mkulima aliyethibitishwa",
+      "declared": "Imetangazwa na muuzaji",
+      "ask": "Omba bei ya jumla",
+      "askBody": "Tuma mahitaji yako sokoni na linganisha ofa za wakulima.",
+      "farmer": "Mkulima",
+      "farm": "Shamba",
+      "region": "Mkoa",
+      "listed": "Imeorodheshwa"
+    }
+  },
+  "logistics": {
+    "register": "Sajili kampuni",
+    "manage": "Simamia kampuni",
+    "public": {
+      "back": "Mtandao wa usafirishaji",
+      "about": "Kuhusu kampuni hii",
+      "facts": "Taarifa za kampuni",
+      "members": "Wanachama",
+      "roles": "Majukumu",
+      "plan": "Mpango",
+      "city": "Mji wa msingi",
+      "joined": "Yupo SupplyHub tangu",
+      "delivery": "Omba usafirishaji",
+      "deliveryBody": "Toa mahali pa kuchukua na kupeleka, kampuni hii itakupa bei.",
+      "operator": "Unaendesha kampuni hii?",
+      "operatorBody": "Ingia kwa akaunti ya kampuni kusimamia usafirishaji, magari, timu na fedha.",
+      "signIn": "Ingia kusimamia",
+      "workspace": "Fungua eneo lako la kazi"
+    },
+    "entry": {
+      "title": "Unaendesha kampuni yako ya usafirishaji?",
+      "body": "Usajili wa kampuni uko katika eneo lako la kazi, pamoja na zana nyingine za biashara.",
+      "action": "Sajili katika eneo la kazi",
+      "signIn": "Ingia kusajili"
+    },
+    "registerPage": {
+      "eyebrow": "Usafirishaji",
+      "title": "Sajili kampuni ya usafirishaji",
+      "body": "Wewe ndiye mmiliki. Wasilisha kampuni kwa uthibitisho taarifa zikiwa tayari.",
+      "back": "Rudi kwenye mtandao wa usafirishaji"
     }
   }
 }

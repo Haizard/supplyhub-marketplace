@@ -88,6 +88,29 @@
     "notice": "Preview catalog — demo products, studios, and orders. LynxPay sandbox payments.",
     "tagline": "Independent studios · Marketplace operations"
   },
+  "marketplaces": {
+    "switcherLabel": "Marketplaces",
+    "all": "All",
+    "allTitle": "All marketplaces",
+    "allBody": "Every network on SupplyHub in one place — retail objects, farm produce, delivery companies and services. Open one on its own when you want a narrower view.",
+    "retail": "Retail",
+    "retailBody": "Objects from independent studios and verified sellers.",
+    "farm": "Farm produce",
+    "farmBody": "Produce listings and bulk buyer requests from farmers.",
+    "logistics": "Logistics",
+    "logisticsBody": "Delivery companies you can book or join.",
+    "services": "Services",
+    "servicesBody": "Book work from verified studios.",
+    "openNamed": "Open {marketplace}",
+    "allObjects": "{count} objects",
+    "allListings": "{count} produce listings",
+    "allRequests": "{count} buyer requests",
+    "allCompanies": "{count} companies",
+    "allServices": "{count} services",
+    "closed": "Not open yet",
+    "empty": "Nothing listed yet",
+    "oneAccount": "One account · every network"
+  },
   "nav": {
     "primary": "Primary",
     "shopAll": "Shop all",
@@ -1178,6 +1201,7 @@
     "bookings": "Bookings",
     "book": "Book",
     "duration": "{minutes} min",
+    "session": "session",
     "price": "Price",
     "location": "Location",
     "provider": "Provider",
@@ -1438,6 +1462,64 @@
       "activities": "Activities",
       "messages": "Messages",
       "more": "More"
+    }
+  },
+  "agriculture": {
+    "sell": "Sell your produce",
+    "detail": {
+      "back": "Farm produce",
+      "produce": "Produce details",
+      "available": "Available",
+      "minimum": "Minimum order",
+      "grade": "Grade",
+      "harvest": "Harvest",
+      "collection": "Collection",
+      "delivery": "Delivery",
+      "deliveryAvailable": "Delivery available",
+      "collectionOnly": "Collection only",
+      "claims": "Claims",
+      "organic": "Organic, seller-declared",
+      "certified": "Certified, seller-declared",
+      "verified": "Verified farmer",
+      "declared": "Seller-declared",
+      "ask": "Request a bulk quote",
+      "askBody": "Send your requirement to the marketplace and compare farmer offers.",
+      "farmer": "Farmer",
+      "farm": "Farm",
+      "region": "Region",
+      "listed": "Listed"
+    }
+  },
+  "logistics": {
+    "register": "Register a company",
+    "manage": "Manage company",
+    "public": {
+      "back": "Logistics network",
+      "about": "About this company",
+      "facts": "Company details",
+      "members": "Team members",
+      "roles": "Roles",
+      "plan": "Plan",
+      "city": "Base city",
+      "joined": "On SupplyHub since",
+      "delivery": "Request a delivery",
+      "deliveryBody": "Share the pickup and drop-off and this company can quote the job.",
+      "operator": "Run this company?",
+      "operatorBody": "Sign in with the company account to manage dispatch, fleet, team and finance.",
+      "signIn": "Sign in to manage",
+      "workspace": "Open your workspace"
+    },
+    "entry": {
+      "title": "Run your own delivery company?",
+      "body": "Company registration lives in your workspace, beside the rest of your business tools.",
+      "action": "Register in your workspace",
+      "signIn": "Sign in to register"
+    },
+    "registerPage": {
+      "eyebrow": "Logistics",
+      "title": "Register a delivery company",
+      "body": "You become the owner. Submit the company for verification when the profile is ready.",
+      "back": "Back to the logistics network"
     }
   }
 }

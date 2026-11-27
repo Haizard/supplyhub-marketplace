@@ -420,7 +420,12 @@ export function navFor(
 
   return [
     { id: "home", labelKey: "workspace.nav.home", href: "/workspace", icon: "home" },
-    { id: "explore", labelKey: "workspace.nav.explore", href: "/products", icon: "compass" },
+    {
+      id: "explore",
+      labelKey: "workspace.nav.explore",
+      href: "/marketplaces",
+      icon: "compass",
+    },
     {
       id: "activities",
       labelKey: "workspace.nav.activities",

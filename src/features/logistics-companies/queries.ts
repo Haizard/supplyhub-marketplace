@@ -68,6 +68,44 @@ export async function listActorCompanies(userId: string): Promise<LogisticsCompa
   }));
 }
 
+/**
+ * The public directory behind the logistics marketplace. Anyone can see which
+ * approved companies operate here; the company workspace itself stays
+ * membership-gated.
+ */
+export async function listPublicLogisticsCompanies(limit = 24): Promise<LogisticsCompanyView[]> {
+  const rows = await getDatabase().logisticsCompany.findMany({
+    where: { status: "APPROVED" },
+    orderBy: { name: "asc" },
+    take: limit,
+    select: {
+      id: true,
+      companyCode: true,
+      name: true,
+      slug: true,
+      description: true,
+      city: true,
+      status: true,
+      plan: true,
+      createdAt: true,
+      _count: { select: { members: true, roles: true } },
+    },
+  });
+  return rows.map((row) => ({
+    id: row.id,
+    companyCode: row.companyCode,
+    name: row.name,
+    slug: row.slug,
+    description: row.description ?? "",
+    city: row.city,
+    status: row.status,
+    plan: row.plan,
+    memberCount: row._count.members,
+    roleCount: row._count.roles,
+    createdAt: row.createdAt.toISOString(),
+  }));
+}
+
 export async function getLogisticsCompany(companyId: string): Promise<LogisticsCompanyView | null> {
   const row = await getDatabase().logisticsCompany.findUnique({
     where: { id: companyId },
