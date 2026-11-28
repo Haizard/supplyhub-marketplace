@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 import { InputPurchaseForm } from "@/components/agriculture/supplier-forms";
-import { PageShell } from "@/components/storefront/page-shell";
+import { ConsolePageHeader } from "@/components/console/console-ui";
 import { isFeatureEnabled } from "@/features/flags/service";
 import { listPublishedInputs } from "@/features/agriculture/supplier-queries";
 import { requireActor } from "@/server/auth/guards";
@@ -17,14 +17,11 @@ export default async function AgriculturalInputsPage() {
   const inputs = await listPublishedInputs();
 
   return (
-    <PageShell className="space-y-6 py-8">
-      <header>
-        <h1 className="font-display text-3xl tracking-tight">Agricultural inputs</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Seeds, fertilizer, manure and compost, feeds, tools and irrigation. Regulated inputs
-          require a registration reference and a verified supplier.
-        </p>
-      </header>
+    <div className="space-y-6">
+      <ConsolePageHeader
+        title="Agricultural inputs"
+        description="Seeds, fertilizer, manure and compost, feeds, tools and irrigation. Regulated inputs require a registration reference and a verified supplier."
+      />
       {!enabled ? (
         <p className="rounded-lg border border-border bg-surface-muted p-4 text-sm text-muted-foreground">
           The agriculture network is not enabled yet.
@@ -54,6 +51,6 @@ export default async function AgriculturalInputsPage() {
       {inputs.length === 0 ? (
         <p className="text-sm text-muted-foreground">No inputs published.</p>
       ) : null}
-    </PageShell>
+    </div>
   );
 }

@@ -6,7 +6,7 @@ import { ArrowRight, CheckCircle2 } from "lucide-react";
 import { Suspense } from "react";
 import { z } from "zod";
 
-import { ConsolePageHeader, ConsoleSection, ConsoleStat } from "@/components/logistics/console-ui";
+import { ConsolePageHeader, ConsoleSection, ConsoleStat } from "@/components/console/console-ui";
 import { companySectionGroups } from "@/components/logistics/company-sections";
 import { SubmitCompanyForm } from "@/components/logistics/submit-company-form";
 import { ProviderVerifiedBadge } from "@/components/providers/verified-badge";

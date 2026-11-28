@@ -12,7 +12,7 @@ import {
 } from "@/components/logistics/integration-forms";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ConsolePageHeader } from "@/components/logistics/console-ui";
+import { ConsolePageHeader } from "@/components/console/console-ui";
 import {
   listApiKeys,
   listExternalStores,

@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import { z } from "zod";
 
 import { Skeleton } from "@/components/ui/skeleton";
-import { ConsolePageHeader } from "@/components/logistics/console-ui";
+import { ConsolePageHeader } from "@/components/console/console-ui";
 import { getLogisticsCompany, listCompanyActivity } from "@/features/logistics-companies/queries";
 import { requireLogisticsAccess } from "@/server/logistics/access";
 

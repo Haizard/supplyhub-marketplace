@@ -6,7 +6,7 @@ import { z } from "zod";
 import { InvoiceForm, InvoiceStatusForm } from "@/components/logistics/contract-forms";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ConsolePageHeader } from "@/components/logistics/console-ui";
+import { ConsolePageHeader } from "@/components/console/console-ui";
 import { getLogisticsCompany } from "@/features/logistics-companies/queries";
 import { listContracts, listInvoices } from "@/features/logistics-contracts/queries";
 import { INVOICE_STATUS_LABELS } from "@/features/logistics-contracts/status";

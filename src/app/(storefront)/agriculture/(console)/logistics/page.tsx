@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 
 import {
   AgriculturalDeliveryForm,
@@ -10,7 +9,7 @@ import {
   StorageDecisionForm,
   StorageFacilityForm,
 } from "@/components/agriculture/logistics-forms";
-import { PageShell } from "@/components/storefront/page-shell";
+import { ConsolePageHeader } from "@/components/console/console-ui";
 import { isFeatureEnabled } from "@/features/flags/service";
 import { getFarmerSummary } from "@/features/agriculture/queries";
 import { getSupplierProfile } from "@/features/agriculture/supplier-queries";
@@ -51,17 +50,11 @@ export default async function AgriculturalLogisticsPage() {
     : [];
 
   return (
-    <PageShell className="space-y-6 py-8">
-      <header>
-        <h1 className="font-display text-3xl tracking-tight">Agricultural logistics</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Farm pickup and bulk haulage use the shared delivery engine. Collection centres record
-          weighing, grading and rejected quantities; storage capacity is checked before it is held.
-        </p>
-        <Link href="/agriculture/farmer" className="text-xs text-accent underline">
-          Back to farmer portal
-        </Link>
-      </header>
+    <div className="space-y-6">
+      <ConsolePageHeader
+        title="Agricultural logistics"
+        description="Farm pickup and bulk haulage use the shared delivery engine. Collection centres record weighing, grading and rejected quantities; storage capacity is checked before it is held."
+      />
       {!enabled ? (
         <p className="rounded-lg border border-border bg-surface-muted p-4 text-sm text-muted-foreground">
           The agriculture network is not enabled yet.
@@ -151,6 +144,6 @@ export default async function AgriculturalLogisticsPage() {
           <p className="text-sm text-muted-foreground">No storage bookings.</p>
         ) : null}
       </section>
-    </PageShell>
+    </div>
   );
 }

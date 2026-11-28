@@ -5,7 +5,7 @@ import { z } from "zod";
 
 import { ContractForm, DeliveryRecordForm } from "@/components/logistics/contract-forms";
 import { Badge } from "@/components/ui/badge";
-import { ConsolePageHeader } from "@/components/logistics/console-ui";
+import { ConsolePageHeader } from "@/components/console/console-ui";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getLogisticsCompany } from "@/features/logistics-companies/queries";
 import { listCompanyClients } from "@/features/logistics-clients/queries";

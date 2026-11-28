@@ -6,7 +6,7 @@ import { z } from "zod";
 import { RoleForm } from "@/components/logistics/role-form";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ConsolePageHeader } from "@/components/logistics/console-ui";
+import { ConsolePageHeader } from "@/components/console/console-ui";
 import { getLogisticsCompany, listCompanyRoles } from "@/features/logistics-companies/queries";
 import { requireLogisticsAccess } from "@/server/logistics/access";
 

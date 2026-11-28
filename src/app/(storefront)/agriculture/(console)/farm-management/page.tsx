@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 
 import {
   ActivityForm,
@@ -8,7 +7,7 @@ import {
   ExpenseForm,
   HarvestForm,
 } from "@/components/agriculture/farm-forms";
-import { PageShell } from "@/components/storefront/page-shell";
+import { ConsolePageHeader } from "@/components/console/console-ui";
 import { Badge } from "@/components/ui/badge";
 import { isFeatureEnabled } from "@/features/flags/service";
 import { getFarmManagementData } from "@/features/agriculture/farm-queries";
@@ -31,18 +30,11 @@ export default async function FarmManagementPage() {
   }));
 
   return (
-    <PageShell className="space-y-6 py-8">
-      <header>
-        <h1 className="font-display text-3xl tracking-tight">Farm management</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Crop cycles, farming activities, expenses and harvest batches. Cost per kilogram is
-          computed from recorded expenses and recorded harvest weights only — expected harvest is
-          not income.
-        </p>
-        <Link href="/agriculture/farmer" className="text-xs text-accent underline">
-          Back to farmer portal
-        </Link>
-      </header>
+    <div className="space-y-6">
+      <ConsolePageHeader
+        title="Farm management"
+        description="Crop cycles, farming activities, expenses and harvest batches. Cost per kilogram is computed from recorded expenses and recorded harvest weights only — expected harvest is not income."
+      />
       {!enabled ? (
         <p className="rounded-lg border border-border bg-surface-muted p-4 text-sm text-muted-foreground">
           The agriculture network is not enabled yet.
@@ -153,6 +145,6 @@ export default async function FarmManagementPage() {
           </section>
         </>
       ) : null}
-    </PageShell>
+    </div>
   );
 }

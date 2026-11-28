@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 
 import { AgricultureAssistantForm } from "@/components/agriculture/assistant-form";
-import { PageShell } from "@/components/storefront/page-shell";
+import { ConsolePageHeader } from "@/components/console/console-ui";
 import { Badge } from "@/components/ui/badge";
 import { isFeatureEnabled } from "@/features/flags/service";
 import { listAgricultureAdvice } from "@/features/agriculture/assistant-queries";
@@ -23,17 +22,11 @@ export default async function AgricultureAssistantPage() {
   ]);
 
   return (
-    <PageShell className="space-y-6 py-8">
-      <header>
-        <h1 className="font-display text-3xl tracking-tight">Agriculture assistant</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Advisory answers grounded in your farm records, crop costs, harvest weights, offers and
-          input prices. AI is opt-in; deterministic record-based guidance is the fallback.
-        </p>
-        <Link href="/agriculture/farmer" className="text-xs text-accent underline">
-          Back to farmer portal
-        </Link>
-      </header>
+    <div className="space-y-6">
+      <ConsolePageHeader
+        title="Agriculture assistant"
+        description="Advisory answers grounded in your farm records, crop costs, harvest weights, offers and input prices. AI is opt-in; deterministic record-based guidance is the fallback."
+      />
       {!enabled ? (
         <p className="rounded-lg border border-border bg-surface-muted p-4 text-sm text-muted-foreground">
           The agriculture network is not enabled yet.
@@ -92,6 +85,6 @@ export default async function AgricultureAssistantPage() {
           <p className="text-sm text-muted-foreground">No saved answers yet.</p>
         ) : null}
       </section>
-    </PageShell>
+    </div>
   );
 }

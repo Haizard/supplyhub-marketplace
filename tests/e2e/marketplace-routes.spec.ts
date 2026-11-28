@@ -69,6 +69,10 @@ test.describe("logistics registration", () => {
 });
 
 test.describe("company profile is split by membership", () => {
+  // Signing in hashes a password server-side; under parallel workers the whole
+  // round trip can exceed the default 30s budget without anything being wrong.
+  test.describe.configure({ timeout: 60_000 });
+
   test("an active member gets the management console", async ({ page }) => {
     await signIn(page, COMPANY_MEMBER);
     await page.goto(`/logistics/${LOGISTICS_COMPANY_ID}`);

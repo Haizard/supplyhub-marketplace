@@ -5,7 +5,7 @@ import { z } from "zod";
 
 import { CompanyProfileForm } from "@/components/logistics/company-profile-form";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ConsolePageHeader } from "@/components/logistics/console-ui";
+import { ConsolePageHeader } from "@/components/console/console-ui";
 import { getLogisticsCompany } from "@/features/logistics-companies/queries";
 import { requireLogisticsAccess } from "@/server/logistics/access";
 

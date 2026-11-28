@@ -10,7 +10,7 @@ import {
   ScheduleForm,
 } from "@/components/logistics/driver-forms";
 import { Badge } from "@/components/ui/badge";
-import { ConsolePageHeader } from "@/components/logistics/console-ui";
+import { ConsolePageHeader } from "@/components/console/console-ui";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getLogisticsCompany } from "@/features/logistics-companies/queries";
 import { getDriverDetail } from "@/features/logistics-drivers/queries";

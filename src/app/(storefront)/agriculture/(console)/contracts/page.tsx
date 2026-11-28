@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 
 import { AgreementDecisionForm, HarvestAgreementForm } from "@/components/agriculture/group-forms";
-import { PageShell } from "@/components/storefront/page-shell";
+import { ConsolePageHeader } from "@/components/console/console-ui";
 import { isFeatureEnabled } from "@/features/flags/service";
 import { getDatabase } from "@/server/db/client";
 import { listAllFarmers, listHarvestAgreements } from "@/features/agriculture/group-queries";
@@ -23,16 +22,11 @@ export default async function HarvestContractsPage() {
   ]);
 
   return (
-    <PageShell className="space-y-6 py-8">
-      <header>
-        <h1 className="font-display text-3xl tracking-tight">Harvest purchase agreements</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Agreed quantity, quality, pricing, delivery and variance terms are frozen at creation.
-        </p>
-        <Link href="/agriculture/groups" className="text-xs text-accent underline">
-          Farmer groups
-        </Link>
-      </header>
+    <div className="space-y-6">
+      <ConsolePageHeader
+        title="Harvest purchase agreements"
+        description="Agreed quantity, quality, pricing, delivery and variance terms are frozen at creation."
+      />
       {!enabled ? (
         <p className="rounded-lg border border-border bg-surface-muted p-4 text-sm text-muted-foreground">
           The agriculture network is not enabled yet.
@@ -71,7 +65,7 @@ export default async function HarvestContractsPage() {
           <p className="text-sm text-muted-foreground">No agreements yet.</p>
         ) : null}
       </section>
-    </PageShell>
+    </div>
   );
 }
 

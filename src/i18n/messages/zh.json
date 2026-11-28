@@ -1489,6 +1489,177 @@
       "farm": "农场",
       "region": "地区",
       "listed": "上架时间"
+    },
+    "console": {
+      "sections": "农业板块",
+      "network": "农产品",
+      "marketplace": "农产品市场",
+      "groups": {
+        "overview": "总览",
+        "farm": "农场",
+        "trade": "交易",
+        "supply": "供应",
+        "logistics": "物流"
+      },
+      "nav": {
+        "farmer": "农户门户",
+        "assistant": "助手",
+        "farm-management": "农场管理",
+        "groups": "农户小组",
+        "contracts": "协议",
+        "buyers": "采购方门户",
+        "marketplace": "农产品市场",
+        "services": "服务",
+        "inputs": "农资",
+        "suppliers": "供应商门户",
+        "logistics": "物流"
+      }
+    },
+    "overview": {
+      "eyebrow": "农户控制台",
+      "title": "你的农场",
+      "description": "农产品、协议与农场记录一览。",
+      "newListing": "发布农产品",
+      "stats": {
+        "farms": "农场",
+        "farmsHint": "已登记地点",
+        "plots": "地块",
+        "plotsHint": "全部农场合计",
+        "listings": "在售发布",
+        "listingsHint": "买家可见",
+        "offers": "待处理报价",
+        "offersHint": "等待买家回复"
+      },
+      "attention": {
+        "title": "需要关注",
+        "body": "解锁农产品销售的下一步。",
+        "empty": "暂无待处理事项，记录与发布均已更新。",
+        "verifyTitle": "完成验证后发布",
+        "verifyBody": "验证后可发布农产品并收到买家报价。",
+        "verifyAction": "完善资料",
+        "farmTitle": "登记第一个农场",
+        "farmBody": "地块、作物周期与收获成本都依附于农场。",
+        "farmAction": "添加农场",
+        "listingTitle": "发布第一个产品",
+        "listingBody": "买家只能看到已发布的产品。",
+        "listingAction": "创建发布"
+      },
+      "profile": {
+        "title": "农户资料",
+        "body": "地区、县与验证状态，会与你的农产品一起展示给买家。"
+      },
+      "farms": {
+        "title": "农场与地块",
+        "body": "农场包含地块；发布与作物周期都指向它们。",
+        "plots": "地块",
+        "noPlots": "暂无地块",
+        "empty": "尚未登记农场。"
+      },
+      "produce": {
+        "title": "待售农产品",
+        "body": "发布后立即出现在农产品市场。"
+      },
+      "offer": {
+        "title": "发送报价",
+        "body": "为发布报价，或回应买家的公开需求。"
+      },
+      "offers": {
+        "title": "我的报价",
+        "body": "你发送的所有报价及其当前状态。",
+        "empty": "暂无报价。"
+      },
+      "contracts": {
+        "title": "合同",
+        "body": "已成交的销售与付款状态。",
+        "empty": "暂无合同。"
+      },
+      "modules": {
+        "title": "你的模块",
+        "body": "所有农场工具，按用途分组。"
+      }
+    },
+    "servicesPage": {
+      "eyebrow": "服务",
+      "title": "农业服务",
+      "description": "拖拉机租赁、耕地、喷药、收割、土壤检测、运输与仓储 —— 预约已认证服务商并跟踪进度。",
+      "requestTitle": "申请服务",
+      "requestBody": "选择服务商并说明你农场的作业内容。",
+      "availableTitle": "可用服务",
+      "availableBody": "价格由服务商设定，不由本表单决定。",
+      "availableEmpty": "暂无已发布服务。",
+      "bookingsTitle": "我的预约",
+      "bookingsBody": "你农场的报价与已排期作业。",
+      "bookingsEmpty": "暂无预约。",
+      "stats": {
+        "available": "已发布服务",
+        "availableHint": "来自已认证服务商",
+        "bookings": "我的预约",
+        "bookingsHint": "进行中与已完成"
+      }
+    },
+    "supplierPortal": {
+      "eyebrow": "供应商控制台",
+      "title": "你的投入品业务",
+      "description": "为网络中农场提供的服务、投入品目录和履约订单。",
+      "manageProfile": "编辑资料",
+      "disabled": "农业网络尚未启用。",
+      "stats": {
+        "verification": "认证",
+        "verificationHint": "发布前必需",
+        "noProfile": "无资料",
+        "services": "已发布服务",
+        "servicesHint": "农场可见",
+        "bookings": "进行中预约",
+        "bookingsHint": "已报价、已确认或进行中",
+        "orders": "已付款投入品订单",
+        "ordersHint": "已结清的目录销售"
+      },
+      "attention": {
+        "title": "需要处理",
+        "body": "开通服务与投入品销售的下一个步骤。",
+        "empty": "没有待办事项。资料、目录和预约都是最新的。",
+        "profileTitle": "创建供应商资料",
+        "profileBody": "农场只能预约在此注册的企业。",
+        "profileAction": "创建资料",
+        "verifyTitle": "认证待审核",
+        "verifyBody": "管理员会在服务与投入品上线前核验许可证。",
+        "verifyAction": "检查资料",
+        "publishTitle": "发布第一项服务",
+        "publishBody": "拖拉机租赁、喷洒、收割——已发布的工作才是农场预约的对象。",
+        "publishAction": "添加服务",
+        "quoteTitle": "有预约请求待报价",
+        "quoteBody": "农场正在等待价格和日期才能确认工作。",
+        "quoteAction": "打开预约"
+      },
+      "profile": {
+        "title": "供应商资料",
+        "body": "企业身份、许可证和保险。买家会在你的列表中看到。"
+      },
+      "services": {
+        "title": "你提供的服务",
+        "body": "已发布的服务会出现在农场服务目录中。",
+        "empty": "尚未发布服务。"
+      },
+      "catalogue": {
+        "title": "投入品目录",
+        "body": "你向农场销售的种子、肥料、植保产品和设备。",
+        "empty": "尚未添加投入品。"
+      },
+      "bookings": {
+        "title": "服务预约",
+        "body": "报价请求、已排期工作及其进度。",
+        "empty": "尚无预约。",
+        "requestedFor": "申请日期"
+      },
+      "orders": {
+        "title": "投入品订单",
+        "body": "农场下单的目录订单及付款状态。",
+        "empty": "尚无投入品订单。"
+      },
+      "modules": {
+        "title": "你的模块",
+        "body": "所有农业工具，按用途分组。"
+      }
     }
   },
   "logistics": {

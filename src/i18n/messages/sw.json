@@ -1489,6 +1489,177 @@
       "farm": "Shamba",
       "region": "Mkoa",
       "listed": "Imeorodheshwa"
+    },
+    "console": {
+      "sections": "Sehemu za kilimo",
+      "network": "Mazao ya shamba",
+      "marketplace": "Soko la mazao",
+      "groups": {
+        "overview": "Muhtasari",
+        "farm": "Shamba",
+        "trade": "Biashara",
+        "supply": "Vifaa",
+        "logistics": "Usafirishaji"
+      },
+      "nav": {
+        "farmer": "Lango la mkulima",
+        "assistant": "Msaidizi",
+        "farm-management": "Usimamizi wa shamba",
+        "groups": "Vikundi vya wakulima",
+        "contracts": "Makubaliano",
+        "buyers": "Lango la wanunuzi",
+        "marketplace": "Soko la mazao",
+        "services": "Huduma",
+        "inputs": "Pembejeo",
+        "suppliers": "Lango la wasambazaji",
+        "logistics": "Usafirishaji"
+      }
+    },
+    "overview": {
+      "eyebrow": "Dashibodi ya mkulima",
+      "title": "Shamba lako",
+      "description": "Mazao, makubaliano na kumbukumbu za shamba kwa mtazamo mmoja.",
+      "newListing": "Tangaza mazao",
+      "stats": {
+        "farms": "Mashamba",
+        "farmsHint": "Maeneo yaliyosajiliwa",
+        "plots": "Vipande",
+        "plotsHint": "Katika mashamba yote",
+        "listings": "Matangazo hai",
+        "listingsHint": "Yanaonekana kwa wanunuzi",
+        "offers": "Ofa wazi",
+        "offersHint": "Zinasubiri mnunuzi"
+      },
+      "attention": {
+        "title": "Yanahitaji uangalizi",
+        "body": "Hatua zinazofungua uuzaji wa mazao.",
+        "empty": "Hakuna kinachohitaji uangalizi. Kumbukumbu na matangazo viko sawa.",
+        "verifyTitle": "Thibitisha ili kutangaza",
+        "verifyBody": "Uthibitisho hufungua matangazo ya mazao na ofa za wanunuzi.",
+        "verifyAction": "Kamilisha wasifu",
+        "farmTitle": "Sajili shamba la kwanza",
+        "farmBody": "Vipande, mzunguko wa mazao na gharama za mavuno hutegemea shamba.",
+        "farmAction": "Ongeza shamba",
+        "listingTitle": "Tangaza zao la kwanza",
+        "listingBody": "Wanunuzi wanaweza kupata mazao yaliyotangazwa tu.",
+        "listingAction": "Unda tangazo"
+      },
+      "profile": {
+        "title": "Wasifu wa mkulima",
+        "body": "Mkoa, wilaya na uthibitisho. Huonekana kwa wanunuzi pamoja na mazao yako."
+      },
+      "farms": {
+        "title": "Mashamba na vipande",
+        "body": "Shamba huwa na vipande; matangazo na mzunguko wa mazao hurejea hapo.",
+        "plots": "Vipande",
+        "noPlots": "hakuna vipande bado",
+        "empty": "Hakuna mashamba yaliyosajiliwa."
+      },
+      "produce": {
+        "title": "Mazao ya kuuza",
+        "body": "Mazao yaliyotangazwa huonekana mara moja kwenye soko la mazao."
+      },
+      "offer": {
+        "title": "Tuma ofa",
+        "body": "Toa bei kwa tangazo au jibu ombi la mnunuzi."
+      },
+      "offers": {
+        "title": "Ofa zangu",
+        "body": "Ofa zote ulizotuma na uamuzi wake wa sasa.",
+        "empty": "Hakuna ofa bado."
+      },
+      "contracts": {
+        "title": "Mikataba",
+        "body": "Mauzo yaliyokubaliwa na hali ya malipo.",
+        "empty": "Hakuna mikataba bado."
+      },
+      "modules": {
+        "title": "Moduli zako",
+        "body": "Zana zote za shamba, zimepangwa kwa kazi."
+      }
+    },
+    "servicesPage": {
+      "eyebrow": "Huduma",
+      "title": "Huduma za kilimo",
+      "description": "Kukodisha trekta, kulima, kunyunyizia, kuvuna, kupima udongo, usafirishaji na kuhifadhi — weka nafasi kwa mtoa huduma aliyethibitishwa na ufuatilie.",
+      "requestTitle": "Omba huduma",
+      "requestBody": "Chagua mtoa huduma na eleza kazi ya shamba lako.",
+      "availableTitle": "Huduma zilizopo",
+      "availableBody": "Bei hupangwa na mtoa huduma, si fomu hii.",
+      "availableEmpty": "Hakuna huduma zilizotangazwa.",
+      "bookingsTitle": "Nafasi zangu",
+      "bookingsBody": "Nukuu na kazi zilizopangwa kwa shamba lako.",
+      "bookingsEmpty": "Hakuna nafasi bado.",
+      "stats": {
+        "available": "Huduma zilizotangazwa",
+        "availableHint": "Kutoka kwa watoa huduma waliothibitishwa",
+        "bookings": "Nafasi zako",
+        "bookingsHint": "Wazi na zilizokamilika"
+      }
+    },
+    "supplierPortal": {
+      "eyebrow": "Dashibodi ya msambazaji",
+      "title": "Biashara yako ya pembejeo",
+      "description": "Huduma, orodha ya pembejeo na nafasi za kazi unazotekeleza kwa mashamba katika mtandao.",
+      "manageProfile": "Hariri wasifu",
+      "disabled": "Mtandao wa kilimo bado haujawashwa.",
+      "stats": {
+        "verification": "Uthibitisho",
+        "verificationHint": "Unahitajika kabla ya kutangaza",
+        "noProfile": "Hakuna wasifu",
+        "services": "Huduma zilizotangazwa",
+        "servicesHint": "Zinaonekana kwa wakulima",
+        "bookings": "Nafasi zinazoendelea",
+        "bookingsHint": "Zilizopewa bei, kuthibitishwa au kuendelea",
+        "orders": "Oda za pembejeo zilizolipwa",
+        "ordersHint": "Mauzo ya orodha yaliyokamilika"
+      },
+      "attention": {
+        "title": "Yanahitaji uangalizi",
+        "body": "Hatua zinazofungua uuzaji wa huduma na pembejeo.",
+        "empty": "Hakuna kinachohitaji uangalizi. Wasifu, orodha na nafasi ziko sawa.",
+        "profileTitle": "Unda wasifu wako wa msambazaji",
+        "profileBody": "Wakulima wanaweza kuweka nafasi tu kwa biashara iliyosajiliwa hapa.",
+        "profileAction": "Unda wasifu",
+        "verifyTitle": "Uthibitisho unasubiri",
+        "verifyBody": "Msimamizi huthibitisha leseni kabla huduma na pembejeo kuanza kuonekana.",
+        "verifyAction": "Angalia maelezo",
+        "publishTitle": "Tangaza huduma yako ya kwanza",
+        "publishBody": "Kukodisha trekta, kunyunyizia, kuvuna — kazi zilizotangazwa ndizo wakulima huhifadhi.",
+        "publishAction": "Ongeza huduma",
+        "quoteTitle": "Maombi ya nafasi yanahitaji bei",
+        "quoteBody": "Mkulima anasubiri bei na tarehe kabla kazi kuthibitishwa.",
+        "quoteAction": "Fungua nafasi"
+      },
+      "profile": {
+        "title": "Wasifu wa msambazaji",
+        "body": "Utambulisho wa biashara, leseni na bima. Wamiliki huona haya kwenye matangazo yako."
+      },
+      "services": {
+        "title": "Huduma unazotoa",
+        "body": "Huduma zilizotangazwa huonekana kwenye orodha ya huduma za shamba.",
+        "empty": "Hakuna huduma zilizotangazwa bado."
+      },
+      "catalogue": {
+        "title": "Orodha ya pembejeo",
+        "body": "Mbegu, mbolea, kinga ya mazao na vifaa unavyuza kwa mashamba.",
+        "empty": "Hakuna pembejeo zilizoorodheshwa bado."
+      },
+      "bookings": {
+        "title": "Nafasi za huduma",
+        "body": "Maombi ya bei, kazi zilizopangwa na maendeleo yake.",
+        "empty": "Hakuna nafasi bado.",
+        "requestedFor": "Imeombwa kwa"
+      },
+      "orders": {
+        "title": "Oda za pembejeo",
+        "body": "Oda za orodha zilizowekwa na mashamba, pamoja na hali ya malipo.",
+        "empty": "Hakuna oda za pembejeo bado."
+      },
+      "modules": {
+        "title": "Moduli zako",
+        "body": "Zana zote za kilimo, zimepangwa kwa kazi."
+      }
     }
   },
   "logistics": {

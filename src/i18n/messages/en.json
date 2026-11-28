@@ -1489,6 +1489,177 @@
       "farm": "Farm",
       "region": "Region",
       "listed": "Listed"
+    },
+    "console": {
+      "sections": "Agriculture sections",
+      "network": "Farm produce",
+      "marketplace": "Produce market",
+      "groups": {
+        "overview": "Overview",
+        "farm": "Farm",
+        "trade": "Trade",
+        "supply": "Supply",
+        "logistics": "Logistics"
+      },
+      "nav": {
+        "farmer": "Farmer portal",
+        "assistant": "Assistant",
+        "farm-management": "Farm management",
+        "groups": "Farmer groups",
+        "contracts": "Agreements",
+        "buyers": "Buyer portal",
+        "marketplace": "Produce market",
+        "services": "Services",
+        "inputs": "Inputs",
+        "suppliers": "Supplier portal",
+        "logistics": "Logistics"
+      }
+    },
+    "overview": {
+      "eyebrow": "Farmer console",
+      "title": "Your farm",
+      "description": "Produce, agreements and farm records for your operation in one view.",
+      "newListing": "Publish produce",
+      "stats": {
+        "farms": "Farms",
+        "farmsHint": "Registered locations",
+        "plots": "Plots",
+        "plotsHint": "Across all farms",
+        "listings": "Live listings",
+        "listingsHint": "Visible to buyers",
+        "offers": "Open offers",
+        "offersHint": "Waiting on a buyer"
+      },
+      "attention": {
+        "title": "Needs attention",
+        "body": "The next steps that unlock selling your produce.",
+        "empty": "Nothing needs your attention. Records and listings are up to date.",
+        "verifyTitle": "Get verified to publish",
+        "verifyBody": "Verification unlocks produce listings and buyer offers.",
+        "verifyAction": "Complete profile",
+        "farmTitle": "Register your first farm",
+        "farmBody": "Plots, crop cycles and harvest costs all hang off a farm.",
+        "farmAction": "Add farm",
+        "listingTitle": "Publish your first listing",
+        "listingBody": "Buyers can only find produce that is listed.",
+        "listingAction": "Create listing"
+      },
+      "profile": {
+        "title": "Farmer profile",
+        "body": "Region, district and verification. Shown to buyers alongside your produce."
+      },
+      "farms": {
+        "title": "Farms and plots",
+        "body": "A farm holds plots; listings and crop cycles point at them.",
+        "plots": "Plots",
+        "noPlots": "no plots yet",
+        "empty": "No farms registered."
+      },
+      "produce": {
+        "title": "Produce for sale",
+        "body": "Published produce appears in the farm produce market immediately."
+      },
+      "offer": {
+        "title": "Send an offer",
+        "body": "Quote a listing or answer an open buyer request."
+      },
+      "offers": {
+        "title": "My offers",
+        "body": "Every offer you have sent, with its current decision.",
+        "empty": "No offers yet."
+      },
+      "contracts": {
+        "title": "Contracts",
+        "body": "Agreed sales and their payment status.",
+        "empty": "No contracts yet."
+      },
+      "modules": {
+        "title": "Your modules",
+        "body": "Every farm tool, grouped by the job it serves."
+      }
+    },
+    "servicesPage": {
+      "eyebrow": "Services",
+      "title": "Agricultural services",
+      "description": "Tractor hire, ploughing, spraying, harvesting, soil testing, transport and storage — book a verified provider and track the booking.",
+      "requestTitle": "Request a service",
+      "requestBody": "Choose a provider and describe the job for your farm.",
+      "availableTitle": "Available services",
+      "availableBody": "Rates are set by the provider, never by this form.",
+      "availableEmpty": "No services published yet.",
+      "bookingsTitle": "My bookings",
+      "bookingsBody": "Quotes and scheduled work for your farm.",
+      "bookingsEmpty": "No bookings yet.",
+      "stats": {
+        "available": "Published services",
+        "availableHint": "From verified providers",
+        "bookings": "Your bookings",
+        "bookingsHint": "Open and completed"
+      }
+    },
+    "supplierPortal": {
+      "eyebrow": "Supplier console",
+      "title": "Your supplies business",
+      "description": "Services, input catalogue and bookings you fulfil for farms in the network.",
+      "manageProfile": "Edit profile",
+      "disabled": "The agriculture network is not enabled yet.",
+      "stats": {
+        "verification": "Verification",
+        "verificationHint": "Required before publishing",
+        "noProfile": "No profile",
+        "services": "Published services",
+        "servicesHint": "Visible to farmers",
+        "bookings": "Active bookings",
+        "bookingsHint": "Quoted, confirmed or running",
+        "orders": "Paid input orders",
+        "ordersHint": "Settled catalogue sales"
+      },
+      "attention": {
+        "title": "Needs attention",
+        "body": "The next steps that unlock selling services and inputs.",
+        "empty": "Nothing needs your attention. Profile, catalogue and bookings are up to date.",
+        "profileTitle": "Create your supplier profile",
+        "profileBody": "Farmers can only book a business that is registered here.",
+        "profileAction": "Create profile",
+        "verifyTitle": "Verification is pending",
+        "verifyBody": "An administrator verifies licences before services and inputs go live.",
+        "verifyAction": "Check details",
+        "publishTitle": "Publish your first service",
+        "publishBody": "Tractor hire, spraying, harvesting — listed work is what farmers book.",
+        "publishAction": "Add service",
+        "quoteTitle": "Booking requests need a quote",
+        "quoteBody": "A farmer is waiting for a price and date before the job is confirmed.",
+        "quoteAction": "Open bookings"
+      },
+      "profile": {
+        "title": "Supplier profile",
+        "body": "Business identity, licences and insurance. Owners see this on your listings."
+      },
+      "services": {
+        "title": "Services you offer",
+        "body": "Published services appear in the farm services catalogue.",
+        "empty": "No services published yet."
+      },
+      "catalogue": {
+        "title": "Input catalogue",
+        "body": "Seeds, fertilizer, crop protection and equipment you sell to farms.",
+        "empty": "No inputs listed yet."
+      },
+      "bookings": {
+        "title": "Service bookings",
+        "body": "Quote requests, scheduled work and its progress.",
+        "empty": "No bookings yet.",
+        "requestedFor": "Requested for"
+      },
+      "orders": {
+        "title": "Input orders",
+        "body": "Catalogue orders placed by farms, with payment status.",
+        "empty": "No input orders yet."
+      },
+      "modules": {
+        "title": "Your modules",
+        "body": "Every agriculture tool, grouped by the job it serves."
+      }
     }
   },
   "logistics": {

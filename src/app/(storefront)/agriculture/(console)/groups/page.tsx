@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 
 import {
   FarmerGroupForm,
@@ -7,7 +6,7 @@ import {
   HarvestDeliveryForm,
   AcceptAgreementForm,
 } from "@/components/agriculture/group-forms";
-import { PageShell } from "@/components/storefront/page-shell";
+import { ConsolePageHeader } from "@/components/console/console-ui";
 import { isFeatureEnabled } from "@/features/flags/service";
 import { getFarmerSummary } from "@/features/agriculture/queries";
 import {
@@ -34,16 +33,11 @@ export default async function FarmerGroupsPage() {
   const agreements = [...direct, ...grouped.flat()];
 
   return (
-    <PageShell className="space-y-6 py-8">
-      <header>
-        <h1 className="font-display text-3xl tracking-tight">Farmer groups</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Cooperatives aggregate supply, negotiate bulk prices and receive harvest agreements.
-        </p>
-        <Link href="/agriculture/contracts" className="text-xs text-accent underline">
-          Buyer agreements
-        </Link>
-      </header>
+    <div className="space-y-6">
+      <ConsolePageHeader
+        title="Farmer groups"
+        description="Cooperatives aggregate supply, negotiate bulk prices and receive harvest agreements."
+      />
       {!enabled ? (
         <p className="rounded-lg border border-border bg-surface-muted p-4 text-sm text-muted-foreground">
           The agriculture network is not enabled yet.
@@ -106,6 +100,6 @@ export default async function FarmerGroupsPage() {
           <p className="text-sm text-muted-foreground">No harvest agreements.</p>
         ) : null}
       </section>
-    </PageShell>
+    </div>
   );
 }

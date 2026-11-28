@@ -214,6 +214,86 @@ export async function listInputOrders(scope: {
   }));
 }
 
+export interface SupplierServiceRow {
+  id: string;
+  serviceType: string;
+  title: string;
+  rateAmount: string;
+  rateUnit: string;
+  currency: string;
+  serviceArea: string | null;
+  status: string;
+}
+
+export interface SupplierInputRow {
+  id: string;
+  name: string;
+  category: string;
+  quantity: string;
+  unit: string;
+  pricePerUnit: string;
+  currency: string;
+  status: string;
+}
+
+/** The services a provider has published — the supply side of the bookings. */
+export async function listSupplierServices(supplierId: string): Promise<SupplierServiceRow[]> {
+  const rows = await getDatabase().agriculturalService.findMany({
+    where: { supplierId },
+    orderBy: { createdAt: "desc" },
+    take: 100,
+    select: {
+      id: true,
+      serviceType: true,
+      title: true,
+      rateAmount: true,
+      rateUnit: true,
+      currency: true,
+      serviceArea: true,
+      status: true,
+    },
+  });
+  return rows.map((row) => ({
+    id: row.id,
+    serviceType: row.serviceType,
+    title: row.title,
+    rateAmount: row.rateAmount.toString(),
+    rateUnit: row.rateUnit,
+    currency: row.currency,
+    serviceArea: row.serviceArea,
+    status: row.status,
+  }));
+}
+
+/** The inputs a provider has listed in their catalogue. */
+export async function listSupplierInputs(supplierId: string): Promise<SupplierInputRow[]> {
+  const rows = await getDatabase().agriculturalInput.findMany({
+    where: { supplierId },
+    orderBy: { createdAt: "desc" },
+    take: 100,
+    select: {
+      id: true,
+      name: true,
+      category: true,
+      quantity: true,
+      unit: true,
+      pricePerUnit: true,
+      currency: true,
+      status: true,
+    },
+  });
+  return rows.map((row) => ({
+    id: row.id,
+    name: row.name,
+    category: row.category,
+    quantity: row.quantity.toString(),
+    unit: row.unit,
+    pricePerUnit: row.pricePerUnit.toString(),
+    currency: row.currency,
+    status: row.status,
+  }));
+}
+
 export async function getSupplierProfile(userId: string) {
   return getDatabase().agriculturalSupplier.findUnique({ where: { userId } });
 }

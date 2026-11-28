@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 import { BuyerRequestForm, DecideOfferForm } from "@/components/agriculture/forms";
-import { PageShell } from "@/components/storefront/page-shell";
+import { ConsolePageHeader } from "@/components/console/console-ui";
 import { isFeatureEnabled } from "@/features/flags/service";
 import {
   listBuyerOffers,
@@ -27,14 +27,11 @@ export default async function AgricultureBuyerPage() {
   ]);
 
   return (
-    <PageShell className="space-y-6 py-8">
-      <header>
-        <h1 className="font-display text-3xl tracking-tight">Agricultural buyer portal</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Publish bulk requirements, review farmer offers and pay through the shared verified
-          payment flow.
-        </p>
-      </header>
+    <div className="space-y-6">
+      <ConsolePageHeader
+        title="Agricultural buyer portal"
+        description="Publish bulk requirements, review farmer offers and pay through the shared verified payment flow."
+      />
       {!enabled ? (
         <p className="rounded-lg border border-border bg-surface-muted p-4 text-sm text-muted-foreground">
           The agriculture network is not enabled yet.
@@ -84,6 +81,6 @@ export default async function AgricultureBuyerPage() {
       <p className="text-xs text-muted-foreground">
         Published listings available: {listings.length}. Open buyer requests: {requests.length}.
       </p>
-    </PageShell>
+    </div>
   );
 }

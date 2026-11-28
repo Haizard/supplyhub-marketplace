@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { z } from "zod";
 
-import { ConsolePageHeader, ConsoleSection } from "@/components/logistics/console-ui";
+import { ConsolePageHeader, ConsoleSection } from "@/components/console/console-ui";
 import { CompanyRequestForm, DispatchForm } from "@/components/logistics/dispatch-forms";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";

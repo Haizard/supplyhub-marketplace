@@ -1489,6 +1489,177 @@
       "farm": "Ferme",
       "region": "Région",
       "listed": "Publié le"
+    },
+    "console": {
+      "sections": "Sections agricoles",
+      "network": "Produits fermiers",
+      "marketplace": "Marché des produits",
+      "groups": {
+        "overview": "Vue d'ensemble",
+        "farm": "Exploitation",
+        "trade": "Commerce",
+        "supply": "Approvisionnement",
+        "logistics": "Logistique"
+      },
+      "nav": {
+        "farmer": "Portail agriculteur",
+        "assistant": "Assistant",
+        "farm-management": "Gestion de l'exploitation",
+        "groups": "Groupements",
+        "contracts": "Accords",
+        "buyers": "Portail acheteurs",
+        "marketplace": "Marché des produits",
+        "services": "Services",
+        "inputs": "Intrants",
+        "suppliers": "Portail fournisseurs",
+        "logistics": "Logistique"
+      }
+    },
+    "overview": {
+      "eyebrow": "Console agriculteur",
+      "title": "Votre exploitation",
+      "description": "Productions, accords et registres de l'exploitation en un coup d'œil.",
+      "newListing": "Publier une récolte",
+      "stats": {
+        "farms": "Exploitations",
+        "farmsHint": "Sites enregistrés",
+        "plots": "Parcelles",
+        "plotsHint": "Toutes exploitations",
+        "listings": "Annonces en ligne",
+        "listingsHint": "Visibles par les acheteurs",
+        "offers": "Offres ouvertes",
+        "offersHint": "En attente d'un acheteur"
+      },
+      "attention": {
+        "title": "À traiter",
+        "body": "Les étapes qui débloquent la vente de vos récoltes.",
+        "empty": "Rien à traiter. Registres et annonces sont à jour.",
+        "verifyTitle": "Faites-vous vérifier pour publier",
+        "verifyBody": "La vérification ouvre les annonces de récolte et les offres d'acheteurs.",
+        "verifyAction": "Compléter le profil",
+        "farmTitle": "Enregistrer votre première exploitation",
+        "farmBody": "Parcelles, cycles de culture et coûts de récolte en dépendent.",
+        "farmAction": "Ajouter une exploitation",
+        "listingTitle": "Publier votre première annonce",
+        "listingBody": "Les acheteurs ne voient que les productions publiées.",
+        "listingAction": "Créer une annonce"
+      },
+      "profile": {
+        "title": "Profil agriculteur",
+        "body": "Région, district et vérification. Affichés aux acheteurs avec vos productions."
+      },
+      "farms": {
+        "title": "Exploitations et parcelles",
+        "body": "Une exploitation contient des parcelles ; annonces et cycles y renvoient.",
+        "plots": "Parcelles",
+        "noPlots": "aucune parcelle",
+        "empty": "Aucune exploitation enregistrée."
+      },
+      "produce": {
+        "title": "Productions à vendre",
+        "body": "Une production publiée apparaît immédiatement sur le marché."
+      },
+      "offer": {
+        "title": "Envoyer une offre",
+        "body": "Proposez un prix sur une annonce ou répondez à une demande d'acheteur."
+      },
+      "offers": {
+        "title": "Mes offres",
+        "body": "Toutes vos offres et leur décision actuelle.",
+        "empty": "Aucune offre."
+      },
+      "contracts": {
+        "title": "Contrats",
+        "body": "Ventes conclues et état du paiement.",
+        "empty": "Aucun contrat."
+      },
+      "modules": {
+        "title": "Vos modules",
+        "body": "Tous les outils agricoles, regroupés par métier."
+      }
+    },
+    "servicesPage": {
+      "eyebrow": "Services",
+      "title": "Services agricoles",
+      "description": "Location de tracteur, labour, pulvérisation, récolte, analyse de sol, transport et stockage — réservez un prestataire vérifié et suivez la réservation.",
+      "requestTitle": "Demander un service",
+      "requestBody": "Choisissez un prestataire et décrivez le travail pour votre exploitation.",
+      "availableTitle": "Services disponibles",
+      "availableBody": "Les tarifs sont fixés par le prestataire, jamais par ce formulaire.",
+      "availableEmpty": "Aucun service publié.",
+      "bookingsTitle": "Mes réservations",
+      "bookingsBody": "Devis et travaux planifiés pour votre exploitation.",
+      "bookingsEmpty": "Aucune réservation.",
+      "stats": {
+        "available": "Services publiés",
+        "availableHint": "De prestataires vérifiés",
+        "bookings": "Vos réservations",
+        "bookingsHint": "Ouvertes et terminées"
+      }
+    },
+    "supplierPortal": {
+      "eyebrow": "Console fournisseur",
+      "title": "Votre activité d'intrants",
+      "description": "Services, catalogue d'intrants et réservations assurés pour les fermes du réseau.",
+      "manageProfile": "Modifier le profil",
+      "disabled": "Le réseau agricole n'est pas encore activé.",
+      "stats": {
+        "verification": "Vérification",
+        "verificationHint": "Requise avant publication",
+        "noProfile": "Aucun profil",
+        "services": "Services publiés",
+        "servicesHint": "Visibles par les fermes",
+        "bookings": "Réservations actives",
+        "bookingsHint": "Devisées, confirmées ou en cours",
+        "orders": "Commandes d'intrants payées",
+        "ordersHint": "Ventes catalogue réglées"
+      },
+      "attention": {
+        "title": "À traiter",
+        "body": "Les prochaines étapes qui débloquent la vente de services et d'intrants.",
+        "empty": "Rien à traiter. Profil, catalogue et réservations à jour.",
+        "profileTitle": "Créez votre profil fournisseur",
+        "profileBody": "Les fermes ne peuvent réserver qu'une entreprise enregistrée ici.",
+        "profileAction": "Créer le profil",
+        "verifyTitle": "Vérification en attente",
+        "verifyBody": "Un administrateur vérifie les licences avant la mise en ligne des services et intrants.",
+        "verifyAction": "Vérifier les informations",
+        "publishTitle": "Publiez votre premier service",
+        "publishBody": "Location de tracteur, pulvérisation, récolte — les fermes réservent les services publiés.",
+        "publishAction": "Ajouter un service",
+        "quoteTitle": "Des demandes attendent un devis",
+        "quoteBody": "Une ferme attend un prix et une date avant confirmation.",
+        "quoteAction": "Ouvrir les réservations"
+      },
+      "profile": {
+        "title": "Profil fournisseur",
+        "body": "Identité de l'entreprise, licences et assurance. Visible sur vos annonces."
+      },
+      "services": {
+        "title": "Services proposés",
+        "body": "Les services publiés apparaissent dans le catalogue agricole.",
+        "empty": "Aucun service publié."
+      },
+      "catalogue": {
+        "title": "Catalogue d'intrants",
+        "body": "Semences, engrais, protection des cultures et matériel vendus aux fermes.",
+        "empty": "Aucun intrant listé."
+      },
+      "bookings": {
+        "title": "Réservations de services",
+        "body": "Demandes de devis, travaux planifiés et leur avancement.",
+        "empty": "Aucune réservation.",
+        "requestedFor": "Demandé pour"
+      },
+      "orders": {
+        "title": "Commandes d'intrants",
+        "body": "Commandes catalogue passées par les fermes, avec statut de paiement.",
+        "empty": "Aucune commande d'intrants."
+      },
+      "modules": {
+        "title": "Vos modules",
+        "body": "Tous les outils agricoles, groupés par usage."
+      }
     }
   },
   "logistics": {

@@ -5,7 +5,7 @@ import { z } from "zod";
 
 import { SettingsForm } from "@/components/logistics/settings-form";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ConsolePageHeader } from "@/components/logistics/console-ui";
+import { ConsolePageHeader } from "@/components/console/console-ui";
 import { getCompanySettings, getLogisticsCompany } from "@/features/logistics-companies/queries";
 import { requireLogisticsAccess } from "@/server/logistics/access";
 

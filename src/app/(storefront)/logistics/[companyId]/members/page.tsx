@@ -8,7 +8,7 @@ import { MemberInviteForm } from "@/components/logistics/member-invite-form";
 import { MemberStatusForm } from "@/components/logistics/member-status-form";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ConsolePageHeader, ConsoleSection } from "@/components/logistics/console-ui";
+import { ConsolePageHeader, ConsoleSection } from "@/components/console/console-ui";
 import {
   getLogisticsCompany,
   listCompanyMembers,
