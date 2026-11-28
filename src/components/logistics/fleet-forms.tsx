@@ -5,6 +5,7 @@ import { useActionState } from "react";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import { initialFormState } from "@/features/identity/form-state";
 import type {
   FleetView,
@@ -50,33 +51,23 @@ export function VehicleForm({ companyId, fleets }: { companyId: string; fleets: 
         <Input id="plate" name="plate" required />
       </Field>
       <Field label="Type" htmlFor="type" error={state.fieldErrors?.type}>
-        <select
-          id="type"
-          name="type"
-          className="h-11 rounded-md border border-border bg-surface px-3 text-sm"
-          defaultValue="MOTORCYCLE"
-        >
+        <Select id="type" name="type" defaultValue="MOTORCYCLE">
           <option value="BICYCLE">Bicycle</option>
           <option value="MOTORCYCLE">Motorcycle</option>
           <option value="CAR">Car</option>
           <option value="VAN">Van</option>
           <option value="TRUCK">Truck</option>
-        </select>
+        </Select>
       </Field>
       <Field label="Fleet" htmlFor="fleetId">
-        <select
-          id="fleetId"
-          name="fleetId"
-          className="h-11 rounded-md border border-border bg-surface px-3 text-sm"
-          defaultValue=""
-        >
+        <Select id="fleetId" name="fleetId" defaultValue="">
           <option value="">Unassigned</option>
           {fleets.map((fleet) => (
             <option key={fleet.id} value={fleet.id}>
               {fleet.name}
             </option>
           ))}
-        </select>
+        </Select>
       </Field>
       <Field label="Make" htmlFor="make">
         <Input id="make" name="make" />
@@ -88,16 +79,11 @@ export function VehicleForm({ companyId, fleets }: { companyId: string; fleets: 
         <Input id="capacityKg" name="capacityKg" inputMode="decimal" />
       </Field>
       <Field label="Ownership" htmlFor="ownership">
-        <select
-          id="ownership"
-          name="ownership"
-          className="h-11 rounded-md border border-border bg-surface px-3 text-sm"
-          defaultValue="OWNED"
-        >
+        <Select id="ownership" name="ownership" defaultValue="OWNED">
           <option value="OWNED">Owned</option>
           <option value="LEASED">Leased</option>
           <option value="RENTED">Rented</option>
-        </select>
+        </Select>
       </Field>
       <Field label="Insurance expires" htmlFor="insuranceExpiresAt">
         <Input id="insuranceExpiresAt" name="insuranceExpiresAt" type="date" />
@@ -157,32 +143,22 @@ export function DocumentForm({
     <form action={action} className="grid gap-3 sm:grid-cols-2">
       <input type="hidden" name="companyId" value={companyId} />
       <Field label="Vehicle" htmlFor="docVehicle">
-        <select
-          id="docVehicle"
-          name="vehicleId"
-          className="h-11 rounded-md border border-border bg-surface px-3 text-sm"
-          required
-        >
+        <Select id="docVehicle" name="vehicleId" required>
           <option value="">Select a vehicle</option>
           {vehicles.map((vehicle) => (
             <option key={vehicle.id} value={vehicle.id}>
               {vehicle.plate}
             </option>
           ))}
-        </select>
+        </Select>
       </Field>
       <Field label="Type" htmlFor="docType">
-        <select
-          id="docType"
-          name="type"
-          className="h-11 rounded-md border border-border bg-surface px-3 text-sm"
-          defaultValue="REGISTRATION"
-        >
+        <Select id="docType" name="type" defaultValue="REGISTRATION">
           <option value="REGISTRATION">Registration</option>
           <option value="INSURANCE">Insurance</option>
           <option value="INSPECTION">Inspection</option>
           <option value="OTHER">Other</option>
-        </select>
+        </Select>
       </Field>
       <Field label="Reference" htmlFor="docReference">
         <Input id="docReference" name="reference" />
@@ -217,14 +193,10 @@ export function DocumentReviewForm({
     <form action={action} className="flex flex-wrap items-center gap-2">
       <input type="hidden" name="companyId" value={companyId} />
       <input type="hidden" name="documentId" value={document.id} />
-      <select
-        name="decision"
-        className="h-9 rounded-md border border-border bg-surface px-2 text-sm"
-        defaultValue="APPROVED"
-      >
+      <Select name="decision" defaultValue="APPROVED" className="h-9 w-28">
         <option value="APPROVED">Approve</option>
         <option value="REJECTED">Reject</option>
-      </select>
+      </Select>
       <Button type="submit" size="sm" variant="secondary" disabled={pending}>
         Review
       </Button>
@@ -247,19 +219,14 @@ export function MaintenanceForm({
     <form action={action} className="grid gap-3 sm:grid-cols-2">
       <input type="hidden" name="companyId" value={companyId} />
       <Field label="Vehicle" htmlFor="maintVehicle">
-        <select
-          id="maintVehicle"
-          name="vehicleId"
-          className="h-11 rounded-md border border-border bg-surface px-3 text-sm"
-          required
-        >
+        <Select id="maintVehicle" name="vehicleId" required>
           <option value="">Select a vehicle</option>
           {vehicles.map((vehicle) => (
             <option key={vehicle.id} value={vehicle.id}>
               {vehicle.plate}
             </option>
           ))}
-        </select>
+        </Select>
       </Field>
       <Field label="Performed at" htmlFor="maintDate">
         <Input id="maintDate" name="performedAt" type="datetime-local" required />

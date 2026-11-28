@@ -13,12 +13,15 @@ export interface ListingView {
   minimumOrder: string;
   grade: string | null;
   collectionLocation: string;
+  coverImageUrl: string | null;
   deliveryAvailable: boolean;
   organicClaim: boolean;
   certifiedClaim: boolean;
   status: string;
   farmerName: string;
   verificationStatus: string;
+  /** True only when a reviewer approved this farmer's provider application. */
+  providerVerified: boolean;
 }
 
 export interface ListingDetailView extends ListingView {
@@ -83,11 +86,18 @@ export async function listPublishedListings(): Promise<ListingView[]> {
       minimumOrder: true,
       grade: true,
       collectionLocation: true,
+      coverImageUrl: true,
       deliveryAvailable: true,
       organicClaim: true,
       certifiedClaim: true,
       status: true,
-      farmer: { select: { user: { select: { name: true } }, verificationStatus: true } },
+      farmer: {
+        select: {
+          user: { select: { name: true } },
+          verificationStatus: true,
+          providerApplication: { select: { status: true } },
+        },
+      },
     },
   });
   return rows.map((row) => ({
@@ -101,12 +111,14 @@ export async function listPublishedListings(): Promise<ListingView[]> {
     minimumOrder: row.minimumOrder.toString(),
     grade: row.grade,
     collectionLocation: row.collectionLocation,
+    coverImageUrl: row.coverImageUrl,
     deliveryAvailable: row.deliveryAvailable,
     organicClaim: row.organicClaim,
     certifiedClaim: row.certifiedClaim,
     status: row.status,
     farmerName: row.farmer.user.name,
     verificationStatus: row.farmer.verificationStatus,
+    providerVerified: row.farmer.providerApplication?.status === "APPROVED",
   }));
 }
 
@@ -126,6 +138,7 @@ export async function getPublishedListing(id: string): Promise<ListingDetailView
       harvestDate: true,
       publishedAt: true,
       collectionLocation: true,
+      coverImageUrl: true,
       deliveryAvailable: true,
       organicClaim: true,
       certifiedClaim: true,
@@ -136,6 +149,7 @@ export async function getPublishedListing(id: string): Promise<ListingDetailView
           region: true,
           district: true,
           verificationStatus: true,
+          providerApplication: { select: { status: true } },
           user: { select: { name: true } },
         },
       },
@@ -155,12 +169,14 @@ export async function getPublishedListing(id: string): Promise<ListingDetailView
     harvestDate: row.harvestDate?.toISOString() ?? null,
     publishedAt: row.publishedAt?.toISOString() ?? null,
     collectionLocation: row.collectionLocation,
+    coverImageUrl: row.coverImageUrl,
     deliveryAvailable: row.deliveryAvailable,
     organicClaim: row.organicClaim,
     certifiedClaim: row.certifiedClaim,
     status: row.status,
     farmerName: row.farmer.user.name,
     verificationStatus: row.farmer.verificationStatus,
+    providerVerified: row.farmer.providerApplication?.status === "APPROVED",
     farmName: row.farm?.name ?? null,
     farmerRegion: row.farmer.region,
     farmerDistrict: row.farmer.district,

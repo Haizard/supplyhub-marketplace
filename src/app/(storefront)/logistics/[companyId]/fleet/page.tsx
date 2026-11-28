@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { z } from "zod";
 
+import { ConsolePageHeader, ConsoleSection } from "@/components/logistics/console-ui";
 import {
   DocumentForm,
   DocumentReviewForm,
@@ -12,8 +12,6 @@ import {
   VehicleForm,
   VehicleStatusForm,
 } from "@/components/logistics/fleet-forms";
-import { CompanyNav } from "@/components/logistics/company-nav";
-import { PageShell } from "@/components/storefront/page-shell";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -58,46 +56,58 @@ async function CompanyFleetContent({ params }: { params: Promise<{ companyId: st
   ]);
   if (!company) notFound();
 
-  return (
-    <PageShell className="space-y-6 py-8">
-      <Link
-        href={`/logistics/${companyId}`}
-        className="text-sm text-muted-foreground hover:text-foreground"
-      >
-        ← {company.name}
-      </Link>
-      <header>
-        <h1 className="font-display text-3xl tracking-tight">Fleet</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Vehicles, documents and maintenance for this company only.
-        </p>
-      </header>
-      <CompanyNav companyId={companyId} active="fleet" />
+  const inService = vehicles.filter((vehicle) => vehicle.status === "ACTIVE").length;
 
-      <section className="rounded-xl border border-border bg-surface p-6">
-        <h2 className="font-display text-lg font-medium">Fleets</h2>
-        <div className="mt-3 space-y-3">
-          {fleets.map((fleet) => (
-            <p key={fleet.id} className="text-sm">
-              {fleet.name} · {fleet.vehicleCount} vehicle(s)
+  return (
+    <div className="space-y-6">
+      <ConsolePageHeader
+        eyebrow="Fleet"
+        title="Vehicles and documents"
+        description="Register the vehicles you dispatch with, keep their papers approved, and record maintenance before a job is blocked."
+        actions={
+          <p className="font-mono text-[0.625rem] tracking-[0.14em] text-muted-foreground uppercase">
+            {inService} of {vehicles.length} in service
+          </p>
+        }
+      />
+
+      <ConsoleSection
+        title="Fleets"
+        description="Group vehicles by depot, branch or contract."
+        action={<Badge tone="neutral">{fleets.length} fleets</Badge>}
+      >
+        <div className="space-y-3">
+          {fleets.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              No fleets yet. Create the first one below, then add vehicles to it.
             </p>
-          ))}
+          ) : (
+            fleets.map((fleet) => (
+              <p key={fleet.id} className="text-sm">
+                <span className="font-medium">{fleet.name}</span>
+                <span className="text-muted-foreground"> · {fleet.vehicleCount} vehicle(s)</span>
+              </p>
+            ))
+          )}
         </div>
-        <div className="mt-4">
+        <div className="mt-4 border-t border-border pt-4">
           <FleetForm companyId={companyId} />
         </div>
-      </section>
+      </ConsoleSection>
 
-      <section className="rounded-xl border border-border bg-surface p-6">
-        <h2 className="font-display text-lg font-medium">Vehicles</h2>
-        <div className="mt-3 space-y-3">
+      <ConsoleSection
+        title="Vehicles"
+        description="A vehicle needs to be active before dispatch can assign it."
+        action={<Badge tone="neutral">{vehicles.length} registered</Badge>}
+      >
+        <div className="space-y-1">
           {vehicles.length === 0 ? (
             <p className="text-sm text-muted-foreground">No vehicles registered yet.</p>
           ) : (
             vehicles.map((vehicle) => (
               <div
                 key={vehicle.id}
-                className="flex flex-wrap items-center justify-between gap-3 border-b border-border/50 py-3"
+                className="flex flex-wrap items-center justify-between gap-3 border-b border-border/50 py-3 last:border-b-0"
               >
                 <div>
                   <p className="font-medium">{vehicle.plate}</p>
@@ -115,52 +125,64 @@ async function CompanyFleetContent({ params }: { params: Promise<{ companyId: st
             ))
           )}
         </div>
-        <div className="mt-5 border-t border-border pt-5">
+        <div className="mt-4 border-t border-border pt-4">
           <VehicleForm companyId={companyId} fleets={fleets} />
         </div>
-      </section>
+      </ConsoleSection>
 
-      <section className="rounded-xl border border-border bg-surface p-6">
-        <h2 className="font-display text-lg font-medium">Documents</h2>
-        <div className="mt-3 space-y-2">
-          {documents.map((document) => (
-            <div
-              key={document.id}
-              className="flex flex-wrap items-center justify-between gap-3 border-b border-border/50 py-2 text-sm"
-            >
-              <span>
-                {document.type} · {document.reference || document.storageKey}
-              </span>
-              <div className="flex items-center gap-3">
-                <Badge tone={document.status === "APPROVED" ? "success" : "neutral"}>
-                  {document.status}
-                </Badge>
-                {document.status === "PENDING" ? (
-                  <DocumentReviewForm companyId={companyId} document={document} />
-                ) : null}
+      <ConsoleSection
+        title="Documents"
+        description="Registration, insurance and inspection papers. Pending documents are reviewed here."
+      >
+        <div className="space-y-1">
+          {documents.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No vehicle documents uploaded.</p>
+          ) : (
+            documents.map((document) => (
+              <div
+                key={document.id}
+                className="flex flex-wrap items-center justify-between gap-3 border-b border-border/50 py-2 text-sm last:border-b-0"
+              >
+                <span>
+                  {document.type} · {document.reference || document.storageKey}
+                </span>
+                <div className="flex items-center gap-3">
+                  <Badge tone={document.status === "APPROVED" ? "success" : "neutral"}>
+                    {document.status}
+                  </Badge>
+                  {document.status === "PENDING" ? (
+                    <DocumentReviewForm companyId={companyId} document={document} />
+                  ) : null}
+                </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
-        <div className="mt-5 border-t border-border pt-5">
+        <div className="mt-4 border-t border-border pt-4">
           <DocumentForm companyId={companyId} vehicles={vehicles} />
         </div>
-      </section>
+      </ConsoleSection>
 
-      <section className="rounded-xl border border-border bg-surface p-6">
-        <h2 className="font-display text-lg font-medium">Maintenance</h2>
-        <div className="mt-3 space-y-2">
-          {maintenance.map((entry) => (
-            <p key={entry.id} className="text-sm text-muted-foreground">
-              {new Date(entry.performedAt).toLocaleDateString()} · {entry.cost} {entry.currency} ·{" "}
-              {entry.description}
-            </p>
-          ))}
+      <ConsoleSection
+        title="Maintenance"
+        description="Keep the service history that explains why a vehicle is off the road."
+      >
+        <div className="space-y-1">
+          {maintenance.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No maintenance recorded.</p>
+          ) : (
+            maintenance.map((entry) => (
+              <p key={entry.id} className="text-sm text-muted-foreground">
+                {new Date(entry.performedAt).toLocaleDateString()} · {entry.cost} {entry.currency} ·{" "}
+                {entry.description}
+              </p>
+            ))
+          )}
         </div>
-        <div className="mt-5 border-t border-border pt-5">
+        <div className="mt-4 border-t border-border pt-4">
           <MaintenanceForm companyId={companyId} vehicles={vehicles} />
         </div>
-      </section>
-    </PageShell>
+      </ConsoleSection>
+    </div>
   );
 }

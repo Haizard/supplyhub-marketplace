@@ -63,6 +63,7 @@ export async function registerCompanyAction(
     contactEmail: formValue(formData, "contactEmail"),
     address: formValue(formData, "address"),
     city: formValue(formData, "city"),
+    coverImageUrl: formValue(formData, "coverImageUrl"),
     countryCode: formValue(formData, "countryCode") || "TZ",
   });
   if (!parsed.success) return failFields(parsed.error);
@@ -99,6 +100,7 @@ export async function registerCompanyAction(
           contactEmail: parsed.data.contactEmail ?? null,
           address: parsed.data.address ?? null,
           city: parsed.data.city ?? null,
+          coverImageUrl: parsed.data.coverImageUrl ?? null,
           countryCode: parsed.data.countryCode,
           status: "PENDING",
         },
@@ -519,6 +521,7 @@ export async function updateCompanyAction(
     contactEmail: formValue(formData, "contactEmail"),
     address: formValue(formData, "address"),
     city: formValue(formData, "city"),
+    coverImageUrl: formValue(formData, "coverImageUrl"),
     countryCode: formValue(formData, "countryCode") || "TZ",
   });
   if (!parsed.success) return failFields(parsed.error);
@@ -543,6 +546,7 @@ export async function updateCompanyAction(
           contactEmail: data.contactEmail ?? null,
           address: data.address ?? null,
           city: data.city ?? null,
+          coverImageUrl: data.coverImageUrl ?? null,
           countryCode: data.countryCode,
         },
       });

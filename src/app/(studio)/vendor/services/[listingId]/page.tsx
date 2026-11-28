@@ -65,6 +65,7 @@ async function EditServiceContent({ params }: { params: Promise<{ listingId: str
               unitPrice: listing.unitPrice,
               durationMinutes: listing.durationMinutes,
               location: listing.location,
+              coverImageUrl: listing.coverImageUrl,
             }}
           />
         </div>

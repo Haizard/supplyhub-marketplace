@@ -3,14 +3,13 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { z } from "zod";
 
-import { CompanyNav } from "@/components/logistics/company-nav";
 import {
   OptimizationDecisionForm,
   OptimizationRequestForm,
 } from "@/components/logistics/optimization-forms";
-import { PageShell } from "@/components/storefront/page-shell";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ConsolePageHeader } from "@/components/logistics/console-ui";
 import { getLogisticsCompany } from "@/features/logistics-companies/queries";
 import {
   listOptimizationRequests,
@@ -70,15 +69,11 @@ async function OptimizationContent({ params }: { params: Promise<{ companyId: st
   if (!company) notFound();
 
   return (
-    <PageShell className="space-y-6 py-8">
-      <header>
-        <h1 className="font-display text-3xl tracking-tight">Dispatch optimisation</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Advisory driver ordering only. The deterministic baseline is always stored and used when
-          AI is disabled, unavailable or invalid. No job is assigned or reassigned from this page.
-        </p>
-      </header>
-      <CompanyNav companyId={companyId} active="optimize" />
+    <div className="space-y-6">
+      <ConsolePageHeader
+        title="Dispatch optimisation"
+        description="Advisory driver ordering only. The deterministic baseline is always stored and used when AI is disabled, unavailable or invalid. No job is assigned or reassigned from this page."
+      />
 
       <section className="rounded-xl border border-border bg-surface p-6">
         <h2 className="font-display text-lg font-medium">Generate a ranking</h2>
@@ -131,6 +126,6 @@ async function OptimizationContent({ params }: { params: Promise<{ companyId: st
           </article>
         ))}
       </section>
-    </PageShell>
+    </div>
   );
 }

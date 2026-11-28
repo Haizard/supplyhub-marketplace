@@ -1,13 +1,11 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { z } from "zod";
 
-import { CompanyNav } from "@/components/logistics/company-nav";
 import { ContractForm, DeliveryRecordForm } from "@/components/logistics/contract-forms";
-import { PageShell } from "@/components/storefront/page-shell";
 import { Badge } from "@/components/ui/badge";
+import { ConsolePageHeader } from "@/components/logistics/console-ui";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getLogisticsCompany } from "@/features/logistics-companies/queries";
 import { listCompanyClients } from "@/features/logistics-clients/queries";
@@ -60,28 +58,20 @@ async function ContractDetailContent({
   const expiring = isExpiringSoon(contract.endsAt);
 
   return (
-    <PageShell className="space-y-6 py-8">
-      <Link
-        href={`/logistics/${companyId}/contracts`}
-        className="text-sm text-muted-foreground hover:text-foreground"
-      >
-        ← Contracts
-      </Link>
-      <header className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="font-display text-3xl tracking-tight">{contract.title}</h1>
-          <p className="text-sm text-muted-foreground">
-            {contract.contractNumber} · {contract.clientName} · version {contract.version}
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge tone={contract.status === "ACTIVE" ? "success" : "neutral"}>
-            {CONTRACT_STATUS_LABELS[contract.status]}
-          </Badge>
-          {expiring ? <Badge tone="neutral">Expiring soon</Badge> : null}
-        </div>
-      </header>
-      <CompanyNav companyId={companyId} active="contracts" />
+    <div className="space-y-6">
+      <ConsolePageHeader
+        eyebrow="Contract"
+        title={contract.title}
+        description={`${contract.contractNumber} · ${contract.clientName} · version ${contract.version}`}
+        actions={
+          <>
+            <Badge tone={contract.status === "ACTIVE" ? "success" : "neutral"}>
+              {CONTRACT_STATUS_LABELS[contract.status]}
+            </Badge>
+            {expiring ? <Badge tone="neutral">Expiring soon</Badge> : null}
+          </>
+        }
+      />
 
       <section className="rounded-xl border border-border bg-surface p-6">
         <h2 className="font-display text-lg font-medium">Performance</h2>
@@ -154,6 +144,6 @@ async function ContractDetailContent({
           </p>
         )}
       </section>
-    </PageShell>
+    </div>
   );
 }

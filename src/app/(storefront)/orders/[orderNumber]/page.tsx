@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { ArrowLeft, Box, CreditCard, MapPin, Navigation } from "lucide-react";
+import { ArrowLeft, Box, CreditCard, MapPin, Navigation, Truck } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -480,6 +480,12 @@ async function OrderContent({
               <Link href={trackingHref}>
                 <Navigation className="size-4" aria-hidden="true" />
                 Track live delivery
+              </Link>
+            </Button>
+            <Button asChild variant="secondary" className="mt-2 w-full">
+              <Link href={`/orders/${order.orderNumber}/transaction`}>
+                <Truck className="size-4" aria-hidden="true" />
+                {t("transactions.open")}
               </Link>
             </Button>
           </section>

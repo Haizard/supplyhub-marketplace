@@ -164,6 +164,7 @@ export async function saveListingAction(_prev: FormState, formData: FormData): P
     deliveryAvailable: formValue(formData, "deliveryAvailable"),
     organicClaim: formValue(formData, "organicClaim"),
     certifiedClaim: formValue(formData, "certifiedClaim"),
+    coverImageUrl: formValue(formData, "coverImageUrl"),
   });
   if (!parsed.success) return failFields(parsed.error);
   let farmer;
@@ -209,6 +210,7 @@ export async function saveListingAction(_prev: FormState, formData: FormData): P
         deliveryAvailable: parsed.data.deliveryAvailable,
         organicClaim: parsed.data.organicClaim,
         certifiedClaim: parsed.data.certifiedClaim,
+        coverImageUrl: parsed.data.coverImageUrl ?? null,
         status: "PUBLISHED",
         publishedAt: new Date(),
       },

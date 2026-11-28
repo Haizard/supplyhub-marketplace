@@ -1,16 +1,14 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { z } from "zod";
 
 import { AssignRoleForm } from "@/components/logistics/assign-role-form";
-import { CompanyNav } from "@/components/logistics/company-nav";
 import { MemberInviteForm } from "@/components/logistics/member-invite-form";
 import { MemberStatusForm } from "@/components/logistics/member-status-form";
-import { PageShell } from "@/components/storefront/page-shell";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ConsolePageHeader, ConsoleSection } from "@/components/logistics/console-ui";
 import {
   getLogisticsCompany,
   listCompanyMembers,
@@ -52,21 +50,11 @@ async function CompanyMembersContent({ params }: { params: Promise<{ companyId: 
     access.permissions.has("*") || access.permissions.has("logistics.company.update");
 
   return (
-    <PageShell className="space-y-6 py-8">
-      <Link
-        href={`/logistics/${companyId}`}
-        className="text-sm text-muted-foreground hover:text-foreground"
-      >
-        ← {company.name}
-      </Link>
-      <header>
-        <h1 className="font-display text-3xl tracking-tight">Members</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Company membership is separate from marketplace roles.
-        </p>
-      </header>
-
-      <CompanyNav companyId={companyId} active="members" />
+    <div className="space-y-6">
+      <ConsolePageHeader
+        title="Members"
+        description="Company membership is separate from marketplace roles."
+      />
 
       <ul className="space-y-3">
         {members.map((member) => (
@@ -100,16 +88,14 @@ async function CompanyMembersContent({ params }: { params: Promise<{ companyId: 
       </ul>
 
       {canManage ? (
-        <section className="max-w-xl rounded-xl border border-border bg-surface p-6">
-          <h2 className="font-display text-lg font-medium">Invite a member</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            The user must already have a SupplyHub account.
-          </p>
-          <div className="mt-4">
-            <MemberInviteForm companyId={companyId} roles={roles} />
-          </div>
-        </section>
+        <ConsoleSection
+          title="Invite a member"
+          description="The user must already have a SupplyHub account."
+          className="max-w-xl"
+        >
+          <MemberInviteForm companyId={companyId} roles={roles} />
+        </ConsoleSection>
       ) : null}
-    </PageShell>
+    </div>
   );
 }

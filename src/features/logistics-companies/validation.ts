@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { coverImageUrlSchema } from "@/features/marketplaces/images";
+
 const uuid = z.uuid();
 
 const optionalText = (max: number) =>
@@ -25,6 +27,7 @@ export const companySchema = z.object({
   ),
   address: optionalText(300),
   city: optionalText(120),
+  coverImageUrl: coverImageUrlSchema,
   countryCode: z
     .string()
     .trim()

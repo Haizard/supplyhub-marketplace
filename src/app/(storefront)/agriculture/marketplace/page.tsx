@@ -81,12 +81,14 @@ async function AgricultureMarketplaceContent() {
                     href={`/agriculture/marketplace/${listing.id}`}
                     tone="farm"
                     icon={cropGlyph(listing.cropName)}
+                    image={listing.coverImageUrl}
+                    imageAlt={`${listing.cropName}${listing.variety ? ` ${listing.variety}` : ""}`}
                     label={listing.collectionLocation}
                     badge={
-                      listing.verificationStatus === "VERIFIED" ? (
-                        <Badge tone="success">Verified</Badge>
+                      listing.providerVerified ? (
+                        <Badge tone="success">{t("providers.verifiedShort")}</Badge>
                       ) : (
-                        <Badge tone="neutral">Declared</Badge>
+                        <Badge tone="neutral">{t("providers.declaredShort")}</Badge>
                       )
                     }
                   />

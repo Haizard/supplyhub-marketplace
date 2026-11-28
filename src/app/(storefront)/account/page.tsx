@@ -213,6 +213,9 @@ async function AccountContent({
                 <Link href="/account/installments">Installment agreements</Link>
               </Button>
               <Button asChild variant="ghost" size="sm">
+                <Link href="/provider/verification">{t("providers.title")}</Link>
+              </Button>
+              <Button asChild variant="ghost" size="sm">
                 <Link href="/recommendations">{t("insights.recommendationsNav")}</Link>
               </Button>
               <Button asChild variant="ghost" size="sm">

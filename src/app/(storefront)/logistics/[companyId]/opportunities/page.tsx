@@ -3,14 +3,13 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { z } from "zod";
 
-import { CompanyNav } from "@/components/logistics/company-nav";
 import {
   AcceptOpportunityForm,
   DeclineOpportunityForm,
 } from "@/components/logistics/marketplace-forms";
-import { PageShell } from "@/components/storefront/page-shell";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ConsolePageHeader } from "@/components/logistics/console-ui";
 import { getLogisticsCompany } from "@/features/logistics-companies/queries";
 import { listCompanyOpportunities } from "@/features/logistics-marketplace/queries";
 import { requireLogisticsAccess } from "@/server/logistics/access";
@@ -49,14 +48,11 @@ async function CompanyOpportunitiesContent({ params }: { params: Promise<{ compa
   if (!company) notFound();
 
   return (
-    <PageShell className="space-y-6 py-8">
-      <header>
-        <h1 className="font-display text-3xl tracking-tight">Delivery opportunities</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Platform-generated work offered to verified companies. You decide what to accept.
-        </p>
-      </header>
-      <CompanyNav companyId={companyId} active="opportunities" />
+    <div className="space-y-6">
+      <ConsolePageHeader
+        title="Delivery opportunities"
+        description="Platform-generated work offered to verified companies. You decide what to accept."
+      />
 
       {opportunities.length === 0 ? (
         <p className="text-sm text-muted-foreground">No opportunities offered yet.</p>
@@ -92,6 +88,6 @@ async function CompanyOpportunitiesContent({ params }: { params: Promise<{ compa
           ))}
         </ul>
       )}
-    </PageShell>
+    </div>
   );
 }

@@ -14,8 +14,11 @@ export interface ServiceListingView {
   unitPrice: string;
   durationMinutes: number;
   location: string;
+  coverImageUrl: string | null;
   status: string;
   publishedAt: string | null;
+  /** True only when a reviewer approved the studio's provider application. */
+  providerVerified: boolean;
 }
 
 export interface ServiceBookingView {
@@ -38,13 +41,14 @@ type ListingRow = {
   id: string;
   listingNumber: string;
   vendorId: string;
-  vendor: { name: string };
+  vendor: { name: string; providerApplication: { status: string } | null };
   title: string;
   description: string;
   currency: string;
   unitPrice: { toString(): string };
   durationMinutes: number;
   location: string;
+  coverImageUrl: string | null;
   status: string;
   publishedAt: Date | null;
 };
@@ -61,8 +65,10 @@ function toListingView(row: ListingRow): ServiceListingView {
     unitPrice: row.unitPrice.toString(),
     durationMinutes: row.durationMinutes,
     location: row.location,
+    coverImageUrl: row.coverImageUrl,
     status: row.status,
     publishedAt: row.publishedAt?.toISOString() ?? null,
+    providerVerified: row.vendor.providerApplication?.status === "APPROVED",
   };
 }
 
@@ -104,7 +110,9 @@ export async function listActiveServiceListings(): Promise<ServiceListingView[]>
   const rows = await getDatabase().serviceListing.findMany({
     where: { status: "ACTIVE" },
     orderBy: [{ publishedAt: "desc" }, { createdAt: "desc" }],
-    include: { vendor: { select: { name: true } } },
+    include: {
+      vendor: { select: { name: true, providerApplication: { select: { status: true } } } },
+    },
   });
   return rows.map(toListingView);
 }
@@ -112,7 +120,9 @@ export async function listActiveServiceListings(): Promise<ServiceListingView[]>
 export async function getActiveServiceListing(id: string): Promise<ServiceListingView | null> {
   const row = await getDatabase().serviceListing.findFirst({
     where: { id, status: "ACTIVE" },
-    include: { vendor: { select: { name: true } } },
+    include: {
+      vendor: { select: { name: true, providerApplication: { select: { status: true } } } },
+    },
   });
   return row ? toListingView(row) : null;
 }
@@ -121,7 +131,9 @@ export async function listVendorServiceListings(vendorId: string): Promise<Servi
   const rows = await getDatabase().serviceListing.findMany({
     where: { vendorId },
     orderBy: { createdAt: "desc" },
-    include: { vendor: { select: { name: true } } },
+    include: {
+      vendor: { select: { name: true, providerApplication: { select: { status: true } } } },
+    },
   });
   return rows.map(toListingView);
 }
@@ -145,7 +157,9 @@ export async function getVendorServiceListing(
 ): Promise<ServiceListingView | null> {
   const row = await getDatabase().serviceListing.findFirst({
     where: { id, vendorId },
-    include: { vendor: { select: { name: true } } },
+    include: {
+      vendor: { select: { name: true, providerApplication: { select: { status: true } } } },
+    },
   });
   return row ? toListingView(row) : null;
 }

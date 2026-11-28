@@ -517,6 +517,12 @@ enum AuditAction {
   AGRICULTURE_INTAKE_RECORDED
   AGRICULTURE_STORAGE_BOOKING_CHANGED
   AGRICULTURE_GROUP_CREATED
+  MARKETPLACE_TRANSACTION_CREATED
+  MARKETPLACE_TRANSACTION_COMPLETED
+  MARKETPLACE_TRANSACTION_CANCELLED
+  PROVIDER_APPLICATION_SUBMITTED
+  PROVIDER_APPLICATION_APPROVED
+  PROVIDER_APPLICATION_REJECTED
   AGRICULTURE_GROUP_MEMBER_CHANGED
   AGRICULTURE_AGREEMENT_CREATED
   AGRICULTURE_AGREEMENT_CHANGED
@@ -577,6 +583,10 @@ model User {
   signInEvents              SignInEvent[]
   serviceBookings           ServiceBooking[]       @relation("ServiceBookingBuyer")
   groupBuyParticipations    GroupBuyParticipation[] @relation("GroupBuyParticipations")
+  marketplaceTransactions   MarketplaceTransaction[]      @relation("MarketplaceTransactionCustomer")
+  marketplaceEvents         MarketplaceTransactionEvent[] @relation("MarketplaceTransactionEventActor")
+  providerApplications      ProviderApplication[]             @relation("ProviderApplications")
+  reviewedProviderApplications ProviderApplication[]          @relation("ProviderApplicationReviewer")
   installmentAgreements     InstallmentAgreement[] @relation("InstallmentBuyer")
   installmentDisputes       InstallmentDispute[] @relation("InstallmentDisputeOpener")
   installmentSignatures     InstallmentContractSignature[] @relation("InstallmentSigner")
@@ -790,6 +800,7 @@ model Vendor {
   products           Product[]
   vendorOrders       VendorOrder[]
   shipments          Shipment[]
+  providerApplication ProviderApplication?
   promotions         Promotion[]
   commissionEntries  CommissionLedger[]
   payouts            Payout[]
@@ -1097,6 +1108,7 @@ model Order {
   statusHistory        OrderStatusHistory[]
   commissionEntries    CommissionLedger[]
   deliveryRequests     DeliveryRequest[]
+  marketplaceTransaction MarketplaceTransaction?
   createdAt            DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt            DateTime             @updatedAt @map("updated_at") @db.Timestamptz(6)
 
@@ -1809,6 +1821,7 @@ model DeliveryRequest {
   externalOrders   LogisticsExternalOrder[]
   optimizationSuggestions LogisticsOptimizationSuggestion[]
   agriculturalDelivery AgriculturalDelivery?
+  marketplaceTransaction MarketplaceTransaction?
   createdAt        DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt        DateTime              @updatedAt @map("updated_at") @db.Timestamptz(6)
 
@@ -2530,6 +2543,7 @@ model ServiceListing {
   unitPrice      Decimal              @map("unit_price") @db.Decimal(12, 2)
   durationMinutes Int                 @map("duration_minutes")
   location       String               @default("")
+  coverImageUrl  String?              @map("cover_image_url") @db.VarChar(500)
   status         ServiceListingStatus @default(DRAFT)
   publishedAt    DateTime?            @map("published_at") @db.Timestamptz(6)
   createdAt      DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
@@ -2561,6 +2575,7 @@ model ServiceBooking {
   cancelledAt     DateTime?           @map("cancelled_at") @db.Timestamptz(6)
   createdAt       DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt       DateTime            @updatedAt @map("updated_at") @db.Timestamptz(6)
+  marketplaceTransaction MarketplaceTransaction?
 
   @@index([serviceId, status])
   @@index([buyerId, createdAt])
@@ -2856,6 +2871,7 @@ model LogisticsCompany {
   contactEmail       String?                @map("contact_email") @db.VarChar(160)
   address            String?                @db.VarChar(300)
   city               String?                @db.VarChar(120)
+  coverImageUrl      String?                @map("cover_image_url") @db.VarChar(500)
   countryCode        String                 @default("TZ") @map("country_code") @db.VarChar(2)
   latitude           Decimal?               @db.Decimal(10, 7)
   longitude          Decimal?               @db.Decimal(10, 7)
@@ -2875,6 +2891,7 @@ model LogisticsCompany {
   settings           LogisticsCompanySettings?
   fleets             LogisticsFleet[]
   vehicles           LogisticsVehicle[]
+  providerApplication ProviderApplication?
   driverMemberships  DriverCompanyMembership[]
   clientRelationships CompanyClientRelationship[]
   contracts          LogisticsContract[]
@@ -4701,6 +4718,7 @@ model AgricultureFarmer {
   groupMemberships  FarmerGroupMember[]
   harvestAgreements HarvestPurchaseAgreement[]
   advice            AgricultureAdvice[]
+  providerApplication ProviderApplication?
 
   @@index([verificationStatus, createdAt])
   @@map("agriculture_farmers")
@@ -4772,6 +4790,7 @@ model AgriculturalListing {
   organicClaim     Boolean                 @default(false) @map("organic_claim")
   certifiedClaim   Boolean                 @default(false) @map("certified_claim")
   photos           Json?
+  coverImageUrl    String?                 @map("cover_image_url") @db.VarChar(500)
   status           AgriculturalListingStatus @default(DRAFT)
   publishedAt      DateTime?               @map("published_at") @db.Timestamptz(6)
   createdAt        DateTime                @default(now()) @map("created_at") @db.Timestamptz(6)
@@ -5411,4 +5430,132 @@ model AgricultureAdvice {
 
   @@index([farmerId, createdAt])
   @@map("agriculture_advice")
+}
+
+// ── Phase 12: One transaction across the marketplaces ───────────────────────
+//
+// A retail or produce order can add a logistics job and an optional service
+// booking. The transaction is the single owner-facing record: it points at the
+// shared Order (the join key for retail and produce), the DeliveryRequest the
+// order booked, and the optional ServiceBooking. Everything that happens on any
+// of those three legs is written to one append-only timeline.
+
+enum MarketplaceTransactionStatus {
+  OPEN
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum MarketplaceTransactionSource {
+  RETAIL
+  AGRICULTURE
+}
+
+enum MarketplaceTransactionEventKind {
+  CREATED
+  LOGISTICS_BOOKED
+  SERVICE_BOOKED
+  LOGISTICS_UPDATE
+  SERVICE_UPDATE
+  COMPLETED
+  CANCELLED
+}
+
+model MarketplaceTransaction {
+  id                String                        @id @default(uuid()) @db.Uuid
+  transactionNumber String                        @unique @map("transaction_number") @db.VarChar(40)
+  /// The buyer who owns the order and every leg attached to it.
+  customerId        String                        @map("customer_id") @db.Uuid
+  customer          User                          @relation("MarketplaceTransactionCustomer", fields: [customerId], references: [id], onDelete: Restrict)
+  /// One order, one transaction. Retail and produce orders are both Orders.
+  orderId           String                        @unique @map("order_id") @db.Uuid
+  order             Order                         @relation(fields: [orderId], references: [id], onDelete: Restrict)
+  source            MarketplaceTransactionSource
+  status            MarketplaceTransactionStatus   @default(OPEN)
+  currency          String                        @db.VarChar(3)
+  deliveryRequestId String?                       @unique @map("delivery_request_id") @db.Uuid
+  deliveryRequest   DeliveryRequest?              @relation(fields: [deliveryRequestId], references: [id], onDelete: SetNull)
+  serviceBookingId  String?                       @unique @map("service_booking_id") @db.Uuid
+  serviceBooking    ServiceBooking?               @relation(fields: [serviceBookingId], references: [id], onDelete: SetNull)
+  note              String?                       @db.Text
+  completedAt       DateTime?                     @map("completed_at") @db.Timestamptz(6)
+  cancelledAt       DateTime?                     @map("cancelled_at") @db.Timestamptz(6)
+  createdAt         DateTime                      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime                      @updatedAt @map("updated_at") @db.Timestamptz(6)
+  events            MarketplaceTransactionEvent[]
+
+  @@index([customerId, createdAt])
+  @@index([status, createdAt])
+  @@map("marketplace_transactions")
+}
+
+/// Append-only shared timeline. Written in the same transaction as the step it
+/// records, so the timeline can never disagree with the order, job or booking.
+model MarketplaceTransactionEvent {
+  id            String                          @id @default(uuid()) @db.Uuid
+  transactionId String                          @map("transaction_id") @db.Uuid
+  transaction   MarketplaceTransaction          @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  kind          MarketplaceTransactionEventKind
+  actorId       String?                         @map("actor_id") @db.Uuid
+  actor         User?                           @relation("MarketplaceTransactionEventActor", fields: [actorId], references: [id], onDelete: SetNull)
+  note          String?                         @db.VarChar(500)
+  createdAt     DateTime                        @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([transactionId, createdAt])
+  @@map("marketplace_transaction_events")
+}
+
+// ── Provider applications: one review flow for every provider type ──────────
+//
+// Farmers, logistics companies and service studios apply through one pipeline.
+// An application is the record of the evidence a reviewer saw; approving it is
+// what flips the entity to verified, and the public badge reads that approval.
+// Exactly one of the three entity links is set, so an entity has one live
+// application (unique columns below) and can re-apply after a rejection.
+
+enum ProviderType {
+  FARMER
+  LOGISTICS_COMPANY
+  SERVICE_PROVIDER
+}
+
+enum ProviderApplicationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  WITHDRAWN
+}
+
+model ProviderApplication {
+  id                String                    @id @default(uuid()) @db.Uuid
+  applicationNumber String                    @unique @map("application_number") @db.VarChar(40)
+  providerType      ProviderType              @map("provider_type")
+  applicantId       String                    @map("applicant_id") @db.Uuid
+  applicant         User                      @relation("ProviderApplications", fields: [applicantId], references: [id], onDelete: Cascade)
+  status            ProviderApplicationStatus @default(PENDING)
+  displayName       String                    @map("display_name") @db.VarChar(160)
+  contactPhone      String                    @map("contact_phone") @db.VarChar(40)
+  contactEmail      String                    @map("contact_email") @db.VarChar(160)
+  district          String?                   @db.VarChar(120)
+  summary           String                    @db.Text
+  /// [{ type: "IDENTITY" | "LICENCE" | "CERTIFICATE", reference: string }]
+  documents         Json
+  farmerId          String?                   @unique @map("farmer_id") @db.Uuid
+  farmer            AgricultureFarmer?        @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+  companyId         String?                   @unique @map("company_id") @db.Uuid
+  company           LogisticsCompany?         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  vendorId          String?                   @unique @map("vendor_id") @db.Uuid
+  vendor            Vendor?                   @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  submittedAt       DateTime                  @default(now()) @map("submitted_at") @db.Timestamptz(6)
+  reviewedById      String?                   @map("reviewed_by_id") @db.Uuid
+  reviewedBy        User?                     @relation("ProviderApplicationReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+  reviewedAt        DateTime?                 @map("reviewed_at") @db.Timestamptz(6)
+  reviewNote        String?                   @map("review_note") @db.Text
+  createdAt         DateTime                  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime                  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([status, submittedAt])
+  @@index([applicantId, createdAt])
+  @@map("provider_applications")
 }

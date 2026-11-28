@@ -1,18 +1,16 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { z } from "zod";
 
-import { CompanyNav } from "@/components/logistics/company-nav";
 import {
   AssignVehicleForm,
   EmploymentForm,
   ReleaseVehicleForm,
   ScheduleForm,
 } from "@/components/logistics/driver-forms";
-import { PageShell } from "@/components/storefront/page-shell";
 import { Badge } from "@/components/ui/badge";
+import { ConsolePageHeader } from "@/components/logistics/console-ui";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getLogisticsCompany } from "@/features/logistics-companies/queries";
 import { getDriverDetail } from "@/features/logistics-drivers/queries";
@@ -65,23 +63,17 @@ async function DriverDetailContent({
   const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
   return (
-    <PageShell className="space-y-6 py-8">
-      <Link
-        href={`/logistics/${companyId}/drivers`}
-        className="text-sm text-muted-foreground hover:text-foreground"
-      >
-        ← Drivers
-      </Link>
-      <header className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="font-display text-3xl tracking-tight">{detail.driverName}</h1>
-          <p className="text-sm text-muted-foreground">Driver #{detail.driverId.slice(0, 8)}</p>
-        </div>
-        <Badge tone={detail.status === "ACTIVE" ? "success" : "neutral"}>
-          {MEMBERSHIP_STATUS_LABELS[detail.status]}
-        </Badge>
-      </header>
-      <CompanyNav companyId={companyId} active="drivers" />
+    <div className="space-y-6">
+      <ConsolePageHeader
+        eyebrow="Driver"
+        title={detail.driverName}
+        description={`Driver #${detail.driverId.slice(0, 8)}`}
+        actions={
+          <Badge tone={detail.status === "ACTIVE" ? "success" : "neutral"}>
+            {MEMBERSHIP_STATUS_LABELS[detail.status]}
+          </Badge>
+        }
+      />
 
       <section className="rounded-xl border border-border bg-surface p-6">
         <h2 className="font-display text-lg font-medium">Compensation agreement</h2>
@@ -148,6 +140,6 @@ async function DriverDetailContent({
           </div>
         ) : null}
       </section>
-    </PageShell>
+    </div>
   );
 }

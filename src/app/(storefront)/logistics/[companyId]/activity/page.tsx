@@ -1,12 +1,10 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { z } from "zod";
 
-import { CompanyNav } from "@/components/logistics/company-nav";
-import { PageShell } from "@/components/storefront/page-shell";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ConsolePageHeader } from "@/components/logistics/console-ui";
 import { getLogisticsCompany, listCompanyActivity } from "@/features/logistics-companies/queries";
 import { requireLogisticsAccess } from "@/server/logistics/access";
 
@@ -44,20 +42,11 @@ async function CompanyActivityContent({ params }: { params: Promise<{ companyId:
   if (!company) notFound();
 
   return (
-    <PageShell className="space-y-6 py-8">
-      <Link
-        href={`/logistics/${companyId}`}
-        className="text-sm text-muted-foreground hover:text-foreground"
-      >
-        ← {company.name}
-      </Link>
-      <header>
-        <h1 className="font-display text-3xl tracking-tight">Activity</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Company events from the platform audit log, newest first.
-        </p>
-      </header>
-      <CompanyNav companyId={companyId} active="activity" />
+    <div className="space-y-6">
+      <ConsolePageHeader
+        title="Activity"
+        description="Company events from the platform audit log, newest first."
+      />
 
       {activity.length === 0 ? (
         <p className="text-sm text-muted-foreground">No activity recorded yet.</p>
@@ -76,6 +65,6 @@ async function CompanyActivityContent({ params }: { params: Promise<{ companyId:
           ))}
         </ul>
       )}
-    </PageShell>
+    </div>
   );
 }

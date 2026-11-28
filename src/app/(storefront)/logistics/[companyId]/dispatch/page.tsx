@@ -4,9 +4,8 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { z } from "zod";
 
-import { CompanyNav } from "@/components/logistics/company-nav";
+import { ConsolePageHeader, ConsoleSection } from "@/components/logistics/console-ui";
 import { CompanyRequestForm, DispatchForm } from "@/components/logistics/dispatch-forms";
-import { PageShell } from "@/components/storefront/page-shell";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getLogisticsCompany } from "@/features/logistics-companies/queries";
@@ -52,87 +51,98 @@ async function CompanyDispatchContent({ params }: { params: Promise<{ companyId:
   ]);
   if (!company) notFound();
 
-  return (
-    <PageShell className="space-y-6 py-8">
-      <Link
-        href={`/logistics/${companyId}`}
-        className="text-sm text-muted-foreground hover:text-foreground"
-      >
-        ← {company.name}
-      </Link>
-      <header>
-        <h1 className="font-display text-3xl tracking-tight">Dispatch</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Company-originated requests use the platform delivery lifecycle, OTP and proof flow.
-        </p>
-      </header>
-      <CompanyNav companyId={companyId} active="dispatch" />
+  const waiting = requests.filter((request) => !request.activeJobId).length;
 
-      <section className="rounded-xl border border-border bg-surface p-6">
-        <h2 className="font-display text-lg font-medium">Available drivers</h2>
-        <p className="mt-1 text-xs text-muted-foreground">
-          A driver must be active, have a vehicle, and be within the configured service area.
-        </p>
-        <ul className="mt-3 flex flex-wrap gap-2">
+  return (
+    <div className="space-y-6">
+      <ConsolePageHeader
+        eyebrow="Operations"
+        title="Dispatch"
+        description="Company-originated requests use the platform delivery lifecycle, OTP and proof flow."
+        actions={
+          <p className="font-mono text-[0.625rem] tracking-[0.14em] text-muted-foreground uppercase">
+            {waiting} awaiting courier · {drivers.length} drivers
+          </p>
+        }
+      />
+
+      <ConsoleSection
+        title="Available drivers"
+        description="A driver must be active, have a vehicle, and be within the configured service area."
+      >
+        <ul className="flex flex-wrap gap-2">
           {drivers.map((driver) => (
-            <li key={driver.id} className="rounded-md border border-border px-3 py-2 text-xs">
-              {driver.name} · {driver.vehiclePlate ?? "no vehicle"} · {driver.activeJobs} active
-              job(s)
+            <li
+              key={driver.id}
+              className="rounded-md border border-border px-3 py-2 text-xs text-muted-foreground"
+            >
+              <span className="font-medium text-foreground">{driver.name}</span> ·{" "}
+              {driver.vehiclePlate ?? "no vehicle"} · {driver.activeJobs} active job(s)
             </li>
           ))}
           {drivers.length === 0 ? (
-            <li className="text-sm text-muted-foreground">No active drivers.</li>
+            <li className="text-sm text-muted-foreground">
+              No active drivers. Register a driver before dispatching.
+            </li>
           ) : null}
         </ul>
-      </section>
+      </ConsoleSection>
 
-      <section className="space-y-3">
-        <h2 className="font-display text-lg font-medium">Delivery requests</h2>
+      <ConsoleSection
+        title="Delivery requests"
+        description="Newest first. Dispatch a request to the best available courier."
+        action={<Badge tone="neutral">{requests.length} requests</Badge>}
+      >
         {requests.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No requests yet.</p>
+          <p className="text-sm text-muted-foreground">
+            No requests yet. Create the first one below.
+          </p>
         ) : (
-          requests.map((request) => (
-            <div
-              key={request.id}
-              className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-surface p-5"
-            >
-              <div>
-                <p className="font-mono text-sm font-medium">{request.requestNumber}</p>
-                <p className="text-sm">
-                  {request.pickupName} → {request.dropoffName}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {request.distanceKm} km · {request.fee} {request.currency}
-                  {request.contractNumber ? ` · ${request.contractNumber}` : ""}
-                </p>
+          <div className="space-y-2">
+            {requests.map((request) => (
+              <div
+                key={request.id}
+                className="flex flex-wrap items-center justify-between gap-3 border-b border-border/50 py-3 last:border-b-0"
+              >
+                <div className="min-w-0">
+                  <p className="font-mono text-sm font-medium">{request.requestNumber}</p>
+                  <p className="text-sm">
+                    {request.pickupName} → {request.dropoffName}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {request.distanceKm} km · {request.fee} {request.currency}
+                    {request.contractNumber ? ` · ${request.contractNumber}` : ""}
+                  </p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Badge tone={request.status === "COMPLETED" ? "success" : "neutral"}>
+                    {request.status}
+                  </Badge>
+                  {request.status === "PENDING" && !request.activeJobId ? (
+                    <DispatchForm companyId={companyId} request={request} />
+                  ) : null}
+                  {request.activeJobId ? (
+                    <Link
+                      href={`/logistics/${companyId}/jobs`}
+                      className="text-sm text-accent hover:underline"
+                    >
+                      View job →
+                    </Link>
+                  ) : null}
+                </div>
               </div>
-              <div className="flex items-center gap-3">
-                <Badge tone={request.status === "COMPLETED" ? "success" : "neutral"}>
-                  {request.status}
-                </Badge>
-                {request.status === "PENDING" && !request.activeJobId ? (
-                  <DispatchForm companyId={companyId} request={request} />
-                ) : null}
-                {request.activeJobId ? (
-                  <Link
-                    href={`/logistics/${companyId}/jobs`}
-                    className="text-sm text-accent hover:underline"
-                  >
-                    View job →
-                  </Link>
-                ) : null}
-              </div>
-            </div>
-          ))
+            ))}
+          </div>
         )}
-      </section>
+      </ConsoleSection>
 
-      <section className="max-w-3xl rounded-xl border border-border bg-surface p-6">
-        <h2 className="font-display text-lg font-medium">New delivery request</h2>
-        <div className="mt-4">
-          <CompanyRequestForm companyId={companyId} contracts={contracts} />
-        </div>
-      </section>
-    </PageShell>
+      <ConsoleSection
+        title="New delivery request"
+        description="Pickup, drop-off and the commercial terms for this run."
+        className="max-w-3xl"
+      >
+        <CompanyRequestForm companyId={companyId} contracts={contracts} />
+      </ConsoleSection>
+    </div>
   );
 }

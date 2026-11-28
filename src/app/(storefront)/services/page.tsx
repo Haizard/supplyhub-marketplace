@@ -13,6 +13,7 @@ import {
   ListingTitle,
   ProviderLabel,
 } from "@/components/storefront/listing-card";
+import { ProviderVerifiedBadge } from "@/components/providers/verified-badge";
 import { PageShell } from "@/components/storefront/page-shell";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -96,6 +97,8 @@ async function ServicesContent() {
                   href={`/services/${listing.id}`}
                   tone="services"
                   icon={<Icon className="size-[46%]" strokeWidth={1.25} aria-hidden="true" />}
+                  image={listing.coverImageUrl}
+                  imageAlt={listing.title}
                   label={serviceArea(listing.location) || listing.vendorName}
                   badge={
                     <Badge tone="neutral">
@@ -114,6 +117,7 @@ async function ServicesContent() {
                   ) : null}
                   <ListingFooter>
                     <ProviderLabel name={listing.vendorName} />
+                    {listing.providerVerified ? <ProviderVerifiedBadge /> : null}
                   </ListingFooter>
                 </ListingBody>
               </ListingCard>

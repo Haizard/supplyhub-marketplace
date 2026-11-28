@@ -1,21 +1,34 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { ArrowRight, CheckCircle2 } from "lucide-react";
 import { Suspense } from "react";
 import { z } from "zod";
 
-import { CompanyNav } from "@/components/logistics/company-nav";
+import { ConsolePageHeader, ConsoleSection, ConsoleStat } from "@/components/logistics/console-ui";
+import { companySectionGroups } from "@/components/logistics/company-sections";
 import { SubmitCompanyForm } from "@/components/logistics/submit-company-form";
+import { ProviderVerifiedBadge } from "@/components/providers/verified-badge";
 import { PageShell } from "@/components/storefront/page-shell";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getLogisticsCompany } from "@/features/logistics-companies/queries";
 import { COMPANY_STATUS_LABELS } from "@/features/logistics-companies/status";
+import {
+  listCompanyJobs,
+  listCompanyRequests,
+} from "@/features/logistics-company-dispatch/queries";
+import { listVehicles } from "@/features/logistics-fleet/queries";
 import { getServerI18n } from "@/i18n/server";
 import { getSessionActor } from "@/server/auth/session";
 import { tryLogisticsAccess } from "@/server/logistics/access";
 
 const uuidSchema = z.uuid();
+
+const CLOSED_REQUEST_STATUSES = ["COMPLETED", "CANCELLED", "FAILED", "EXPIRED"];
+const CLOSED_JOB_STATUSES = ["DELIVERED", "COMPLETED", "CANCELLED", "FAILED"];
 
 export const metadata: Metadata = {
   title: "Logistics company",
@@ -48,120 +61,222 @@ async function LogisticsCompanyContent({ params }: { params: Promise<{ companyId
     return <PublicCompanyProfile company={company} />;
   }
 
+  return <CompanyOverview company={company} />;
+}
+
+/** The console landing page: where the company stands and what to do next. */
+async function CompanyOverview({
+  company,
+}: {
+  company: NonNullable<Awaited<ReturnType<typeof getLogisticsCompany>>>;
+}) {
+  const { t } = await getServerI18n();
+  const base = `/logistics/${company.id}`;
+
+  const [requests, jobs, vehicles] = await Promise.all([
+    listCompanyRequests(company.id),
+    listCompanyJobs(company.id),
+    listVehicles(company.id),
+  ]);
+
+  const openRequests = requests.filter(
+    (request) => !CLOSED_REQUEST_STATUSES.includes(request.status),
+  ).length;
+  const activeJobs = jobs.filter((job) => !CLOSED_JOB_STATUSES.includes(job.status)).length;
+  const inService = vehicles.filter((vehicle) => vehicle.status === "ACTIVE").length;
+
+  const pendingVerification = company.status === "PENDING";
+  const needsFleet = vehicles.length === 0;
+  const needsTeam = company.memberCount <= 1;
+
   return (
-    <PageShell className="space-y-6 py-8">
-      <Link href="/logistics" className="text-sm text-muted-foreground hover:text-foreground">
-        ← Logistics network
-      </Link>
+    <div className="space-y-6">
+      <ConsolePageHeader
+        eyebrow={t("logistics.overview.eyebrow")}
+        title={t("logistics.overview.title")}
+        description={t("logistics.overview.description", { company: company.name })}
+        actions={
+          <Button asChild size="sm">
+            <Link href={`${base}/dispatch`}>
+              {t("logistics.overview.newRequest")}
+              <ArrowRight className="size-4" aria-hidden="true" />
+            </Link>
+          </Button>
+        }
+      />
 
-      <header className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="font-display text-3xl tracking-tight">{company.name}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {company.companyCode} · {company.city ?? "—"} · plan: {company.plan}
-          </p>
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <ConsoleStat
+          label={t("logistics.overview.stats.openRequests")}
+          value={openRequests}
+          hint={t("logistics.overview.stats.openRequestsHint")}
+          href={`${base}/dispatch`}
+          tone={openRequests > 0 ? "warning" : "neutral"}
+        />
+        <ConsoleStat
+          label={t("logistics.overview.stats.activeJobs")}
+          value={activeJobs}
+          hint={t("logistics.overview.stats.activeJobsHint")}
+          href={`${base}/jobs`}
+        />
+        <ConsoleStat
+          label={t("logistics.overview.stats.vehicles")}
+          value={`${inService}/${vehicles.length}`}
+          hint={t("logistics.overview.stats.vehiclesHint")}
+          href={`${base}/fleet`}
+        />
+        <ConsoleStat
+          label={t("logistics.overview.stats.members")}
+          value={company.memberCount}
+          hint={t("logistics.overview.stats.membersHint", { roles: company.roleCount })}
+          href={`${base}/members`}
+        />
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+        <ConsoleSection
+          title={t("logistics.overview.attention.title")}
+          description={t("logistics.overview.attention.body")}
+        >
+          {pendingVerification || needsFleet || needsTeam ? (
+            <ul className="divide-y divide-border">
+              {pendingVerification ? (
+                <AttentionRow
+                  title={t("logistics.overview.attention.verifyTitle")}
+                  body={t("logistics.overview.attention.verifyBody")}
+                  href={`${base}#verification`}
+                  action={t("logistics.overview.attention.verifyAction")}
+                />
+              ) : null}
+              {needsFleet ? (
+                <AttentionRow
+                  title={t("logistics.overview.attention.fleetTitle")}
+                  body={t("logistics.overview.attention.fleetBody")}
+                  href={`${base}/fleet`}
+                  action={t("logistics.overview.attention.fleetAction")}
+                />
+              ) : null}
+              {needsTeam ? (
+                <AttentionRow
+                  title={t("logistics.overview.attention.membersTitle")}
+                  body={t("logistics.overview.attention.membersBody")}
+                  href={`${base}/members`}
+                  action={t("logistics.overview.attention.membersAction")}
+                />
+              ) : null}
+            </ul>
+          ) : (
+            <p className="flex items-center gap-2 text-sm text-muted-foreground">
+              <CheckCircle2 className="size-4 text-success" aria-hidden="true" />
+              {t("logistics.overview.attention.empty")}
+            </p>
+          )}
+        </ConsoleSection>
+
+        <ConsoleSection title={t("logistics.overview.quick.title")}>
+          <div className="flex flex-col gap-2">
+            <Button asChild variant="secondary" size="sm" className="justify-between">
+              <Link href={`${base}/dispatch`}>
+                {t("logistics.overview.quick.request")}
+                <ArrowRight className="size-4" aria-hidden="true" />
+              </Link>
+            </Button>
+            <Button asChild variant="secondary" size="sm" className="justify-between">
+              <Link href={`${base}/fleet`}>
+                {t("logistics.overview.quick.vehicle")}
+                <ArrowRight className="size-4" aria-hidden="true" />
+              </Link>
+            </Button>
+            <Button asChild variant="secondary" size="sm" className="justify-between">
+              <Link href={`${base}/members`}>
+                {t("logistics.overview.quick.invite")}
+                <ArrowRight className="size-4" aria-hidden="true" />
+              </Link>
+            </Button>
+            <Button asChild variant="secondary" size="sm" className="justify-between">
+              <Link href={`${base}/edit`}>
+                {t("logistics.overview.quick.profile")}
+                <ArrowRight className="size-4" aria-hidden="true" />
+              </Link>
+            </Button>
+          </div>
+        </ConsoleSection>
+      </div>
+
+      {pendingVerification ? (
+        <div id="verification" className="scroll-mt-32">
+          <ConsoleSection
+            title={t("logistics.overview.verify.title")}
+            description={t("logistics.overview.verify.body")}
+          >
+            <SubmitCompanyForm companyId={company.id} />
+          </ConsoleSection>
         </div>
-        <Badge tone={company.status === "APPROVED" ? "success" : "neutral"}>
-          {COMPANY_STATUS_LABELS[company.status]}
-        </Badge>
-      </header>
-
-      <CompanyNav companyId={companyId} active="overview" />
-
-      {company.description ? (
-        <p className="max-w-2xl text-sm leading-6 text-muted-foreground">{company.description}</p>
       ) : null}
 
-      <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        <Link
-          href={`/logistics/${company.id}/members`}
-          className="rounded-xl border border-border bg-surface p-5 hover:border-border-strong"
-        >
-          <p className="font-display text-lg font-medium">Members</p>
-          <p className="mt-1 text-xs text-muted-foreground">{company.memberCount} member(s)</p>
-        </Link>
-        <Link
-          href={`/logistics/${company.id}/fleet`}
-          className="rounded-xl border border-border bg-surface p-5 hover:border-border-strong"
-        >
-          <p className="font-display text-lg font-medium">Fleet</p>
-          <p className="mt-1 text-xs text-muted-foreground">Vehicles and documents</p>
-        </Link>
-        <Link
-          href={`/logistics/${company.id}/drivers`}
-          className="rounded-xl border border-border bg-surface p-5 hover:border-border-strong"
-        >
-          <p className="font-display text-lg font-medium">Drivers</p>
-          <p className="mt-1 text-xs text-muted-foreground">Profiles and memberships</p>
-        </Link>
-        <Link
-          href={`/logistics/${company.id}/clients`}
-          className="rounded-xl border border-border bg-surface p-5 hover:border-border-strong"
-        >
-          <p className="font-display text-lg font-medium">Clients</p>
-          <p className="mt-1 text-xs text-muted-foreground">Merchant relationships</p>
-        </Link>
-        <Link
-          href={`/logistics/${company.id}/contracts`}
-          className="rounded-xl border border-border bg-surface p-5 hover:border-border-strong"
-        >
-          <p className="font-display text-lg font-medium">Contracts</p>
-          <p className="mt-1 text-xs text-muted-foreground">Pricing and SLAs</p>
-        </Link>
-        <Link
-          href={`/logistics/${company.id}/dispatch`}
-          className="rounded-xl border border-border bg-surface p-5 hover:border-border-strong"
-        >
-          <p className="font-display text-lg font-medium">Dispatch</p>
-          <p className="mt-1 text-xs text-muted-foreground">Requests and assignments</p>
-        </Link>
-        <Link
-          href={`/logistics/${company.id}/finance`}
-          className="rounded-xl border border-border bg-surface p-5 hover:border-border-strong"
-        >
-          <p className="font-display text-lg font-medium">Finance</p>
-          <p className="mt-1 text-xs text-muted-foreground">Earnings, expenses and settlements</p>
-        </Link>
-        <Link
-          href={`/logistics/${company.id}/referrals`}
-          className="rounded-xl border border-border bg-surface p-5 hover:border-border-strong"
-        >
-          <p className="font-display text-lg font-medium">Partner growth</p>
-          <p className="mt-1 text-xs text-muted-foreground">Referrals and eligible rewards</p>
-        </Link>
-        <Link
-          href={`/logistics/${company.id}/roles`}
-          className="rounded-xl border border-border bg-surface p-5 hover:border-border-strong"
-        >
-          <p className="font-display text-lg font-medium">Roles</p>
-          <p className="mt-1 text-xs text-muted-foreground">{company.roleCount} role(s)</p>
-        </Link>
-        <div className="rounded-xl border border-border bg-surface p-5">
-          <p className="font-display text-lg font-medium">Verification</p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            {COMPANY_STATUS_LABELS[company.status]}
-          </p>
+      <section className="space-y-3">
+        <div className="flex flex-wrap items-end justify-between gap-2">
+          <div>
+            <h2 className="font-display text-base font-medium">
+              {t("logistics.overview.modules.title")}
+            </h2>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {t("logistics.overview.modules.body")}
+            </p>
+          </div>
+        </div>
+
+        <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          {companySectionGroups.map((group) => (
+            <div key={group.key} className="rounded-xl border border-border bg-surface p-4">
+              <p className="font-mono text-[0.5625rem] tracking-[0.16em] text-muted-foreground uppercase">
+                {t(`logistics.console.groups.${group.key}`)}
+              </p>
+              <ul className="mt-2.5 space-y-0.5">
+                {group.items.map((section) => (
+                  <li key={section.key}>
+                    <Link
+                      href={`${base}${section.suffix}`}
+                      className="flex items-center gap-2.5 rounded-md px-1.5 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-surface-muted hover:text-foreground"
+                    >
+                      <section.icon className="size-4 shrink-0" aria-hidden="true" />
+                      <span className="truncate">{t(`logistics.console.nav.${section.key}`)}</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </div>
       </section>
+    </div>
+  );
+}
 
-      {company.status === "PENDING" ? (
-        <section className="max-w-xl rounded-xl border border-border bg-surface p-6">
-          <h2 className="font-display text-lg font-medium">Verification</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Submit your profile for administrator review before taking live deliveries.
-          </p>
-          <div className="mt-4">
-            <SubmitCompanyForm companyId={company.id} />
-          </div>
-        </section>
-      ) : null}
-
-      {access.isOwner ? (
-        <p className="text-xs text-muted-foreground">
-          You are the owner of this company. Fleet, drivers and contracts arrive in later slices.
-        </p>
-      ) : null}
-    </PageShell>
+function AttentionRow({
+  title,
+  body,
+  href,
+  action,
+}: {
+  title: string;
+  body: string;
+  href: string;
+  action: string;
+}) {
+  return (
+    <li className="flex flex-wrap items-center justify-between gap-3 py-3 first:pt-0 last:pb-0">
+      <div className="min-w-0">
+        <p className="text-sm font-medium">{title}</p>
+        <p className="mt-0.5 text-xs leading-5 text-muted-foreground">{body}</p>
+      </div>
+      <Button asChild variant="ghost" size="sm" className="shrink-0">
+        <Link href={href}>
+          {action}
+          <ArrowRight className="size-4" aria-hidden="true" />
+        </Link>
+      </Button>
+    </li>
   );
 }
 
@@ -185,6 +300,18 @@ async function PublicCompanyProfile({
       </Link>
 
       <header className="rounded-2xl border border-border bg-surface p-6 sm:p-8">
+        {company.coverImageUrl ? (
+          <div className="relative mb-6 aspect-[16/7] overflow-hidden rounded-xl bg-surface-muted">
+            <Image
+              src={company.coverImageUrl}
+              alt={`${company.name} operations`}
+              fill
+              priority
+              sizes="(min-width: 1024px) 60vw, 96vw"
+              className="object-cover"
+            />
+          </div>
+        ) : null}
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="min-w-0">
             <p className="eyebrow text-muted-foreground">{t("marketplaces.logistics")}</p>
@@ -196,7 +323,11 @@ async function PublicCompanyProfile({
               {t("logistics.public.plan").toLowerCase()}
             </p>
           </div>
-          <Badge tone="success">{COMPANY_STATUS_LABELS[company.status]}</Badge>
+          {company.providerVerified ? (
+            <ProviderVerifiedBadge />
+          ) : (
+            <Badge tone="neutral">{COMPANY_STATUS_LABELS[company.status]}</Badge>
+          )}
         </div>
         {company.description ? (
           <p className="mt-4 max-w-2xl text-sm leading-6 text-muted-foreground">

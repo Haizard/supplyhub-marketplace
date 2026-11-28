@@ -22,6 +22,7 @@ export function ServiceListingForm({
     unitPrice: string;
     durationMinutes: number;
     location: string;
+    coverImageUrl: string | null;
   };
 }) {
   const t = useT();
@@ -92,6 +93,18 @@ export function ServiceListingForm({
             name="location"
             defaultValue={listing?.location ?? ""}
             maxLength={150}
+          />
+        </Field>
+        <Field
+          label="Cover image path (optional)"
+          htmlFor="coverImageUrl"
+          error={errors.coverImageUrl}
+        >
+          <Input
+            id="coverImageUrl"
+            name="coverImageUrl"
+            defaultValue={listing?.coverImageUrl ?? ""}
+            placeholder="/images/marketplace/services-pottery.jpg"
           />
         </Field>
       </div>

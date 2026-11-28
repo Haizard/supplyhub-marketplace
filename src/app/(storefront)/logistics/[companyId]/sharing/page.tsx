@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { z } from "zod";
 
-import { CompanyNav } from "@/components/logistics/company-nav";
 import {
   ParcelHubForm,
   ParcelIntakeForm,
@@ -15,9 +14,9 @@ import {
   ShareResponseForm,
   ShareStatusForm,
 } from "@/components/logistics/sharing-forms";
-import { PageShell } from "@/components/storefront/page-shell";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ConsolePageHeader } from "@/components/logistics/console-ui";
 import { getLogisticsCompany } from "@/features/logistics-companies/queries";
 import {
   listActiveCompanyJobs,
@@ -82,15 +81,11 @@ async function SharingContent({ params }: { params: Promise<{ companyId: string 
   const agreementEditableVehicles = eligibleVehicles(vehicles);
 
   return (
-    <PageShell className="space-y-6 py-8">
-      <header>
-        <h1 className="font-display text-3xl tracking-tight">Fleet sharing and parcel hubs</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Capacity is shared only with explicit consent from both companies, current insurance and a
-          single accountable company per delivery. Every custody change is recorded.
-        </p>
-      </header>
-      <CompanyNav companyId={companyId} active="sharing" />
+    <div className="space-y-6">
+      <ConsolePageHeader
+        title="Fleet sharing and parcel hubs"
+        description="Capacity is shared only with explicit consent from both companies, current insurance and a single accountable company per delivery. Every custody change is recorded."
+      />
 
       <section className="space-y-4 rounded-xl border border-border bg-surface p-6">
         <h2 className="font-display text-lg font-medium">Sharing agreements</h2>
@@ -273,6 +268,6 @@ async function SharingContent({ params }: { params: Promise<{ companyId: string 
           ) : null}
         </ul>
       </section>
-    </PageShell>
+    </div>
   );
 }

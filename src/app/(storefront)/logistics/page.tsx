@@ -12,6 +12,7 @@ import {
   ListingTitle,
   ProviderLabel,
 } from "@/components/storefront/listing-card";
+import { ProviderVerifiedBadge } from "@/components/providers/verified-badge";
 import { PageShell } from "@/components/storefront/page-shell";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -143,8 +144,16 @@ async function LogisticsContent() {
                   href={`/logistics/${company.id}`}
                   tone="logistics"
                   icon={<Truck className="size-[46%]" strokeWidth={1.25} aria-hidden="true" />}
+                  image={company.coverImageUrl}
+                  imageAlt={`${company.name} delivery fleet`}
                   label={company.companyCode}
-                  badge={<Badge tone="success">{COMPANY_STATUS_LABELS[company.status]}</Badge>}
+                  badge={
+                    company.providerVerified ? (
+                      <ProviderVerifiedBadge />
+                    ) : (
+                      <Badge tone="neutral">{COMPANY_STATUS_LABELS[company.status]}</Badge>
+                    )
+                  }
                 />
                 <ListingBody>
                   <p className="flex flex-wrap items-baseline gap-x-1.5 font-semibold">

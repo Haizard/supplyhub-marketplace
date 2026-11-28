@@ -5,10 +5,9 @@ import { Suspense } from "react";
 import { z } from "zod";
 
 import { ClientForm } from "@/components/logistics/client-forms";
-import { CompanyNav } from "@/components/logistics/company-nav";
-import { PageShell } from "@/components/storefront/page-shell";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ConsolePageHeader } from "@/components/logistics/console-ui";
 import { getLogisticsCompany } from "@/features/logistics-companies/queries";
 import { listCompanyClients } from "@/features/logistics-clients/queries";
 import {
@@ -47,21 +46,11 @@ async function CompanyClientsContent({ params }: { params: Promise<{ companyId: 
   if (!company) notFound();
 
   return (
-    <PageShell className="space-y-6 py-8">
-      <Link
-        href={`/logistics/${companyId}`}
-        className="text-sm text-muted-foreground hover:text-foreground"
-      >
-        ← {company.name}
-      </Link>
-      <header>
-        <h1 className="font-display text-3xl tracking-tight">Merchant clients</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Merchants can use your delivery service without listing on the marketplace. One merchant
-          may work with several logistics companies.
-        </p>
-      </header>
-      <CompanyNav companyId={companyId} active="clients" />
+    <div className="space-y-6">
+      <ConsolePageHeader
+        title="Merchant clients"
+        description="Merchants can use your delivery service without listing on the marketplace. One merchant may work with several logistics companies."
+      />
 
       {clients.length > 0 ? (
         <ul className="space-y-3">
@@ -104,6 +93,6 @@ async function CompanyClientsContent({ params }: { params: Promise<{ companyId: 
       {!access.permissions.has("*") && !access.permissions.has("logistics.client.manage") ? (
         <p className="text-xs text-muted-foreground">Your role has read-only client access.</p>
       ) : null}
-    </PageShell>
+    </div>
   );
 }

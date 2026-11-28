@@ -61,6 +61,7 @@ export async function saveServiceListingAction(
     unitPrice: formValue(formData, "unitPrice"),
     durationMinutes: formValue(formData, "durationMinutes"),
     location: formValue(formData, "location"),
+    coverImageUrl: formValue(formData, "coverImageUrl"),
   });
   if (!parsed.success) return failFields(parsed.error);
 
@@ -97,6 +98,7 @@ export async function saveServiceListingAction(
             unitPrice: decimal(data.unitPrice),
             durationMinutes: data.durationMinutes,
             location: data.location ?? "",
+            coverImageUrl: data.coverImageUrl ?? null,
           },
         });
       } else {
@@ -113,6 +115,7 @@ export async function saveServiceListingAction(
             unitPrice: decimal(data.unitPrice),
             durationMinutes: data.durationMinutes,
             location: data.location ?? "",
+            coverImageUrl: data.coverImageUrl ?? null,
             status: "ACTIVE",
             publishedAt: new Date(),
           },

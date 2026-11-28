@@ -1,14 +1,12 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { z } from "zod";
 
-import { CompanyNav } from "@/components/logistics/company-nav";
 import { InvoiceForm, InvoiceStatusForm } from "@/components/logistics/contract-forms";
-import { PageShell } from "@/components/storefront/page-shell";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ConsolePageHeader } from "@/components/logistics/console-ui";
 import { getLogisticsCompany } from "@/features/logistics-companies/queries";
 import { listContracts, listInvoices } from "@/features/logistics-contracts/queries";
 import { INVOICE_STATUS_LABELS } from "@/features/logistics-contracts/status";
@@ -49,20 +47,11 @@ async function CompanyInvoicesContent({ params }: { params: Promise<{ companyId:
   if (!company) notFound();
 
   return (
-    <PageShell className="space-y-6 py-8">
-      <Link
-        href={`/logistics/${companyId}`}
-        className="text-sm text-muted-foreground hover:text-foreground"
-      >
-        ← {company.name}
-      </Link>
-      <header>
-        <h1 className="font-display text-3xl tracking-tight">Invoices</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Company-to-merchant billing, separate from the platform ledger.
-        </p>
-      </header>
-      <CompanyNav companyId={companyId} active="invoices" />
+    <div className="space-y-6">
+      <ConsolePageHeader
+        title="Invoices"
+        description="Company-to-merchant billing, separate from the platform ledger."
+      />
 
       {invoices.length === 0 ? (
         <p className="text-sm text-muted-foreground">No invoices generated yet.</p>
@@ -105,6 +94,6 @@ async function CompanyInvoicesContent({ params }: { params: Promise<{ companyId:
           <InvoiceForm companyId={companyId} contracts={contracts} />
         </div>
       </section>
-    </PageShell>
+    </div>
   );
 }

@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import Image from "next/image";
 import Link from "next/link";
 
 import { cn } from "@/lib/utils/cn";
@@ -24,34 +25,57 @@ export function ListingCard({ children, className }: { children: ReactNode; clas
 export function ListingMedia({
   tone,
   icon,
+  image,
+  imageAlt,
   label,
   badge,
   href,
 }: {
   tone: ListingTone;
   icon: ReactNode;
+  image?: string | null;
+  imageAlt?: string;
   label?: string | null;
   badge?: ReactNode;
   href?: string;
 }) {
   const plate = (
-    <div className={cn("media-square relative w-full overflow-hidden", mediaTones[tone])}>
-      <div
-        aria-hidden="true"
-        className="absolute inset-0 opacity-[0.07]"
-        style={{
-          backgroundImage:
-            "linear-gradient(to right, currentColor 1px, transparent 1px), linear-gradient(to bottom, currentColor 1px, transparent 1px)",
-          backgroundSize: "32px 32px",
-        }}
-      />
-      <div aria-hidden="true" className="absolute inset-0 grid place-items-center">
-        <span className="grid size-[42%] max-h-24 max-w-24 place-items-center rounded-full border border-current/20 bg-surface/60 shadow-[0_1px_0_rgb(255_255_255/0.5)_inset] transition-transform duration-500 ease-out group-hover:scale-[1.06]">
-          {icon}
-        </span>
-      </div>
+    <div className={cn("media-square relative w-full overflow-hidden", !image && mediaTones[tone])}>
+      {image ? (
+        <Image
+          src={image}
+          alt={imageAlt ?? ""}
+          fill
+          sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 96vw"
+          className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.035]"
+        />
+      ) : (
+        <>
+          <div
+            aria-hidden="true"
+            className="absolute inset-0 opacity-[0.07]"
+            style={{
+              backgroundImage:
+                "linear-gradient(to right, currentColor 1px, transparent 1px), linear-gradient(to bottom, currentColor 1px, transparent 1px)",
+              backgroundSize: "32px 32px",
+            }}
+          />
+          <div aria-hidden="true" className="absolute inset-0 grid place-items-center">
+            <span className="grid size-[42%] max-h-24 max-w-24 place-items-center rounded-full border border-current/20 bg-surface/60 shadow-[0_1px_0_rgb(255_255_255/0.5)_inset] transition-transform duration-500 ease-out group-hover:scale-[1.06]">
+              {icon}
+            </span>
+          </div>
+        </>
+      )}
       {label ? (
-        <p className="absolute inset-x-3 bottom-2.5 truncate font-mono text-[0.5625rem] tracking-[0.14em] uppercase opacity-80">
+        <p
+          className={cn(
+            "absolute inset-x-3 bottom-2.5 truncate font-mono text-[0.5625rem] tracking-[0.14em] uppercase",
+            image
+              ? "w-fit rounded-sm bg-surface/90 px-1.5 py-0.5 text-foreground backdrop-blur"
+              : "opacity-80",
+          )}
+        >
           {label}
         </p>
       ) : null}

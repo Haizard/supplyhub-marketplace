@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  BadgeCheck,
   Banknote,
   ChartNoAxesCombined,
   ClipboardList,
@@ -43,6 +44,7 @@ const links = [
   { href: "/admin/feature-flags", labelKey: "admin.featureFlags", icon: Flag },
   { href: "/admin/outbox", labelKey: "admin.outbox", icon: Inbox },
   { href: "/admin/verification", labelKey: "admin.verification", icon: ShieldAlert },
+  { href: "/admin/providers", labelKey: "admin.providers", icon: BadgeCheck },
   { href: "/admin/disputes", labelKey: "admin.disputes", icon: MessageSquareWarning },
   { href: "/admin/analytics", labelKey: "admin.analytics", icon: ChartNoAxesCombined },
   { href: "/admin/reconciliation", labelKey: "admin.reconciliation", icon: RefreshCw },

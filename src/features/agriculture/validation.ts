@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { coverImageUrlSchema } from "@/features/marketplaces/images";
+
 const uuid = z.uuid();
 const optionalText = (max: number) =>
   z.preprocess(
@@ -72,6 +74,7 @@ export const listingSchema = z.object({
   deliveryAvailable: z.preprocess((value) => value === "true", z.boolean()),
   organicClaim: z.preprocess((value) => value === "true", z.boolean()),
   certifiedClaim: z.preprocess((value) => value === "true", z.boolean()),
+  coverImageUrl: coverImageUrlSchema,
 });
 
 export const buyerRequestSchema = z.object({

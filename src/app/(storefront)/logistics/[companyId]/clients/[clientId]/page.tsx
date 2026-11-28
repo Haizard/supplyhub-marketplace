@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { z } from "zod";
@@ -9,9 +8,8 @@ import {
   ContactForm,
   RelationshipStatusForm,
 } from "@/components/logistics/client-forms";
-import { CompanyNav } from "@/components/logistics/company-nav";
-import { PageShell } from "@/components/storefront/page-shell";
 import { Badge } from "@/components/ui/badge";
+import { ConsolePageHeader } from "@/components/logistics/console-ui";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getLogisticsCompany } from "@/features/logistics-companies/queries";
 import { getClientDetail } from "@/features/logistics-clients/queries";
@@ -61,34 +59,25 @@ async function ClientDetailContent({
   if (!company || !client) notFound();
 
   return (
-    <PageShell className="space-y-6 py-8">
-      <Link
-        href={`/logistics/${companyId}/clients`}
-        className="text-sm text-muted-foreground hover:text-foreground"
-      >
-        ← Merchant clients
-      </Link>
-      <header className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="font-display text-3xl tracking-tight">{client.name}</h1>
-          <p className="text-sm text-muted-foreground">
-            {client.clientNumber} · {client.businessName || "Independent merchant"} · works with{" "}
-            {client.companyCount} company(ies)
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge tone="neutral">{CLIENT_STATUS_LABELS[client.status]}</Badge>
-          <Badge tone={client.relationshipStatus === "ACTIVE" ? "success" : "neutral"}>
-            {RELATIONSHIP_STATUS_LABELS[client.relationshipStatus ?? "PENDING"]}
-          </Badge>
-          <RelationshipStatusForm
-            companyId={companyId}
-            clientId={clientId}
-            status={client.relationshipStatus ?? "PENDING"}
-          />
-        </div>
-      </header>
-      <CompanyNav companyId={companyId} active="clients" />
+    <div className="space-y-6">
+      <ConsolePageHeader
+        eyebrow="Client"
+        title={client.name}
+        description={`${client.clientNumber} · ${client.businessName || "Independent merchant"} · works with ${client.companyCount} company(ies)`}
+        actions={
+          <>
+            <Badge tone="neutral">{CLIENT_STATUS_LABELS[client.status]}</Badge>
+            <Badge tone={client.relationshipStatus === "ACTIVE" ? "success" : "neutral"}>
+              {RELATIONSHIP_STATUS_LABELS[client.relationshipStatus ?? "PENDING"]}
+            </Badge>
+            <RelationshipStatusForm
+              companyId={companyId}
+              clientId={clientId}
+              status={client.relationshipStatus ?? "PENDING"}
+            />
+          </>
+        }
+      />
 
       <section className="rounded-xl border border-border bg-surface p-6">
         <h2 className="font-display text-lg font-medium">Client details</h2>
@@ -114,6 +103,6 @@ async function ClientDetailContent({
           <ContactForm companyId={companyId} clientId={clientId} />
         </div>
       </section>
-    </PageShell>
+    </div>
   );
 }

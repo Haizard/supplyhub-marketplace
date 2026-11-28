@@ -17,6 +17,7 @@ export function CompanyProfileForm({
     slug: string;
     description: string;
     city: string | null;
+    coverImageUrl: string | null;
   };
 }) {
   const [state, action, pending] = useActionState(updateCompanyAction, initialFormState);
@@ -45,6 +46,18 @@ export function CompanyProfileForm({
           <Input id="countryCode" name="countryCode" defaultValue="TZ" maxLength={2} />
         </Field>
       </div>
+      <Field
+        label="Cover image path (optional)"
+        htmlFor="coverImageUrl"
+        error={errors.coverImageUrl}
+      >
+        <Input
+          id="coverImageUrl"
+          name="coverImageUrl"
+          defaultValue={company.coverImageUrl ?? ""}
+          placeholder="/images/marketplace/logistics-freight.jpg"
+        />
+      </Field>
       <Field label="Description" htmlFor="description" error={errors.description}>
         <Textarea
           id="description"

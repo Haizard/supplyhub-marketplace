@@ -1,18 +1,16 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { z } from "zod";
 
-import { CompanyNav } from "@/components/logistics/company-nav";
 import {
   CompanyJobStatusForm,
   CompanyOtpForm,
   ReassignForm,
 } from "@/components/logistics/dispatch-forms";
-import { PageShell } from "@/components/storefront/page-shell";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ConsolePageHeader } from "@/components/logistics/console-ui";
 import { getLogisticsCompany } from "@/features/logistics-companies/queries";
 import {
   listCompanyJobs,
@@ -51,20 +49,11 @@ async function CompanyJobsContent({ params }: { params: Promise<{ companyId: str
   if (!company) notFound();
 
   return (
-    <PageShell className="space-y-6 py-8">
-      <Link
-        href={`/logistics/${companyId}/dispatch`}
-        className="text-sm text-muted-foreground hover:text-foreground"
-      >
-        ← Dispatch
-      </Link>
-      <header>
-        <h1 className="font-display text-3xl tracking-tight">Deliveries</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Jobs follow the shared state machine with OTP hand-over and proof of delivery.
-        </p>
-      </header>
-      <CompanyNav companyId={companyId} active="jobs" />
+    <div className="space-y-6">
+      <ConsolePageHeader
+        title="Deliveries"
+        description="Jobs follow the shared state machine with OTP hand-over and proof of delivery."
+      />
 
       {jobs.length === 0 ? (
         <p className="text-sm text-muted-foreground">No company delivery jobs yet.</p>
@@ -99,6 +88,6 @@ async function CompanyJobsContent({ params }: { params: Promise<{ companyId: str
           ))}
         </ul>
       )}
-    </PageShell>
+    </div>
   );
 }

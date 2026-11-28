@@ -55,6 +55,17 @@ export function CompanyForm() {
       <Field label="Address" htmlFor="address" error={errors.address}>
         <Input id="address" name="address" />
       </Field>
+      <Field
+        label="Cover image path (optional)"
+        htmlFor="coverImageUrl"
+        error={errors.coverImageUrl}
+      >
+        <Input
+          id="coverImageUrl"
+          name="coverImageUrl"
+          placeholder="/images/marketplace/logistics-freight.jpg"
+        />
+      </Field>
       <Field label="Description" htmlFor="description" error={errors.description}>
         <Textarea id="description" name="description" maxLength={2000} />
       </Field>

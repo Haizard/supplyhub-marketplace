@@ -54,6 +54,7 @@ const farmers = [
         minimumOrder: "1.00",
         grade: "Grade A",
         collectionLocation: "Mbalizi collection point, Mbeya",
+        coverImageUrl: "/images/marketplace/produce-maize.jpg",
         deliveryAvailable: true,
         organicClaim: false,
         certifiedClaim: false,
@@ -69,6 +70,7 @@ const farmers = [
         minimumOrder: "50.00",
         grade: "Grade A",
         collectionLocation: "Mbalizi collection point, Mbeya",
+        coverImageUrl: "/images/marketplace/produce-beans.jpg",
         deliveryAvailable: false,
         organicClaim: false,
         certifiedClaim: false,
@@ -84,6 +86,7 @@ const farmers = [
         minimumOrder: "100.00",
         grade: "Export grade",
         collectionLocation: "Mbalizi packhouse, Mbeya",
+        coverImageUrl: "/images/marketplace/produce-avocado.jpg",
         deliveryAvailable: true,
         organicClaim: true,
         certifiedClaim: false,
@@ -99,6 +102,7 @@ const farmers = [
         minimumOrder: "60.00",
         grade: "AA",
         collectionLocation: "Mbalizi curing station, Mbeya",
+        coverImageUrl: "/images/marketplace/produce-coffee.jpg",
         deliveryAvailable: false,
         organicClaim: false,
         certifiedClaim: false,
@@ -144,6 +148,7 @@ const companies = [
     contactEmail: "ops@kilimanjaro-freight.test",
     address: "Plot 14, Sokoine Road",
     city: "Moshi",
+    coverImageUrl: "/images/marketplace/logistics-freight.jpg",
     latitude: "-3.3731",
     longitude: "37.3405",
     owner: true,
@@ -163,6 +168,7 @@ const companies = [
     contactEmail: "hello@pwani-cold-chain.test",
     address: "Nyerere Road, Vingunguti",
     city: "Dar es Salaam",
+    coverImageUrl: "/images/marketplace/logistics-cold-chain.jpg",
     latitude: "-6.8280",
     longitude: "39.2400",
     owner: false,
@@ -186,6 +192,7 @@ const companies = [
     contactEmail: "dispatch@lake-zone-couriers.test",
     address: "Kenyatta Road",
     city: "Mwanza",
+    coverImageUrl: "/images/marketplace/logistics-courier.jpg",
     latitude: "-2.5164",
     longitude: "32.9175",
     owner: false,
@@ -205,6 +212,7 @@ const serviceListings = [
     unitPrice: "45000.00",
     durationMinutes: 120,
     location: "Art & Crafts Supply Studio, Arusha",
+    coverImageUrl: "/images/marketplace/services-pottery.jpg",
   },
   {
     listingNumber: "SL-DEMO12",
@@ -214,6 +222,7 @@ const serviceListings = [
     unitPrice: "120000.00",
     durationMinutes: 120,
     location: "Art & Crafts Supply Studio, Arusha",
+    coverImageUrl: "/images/marketplace/services-photography.jpg",
   },
   {
     listingNumber: "SL-DEMO13",
@@ -224,6 +233,7 @@ const serviceListings = [
     unitPrice: "35000.00",
     durationMinutes: 60,
     location: "Food & Beverages Supply Roastery, Mbeya",
+    coverImageUrl: "/images/marketplace/services-coffee-cupping.jpg",
   },
   {
     listingNumber: "SL-DEMO14",
@@ -233,6 +243,7 @@ const serviceListings = [
     unitPrice: "150000.00",
     durationMinutes: 90,
     location: "Food & Beverages Supply Kitchen, Dar es Salaam",
+    coverImageUrl: "/images/marketplace/services-catering.jpg",
   },
 ];
 
@@ -307,15 +318,16 @@ try {
       await client.query(
         `INSERT INTO agricultural_listings (
            id, farmer_id, farm_id, crop_name, variety, quantity, unit, price_per_unit, currency,
-           minimum_order, grade, harvest_date, collection_location, delivery_available,
-           organic_claim, certified_claim, status, published_at, created_at, updated_at
+           minimum_order, grade, harvest_date, collection_location, cover_image_url,
+           delivery_available, organic_claim, certified_claim, status, published_at, created_at, updated_at
          )
          VALUES (
            $1, $2, $3, $4, $5, $6, $7::"AgriculturalUnit", $8, 'TZS',
            $9, $10, now() - make_interval(days => $11::int), $12, $13,
-           $14, $15, 'PUBLISHED', now(), now(), now()
+           $14, $15, $16, 'PUBLISHED', now(), now(), now()
          )
-         ON CONFLICT (id) DO NOTHING`,
+         ON CONFLICT (id) DO UPDATE SET
+           cover_image_url = COALESCE(agricultural_listings.cover_image_url, EXCLUDED.cover_image_url)`,
         [
           listing.id,
           farmer.farmer.id,
@@ -329,6 +341,7 @@ try {
           listing.grade,
           listing.harvestDateDaysAgo,
           listing.collectionLocation,
+          listing.coverImageUrl,
           listing.deliveryAvailable,
           listing.organicClaim,
           listing.certifiedClaim,
@@ -419,15 +432,16 @@ try {
     await client.query(
       `INSERT INTO logistics_companies (
          id, company_code, name, slug, registration_number, description, contact_phone, contact_email,
-         address, city, country_code, latitude, longitude, status, plan, submitted_at, reviewed_by_id,
-         reviewed_at, created_at, updated_at
+         address, city, cover_image_url, country_code, latitude, longitude, status, plan, submitted_at,
+         reviewed_by_id, reviewed_at, created_at, updated_at
        )
        VALUES (
          $1, $2, $3, $4, $5, $6, $7, $8,
-         $9, $10, 'TZ', $11, $12, 'APPROVED', 'growth', now() - interval '20 days', $13,
+         $9, $10, $11, 'TZ', $12, $13, 'APPROVED', 'growth', now() - interval '20 days', $14,
          now() - interval '18 days', now(), now()
        )
-       ON CONFLICT (id) DO NOTHING`,
+       ON CONFLICT (id) DO UPDATE SET
+         cover_image_url = COALESCE(logistics_companies.cover_image_url, EXCLUDED.cover_image_url)`,
       [
         company.id,
         company.companyCode,
@@ -439,6 +453,7 @@ try {
         company.contactEmail,
         company.address,
         company.city,
+        company.coverImageUrl,
         company.latitude,
         company.longitude,
         adminId,
@@ -549,10 +564,11 @@ try {
     await client.query(
       `INSERT INTO service_listings (
          id, listing_number, vendor_id, business_id, title, description, currency, unit_price,
-         duration_minutes, location, status, published_at, created_at, updated_at
+         duration_minutes, location, cover_image_url, status, published_at, created_at, updated_at
        )
-       VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, 'TZS', $6, $7, $8, 'ACTIVE', now(), now(), now())
-       ON CONFLICT (listing_number) DO NOTHING`,
+       VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, 'TZS', $6, $7, $8, $9, 'ACTIVE', now(), now(), now())
+       ON CONFLICT (listing_number) DO UPDATE SET
+         cover_image_url = COALESCE(service_listings.cover_image_url, EXCLUDED.cover_image_url)`,
       [
         service.listingNumber,
         vendor.vendor_id,
@@ -562,6 +578,7 @@ try {
         service.unitPrice,
         service.durationMinutes,
         service.location,
+        service.coverImageUrl,
       ],
     );
   }

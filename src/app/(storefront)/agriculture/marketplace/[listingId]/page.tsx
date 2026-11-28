@@ -41,7 +41,7 @@ async function ProduceDetailContent({ params }: { params: Promise<{ listingId: s
   if (!listing) notFound();
 
   const actor = await getSessionActor();
-  const verified = listing.verificationStatus === "VERIFIED";
+  const verified = listing.providerVerified;
   const requestHref = actor
     ? "/agriculture/buyers"
     : `/sign-in?next=${encodeURIComponent("/agriculture/buyers")}`;
@@ -82,6 +82,8 @@ async function ProduceDetailContent({ params }: { params: Promise<{ listingId: s
             <ListingMedia
               tone="farm"
               icon={cropGlyph(listing.cropName)}
+              image={listing.coverImageUrl}
+              imageAlt={`${listing.cropName}${listing.variety ? ` ${listing.variety}` : ""}`}
               label={listing.collectionLocation}
               badge={
                 <Badge tone={listing.deliveryAvailable ? "success" : "neutral"}>

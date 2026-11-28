@@ -1,13 +1,11 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { z } from "zod";
 
-import { CompanyNav } from "@/components/logistics/company-nav";
 import { CompanyProfileForm } from "@/components/logistics/company-profile-form";
-import { PageShell } from "@/components/storefront/page-shell";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ConsolePageHeader } from "@/components/logistics/console-ui";
 import { getLogisticsCompany } from "@/features/logistics-companies/queries";
 import { requireLogisticsAccess } from "@/server/logistics/access";
 
@@ -41,20 +39,11 @@ async function EditCompanyContent({ params }: { params: Promise<{ companyId: str
     access.permissions.has("*") || access.permissions.has("logistics.company.update");
 
   return (
-    <PageShell className="space-y-6 py-8">
-      <Link
-        href={`/logistics/${companyId}`}
-        className="text-sm text-muted-foreground hover:text-foreground"
-      >
-        ← {company.name}
-      </Link>
-      <header>
-        <h1 className="font-display text-3xl tracking-tight">Company profile</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Details shown to merchants and partners.
-        </p>
-      </header>
-      <CompanyNav companyId={companyId} active="profile" />
+    <div className="space-y-6">
+      <ConsolePageHeader
+        title="Company profile"
+        description="Details shown to merchants and partners."
+      />
 
       {canManage ? (
         <div className="max-w-2xl rounded-xl border border-border bg-surface p-6">
@@ -65,6 +54,7 @@ async function EditCompanyContent({ params }: { params: Promise<{ companyId: str
               slug: company.slug,
               description: company.description,
               city: company.city,
+              coverImageUrl: company.coverImageUrl,
             }}
           />
         </div>
@@ -73,6 +63,6 @@ async function EditCompanyContent({ params }: { params: Promise<{ companyId: str
           You do not have permission to edit this profile.
         </p>
       )}
-    </PageShell>
+    </div>
   );
 }

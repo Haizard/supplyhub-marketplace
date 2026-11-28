@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { z } from "zod";
 
-import { CompanyNav } from "@/components/logistics/company-nav";
 import {
   ApiKeyForm,
   EndpointStatusForm,
@@ -11,9 +10,9 @@ import {
   RevokeKeyForm,
   WebhookEndpointForm,
 } from "@/components/logistics/integration-forms";
-import { PageShell } from "@/components/storefront/page-shell";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ConsolePageHeader } from "@/components/logistics/console-ui";
 import {
   listApiKeys,
   listExternalStores,
@@ -56,15 +55,11 @@ async function IntegrationsContent({ params }: { params: Promise<{ companyId: st
   if (!company) notFound();
 
   return (
-    <PageShell className="space-y-6 py-8">
-      <header>
-        <h1 className="font-display text-3xl tracking-tight">External integrations</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Versioned API keys, signed webhooks and external store connections. The company is always
-          derived from the key, never from the request body.
-        </p>
-      </header>
-      <CompanyNav companyId={companyId} active="integrations" />
+    <div className="space-y-6">
+      <ConsolePageHeader
+        title="External integrations"
+        description="Versioned API keys, signed webhooks and external store connections. The company is always derived from the key, never from the request body."
+      />
 
       <section className="rounded-xl border border-border bg-surface p-6">
         <h2 className="font-display text-lg font-medium">API keys</h2>
@@ -165,6 +160,6 @@ async function IntegrationsContent({ params }: { params: Promise<{ companyId: st
           <ExternalStoreForm companyId={companyId} />
         </div>
       </section>
-    </PageShell>
+    </div>
   );
 }

@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { MAX_PRICE_CENTS, parseMoneyToCents } from "@/features/catalog/money";
+import { coverImageUrlSchema } from "@/features/marketplaces/images";
 
 const uuid = z.uuid();
 const optionalText = (max: number) =>
@@ -36,6 +37,7 @@ export const serviceListingSchema = z.object({
     .positive({ error: "Duration must be positive." })
     .max(1440, { error: "Duration cannot exceed 1440 minutes." }),
   location: optionalText(150),
+  coverImageUrl: coverImageUrlSchema,
 });
 
 export const bookingSchema = z.object({

@@ -199,6 +199,17 @@ export function ListingForm({
       >
         <Input id="listingLocation" name="collectionLocation" required />
       </Field>
+      <Field
+        label="Cover image path (optional)"
+        htmlFor="listingCover"
+        error={state.fieldErrors?.coverImageUrl}
+      >
+        <Input
+          id="listingCover"
+          name="coverImageUrl"
+          placeholder="/images/marketplace/avocado.jpg"
+        />
+      </Field>
       <fieldset className="space-y-1 sm:col-span-full">
         <legend className="text-sm font-medium">Claims and delivery</legend>
         <label className="flex items-center gap-2 text-xs">

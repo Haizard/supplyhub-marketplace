@@ -10,11 +10,14 @@ export interface LogisticsCompanyView {
   slug: string;
   description: string;
   city: string | null;
+  coverImageUrl: string | null;
   status: LogisticsCompanyStatus;
   plan: string;
   memberCount: number;
   roleCount: number;
   createdAt: string;
+  /** True only when a reviewer approved this company's provider application. */
+  providerVerified: boolean;
 }
 
 export interface CompanyMemberView {
@@ -47,9 +50,11 @@ export async function listActorCompanies(userId: string): Promise<LogisticsCompa
       slug: true,
       description: true,
       city: true,
+      coverImageUrl: true,
       status: true,
       plan: true,
       createdAt: true,
+      providerApplication: { select: { status: true } },
       _count: { select: { members: true, roles: true } },
     },
   });
@@ -60,11 +65,13 @@ export async function listActorCompanies(userId: string): Promise<LogisticsCompa
     slug: row.slug,
     description: row.description ?? "",
     city: row.city,
+    coverImageUrl: row.coverImageUrl,
     status: row.status,
     plan: row.plan,
     memberCount: row._count.members,
     roleCount: row._count.roles,
     createdAt: row.createdAt.toISOString(),
+    providerVerified: row.providerApplication?.status === "APPROVED",
   }));
 }
 
@@ -85,9 +92,11 @@ export async function listPublicLogisticsCompanies(limit = 24): Promise<Logistic
       slug: true,
       description: true,
       city: true,
+      coverImageUrl: true,
       status: true,
       plan: true,
       createdAt: true,
+      providerApplication: { select: { status: true } },
       _count: { select: { members: true, roles: true } },
     },
   });
@@ -98,11 +107,13 @@ export async function listPublicLogisticsCompanies(limit = 24): Promise<Logistic
     slug: row.slug,
     description: row.description ?? "",
     city: row.city,
+    coverImageUrl: row.coverImageUrl,
     status: row.status,
     plan: row.plan,
     memberCount: row._count.members,
     roleCount: row._count.roles,
     createdAt: row.createdAt.toISOString(),
+    providerVerified: row.providerApplication?.status === "APPROVED",
   }));
 }
 
@@ -116,9 +127,11 @@ export async function getLogisticsCompany(companyId: string): Promise<LogisticsC
       slug: true,
       description: true,
       city: true,
+      coverImageUrl: true,
       status: true,
       plan: true,
       createdAt: true,
+      providerApplication: { select: { status: true } },
       _count: { select: { members: true, roles: true } },
     },
   });
@@ -130,11 +143,13 @@ export async function getLogisticsCompany(companyId: string): Promise<LogisticsC
     slug: row.slug,
     description: row.description ?? "",
     city: row.city,
+    coverImageUrl: row.coverImageUrl,
     status: row.status,
     plan: row.plan,
     memberCount: row._count.members,
     roleCount: row._count.roles,
     createdAt: row.createdAt.toISOString(),
+    providerVerified: row.providerApplication?.status === "APPROVED",
   };
 }
 
@@ -294,9 +309,11 @@ export async function listPendingLogisticsCompanies(): Promise<LogisticsCompanyV
       slug: true,
       description: true,
       city: true,
+      coverImageUrl: true,
       status: true,
       plan: true,
       createdAt: true,
+      providerApplication: { select: { status: true } },
       _count: { select: { members: true, roles: true } },
     },
   });
@@ -307,10 +324,12 @@ export async function listPendingLogisticsCompanies(): Promise<LogisticsCompanyV
     slug: row.slug,
     description: row.description ?? "",
     city: row.city,
+    coverImageUrl: row.coverImageUrl,
     status: row.status,
     plan: row.plan,
     memberCount: row._count.members,
     roleCount: row._count.roles,
     createdAt: row.createdAt.toISOString(),
+    providerVerified: row.providerApplication?.status === "APPROVED",
   }));
 }
